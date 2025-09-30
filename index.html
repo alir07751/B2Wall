@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ویترین پروژه‌ها</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body{font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
+        /* لیبل درصد: با نوار از راست حرکت کند و داخل آن بماند */
+        .progress-wrap{position:relative}
+        .progress-label{
+          position:absolute; top:50%; transform:translate(50%,-50%);
+          right:clamp(8px, calc(var(--p,0) * 1%), calc(100% - 8px));
+          background-color:rgba(255,255,255,.92);
+          border:1px solid rgb(226,232,240);
+          font-size:10px; padding:2px 6px; border-radius:9999px; color:#334155;
+          white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.06);
+          pointer-events:none;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-gray-800">
+<!-- Header -->
+<header class="max-w-6xl mx-auto px-4 py-6">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-2xl md:text-3xl font-bold">ویترین پروژه‌ها</h1>
+        <span class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm">نسخه آزمایشی</span>
+    </div>
+
+    <!-- Filters -->
+    <div class="mt-4 flex flex-wrap gap-2" id="filters">
+        <button data-filter="all"         class="flt active px-3 py-1.5 rounded-full text-sm border border-blue-600 bg-blue-600 text-white">همه</button>
+        <button data-filter="open"        class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white hover:bg-slate-50">در حال جذب</button>
+        <button data-filter="completed"   class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white hover:bg-slate-50">تکمیل شده</button>
+        <button data-filter="coming_soon" class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white hover:bg-slate-50">به‌زودی</button>
+    </div>
+</header>
+
+<!-- Grid -->
+<main id="grid" class="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></main>
+
+<script>
+    // ---------- Helpers ----------
+    const numFa = n => (typeof n === "number") ? n.toLocaleString("fa-IR") : (n ?? "—");
+    const pctFa = n => (typeof n === "number") ? Math.round(n).toLocaleString("fa-IR") : n;
+
+    function payoutFa(v){
+      if(v == null) return "—";
+      const s = String(v).trim();
+      if(!/[A-Za-z]/.test(s)) return s; // ورودی فارسی/متن آزاد
+      const m = {
+        "monthly": "ماهانه",
+        "weekly": "هفتگی",
+        "biweekly": "دو هفته یکبار",
+        "bi-weekly": "دو هفته یکبار",
+        "fortnightly": "دو هفته یکبار",
+        "quarterly": "فصلی",
+        "yearly": "سالیانه",
+        "annually": "سالیانه",
+        "end_of_term": "پایان دوره",
+        "end-of-term": "پایان دوره",
+        "end of term": "پایان دوره"
+      };
+      return m[s.toLowerCase()] || s;
+    }
+
+    const statusBadge = s => {
+      const map = {
+        open:       ["در حال جذب","bg-blue-600 text-white"],
+        completed:  ["تکمیل شد","bg-green-600 text-white"],
+        coming_soon:["به‌زودی","bg-yellow-400 text-black"]
+      };
+      const [t,c] = map[s] || ["—","bg-slate-500 text-white"];
+      return `<span class="absolute top-3 right-3 ${c} text-xs px-3 py-1 rounded-full shadow">${t}</span>`;
+    };
+
+    const chip = (label, value) =>
+      `<span class="px-3 py-1 bg-slate-100 rounded-full text-xs">
+         <span class="opacity-70">${label}:</span>
+         <span class="font-semibold">&nbsp;${value}</span>
+       </span>`;
+
+    // ---------- Card ----------
+    function cardHTML(p){
+      const raised = p.capital_raised || 0;
+      const req    = p.capital_required || 0;
+      const progress = req ? Math.min(100, Math.round((raised/req)*100)) : 0;
+
+      return `
+      <article class="bg-white rounded-2xl shadow overflow-hidden border border-slate-200">
+        <div class="relative">
+          ${p.image ? `<img src="${p.image}" alt="${p.title||''}" class="w-full aspect-[16/9] object-cover">`
+                     : `<div class="w-full aspect-[16/9] bg-slate-200"></div>`}
+          ${p.status ? statusBadge(p.status) : ""}
+        </div>
+
+        <div class="p-4">
+          <h3 class="font-bold text-lg">${p.title || "—"}</h3>
+
+          <div class="mt-3">
+            <div class="flex justify-between text-xs text-gray-600">
+              <span>تأمین‌شده: <b>${numFa(raised)}</b> ریال</span>
+              <span>موردنیاز: <b>${numFa(req)}</b> ریال</span>
+            </div>
+
+            <!-- نوار: از راست پُر می‌شود و لیبل هم از راست حرکت می‌کند -->
+            <div class="progress-wrap h-3 mt-2 bg-slate-200 rounded-full overflow-hidden" style="--p:${progress}">
+              <div class="h-full bg-emerald-600 float-right" style="width:${progress}%"></div>
+              <span class="progress-label">%${pctFa(progress)} تکمیل</span>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            ${p.tenor_months ? chip("مدت طرح", `${numFa(p.tenor_months)} ماه`) : ""}
+            ${typeof p.expected_profit_pct === "number" ? chip("سود پیش‌بینی شده", `%${pctFa(p.expected_profit_pct)}`) : ""}
+            ${p.payout_schedule ? chip("مواعد پرداخت سود", payoutFa(p.payout_schedule)) : ""}
+            ${p.principal_return_months ? chip("مدت بازگشت اصل پول", `${numFa(p.principal_return_months)} ماه`) : ""}
+          </div>
+
+          <!-- CTA: نمایش شماره تماس (با جایگزینی درجا) -->
+          <div class="mt-4">
+            <button type="button"
+              class="w-full inline-flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition"
+              onclick="showPhone(this)">
+              📞 نمایش شماره تماس
+            </button>
+          </div>
+        </div>
+      </article>`;
+    }
+
+    // ---------- Render & Filter ----------
+    let ALL_PROJECTS = [];
+    let currentFilter = "all";
+
+    function applyFilter(){
+      if(currentFilter === "all") return ALL_PROJECTS;
+      return ALL_PROJECTS.filter(p => p.status === currentFilter);
+    }
+
+    function render(projects){
+      const grid = document.getElementById("grid");
+      if(!grid) return;
+      grid.innerHTML = projects.map(cardHTML).join("");
+    }
+
+    function setFilter(key){
+      currentFilter = key;
+      document.querySelectorAll("#filters .flt").forEach(btn=>{
+        btn.classList.remove("active","bg-blue-600","text-white","border-blue-600");
+        btn.classList.add("bg-white","text-gray-700","border-slate-300");
+      });
+      const btn = document.querySelector(`#filters .flt[data-filter="${key}"]`);
+      if(btn){
+        btn.classList.remove("bg-white","text-gray-700","border-slate-300");
+        btn.classList.add("active","bg-blue-600","text-white","border-blue-600");
+      }
+      render(applyFilter());
+    }
+
+    async function main(){
+      const res = await fetch("data.json", {cache:"no-store"});
+      const {projects=[]} = await res.json();
+      ALL_PROJECTS = projects;
+
+      // ✅ از ابتدا «همه» را فعال و رندر کن
+      setFilter("all");
+
+      // رویدادهای فیلتر
+      document.querySelectorAll("#filters .flt").forEach(b=>{
+        b.addEventListener("click", ()=> setFilter(b.dataset.filter));
+      });
+    }
+
+    // CTA: نمایش شماره تماس (جایگزینی دکمه)
+    function showPhone(el){
+      el.textContent = "۰۳۵۳۷۲۸۴۱۱۹";
+      el.disabled = true;
+      el.classList.remove("bg-blue-600","hover:bg-blue-700","text-white");
+      el.classList.add("bg-blue-50","text-blue-700","border","border-blue-200","cursor-default","select-text");
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", main);
+    } else {
+      main();
+    }
+</script>
+</body>
+</html>

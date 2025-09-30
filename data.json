@@ -1,0 +1,40 @@
+{
+  "projects": [
+    {
+      "id": 1,
+      "title": "توسعه خط تولید آبمیوه طبیعی",
+      "image": "https://picsum.photos/id/1018/600/400",
+      "capital_required": 5000000000,
+      "capital_raised": 2500000000,
+      "status": "open",
+      "tenor_months": 18,
+      "expected_profit_pct": 28,
+      "payout_schedule": "ماهانه",
+      "principal_return_months": 18
+    },
+    {
+      "id": 2,
+      "title": "تأمین سرمایه در گردش کارخانه لوازم خانگی",
+      "image": "https://picsum.photos/id/1025/600/400",
+      "capital_required": 7500000000,
+      "capital_raised": 6000000000,
+      "status": "completed",
+      "tenor_months": 12,
+      "expected_profit_pct": 24,
+      "payout_schedule": "فصلی",
+      "principal_return_months": 12
+    },
+    {
+      "id": 3,
+      "title": "راه‌اندازی مزرعه پرورش ماهی",
+      "image": "https://picsum.photos/id/1043/600/400",
+      "capital_required": 3000000000,
+      "capital_raised": 1200000000,
+      "status": "coming_soon",
+      "tenor_months": 24,
+      "expected_profit_pct": 32,
+      "payout_schedule": "پایان دوره",
+      "principal_return_months": 24
+    }
+  ]
+}
