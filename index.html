@@ -153,13 +153,12 @@
               📞 نمایش شماره تماس
             </button>
 
-            ${p.owner ? `
-  <a href="${p.owner.profile_url}" target="_blank" rel="noopener noreferrer"
+           ${p.owner ? `
+  <a href="owner-profile.html?id=${p.owner.id}"
      class="w-full block">
     <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow transition bg-white">
       <div class="flex items-center gap-3">
-        <img src="${p.owner.profile_image}" alt="${p.owner.name}"
-             class="w-10 h-10 rounded-full object-cover">
+        <img src="${p.owner.profile_image}" alt="${p.owner.name}" class="w-10 h-10 rounded-full object-cover">
         <span class="font-semibold text-slate-800">${p.owner.name}</span>
       </div>
       <span class="text-blue-600 text-sm font-semibold flex items-center gap-1">
@@ -168,6 +167,7 @@
     </div>
   </a>
 ` : ``}
+
 
 
           </div>

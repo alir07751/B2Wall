@@ -13,9 +13,10 @@
       "principal_return_months": 18,
       "guarantees": ["سفته", "چک بانکی"],
       "owner": {
+        "id": "ali-rezaei",
         "name": "علی رضایی",
         "profile_image": "https://i.pravatar.cc/100?img=1",
-        "profile_url": "https://example.com/owner/ali"
+        "profile_url": "owner-profile.html?id=ali-rezaei"
       }
     },
     {
@@ -31,9 +32,10 @@
       "principal_return_months": 6,
       "guarantees": ["چک بانکی صاحب طرح و دو ضامن دیگر"],
       "owner": {
+        "id": "behram-sohrabi-nia",
         "name": "بهرام سهرابی نیا",
         "profile_image": "https://i.pravatar.cc/100?img=2",
-        "profile_url": "https://example.com/owner/maryam"
+        "profile_url": "owner-profile.html?id=behram-sohrabi-nia"
       }
     },
     {
@@ -49,9 +51,10 @@
       "principal_return_months": 24,
       "guarantees": ["وثیقه ملکی", "چک بانکی"],
       "owner": {
+        "id": "hossein-mohammadi",
         "name": "حسین محمدی",
         "profile_image": "https://i.pravatar.cc/100?img=3",
-        "profile_url": "https://example.com/owner/hossein"
+        "profile_url": "owner-profile.html?id=hossein-mohammadi"
       }
     }
   ]
