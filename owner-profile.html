@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>پروفایل صاحب طرح</title>
+
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root{
+          --brand:#1f9fb1; /* سبزآبی ملایم الهام‌گرفته از حلال‌فاند */
+          --ink:#0f172a;
+        }
+        html,body{font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
+        .card{background:#fff;border:1px solid #e5e7eb;border-radius:20px}
+        .pill{display:inline-flex;align-items:center;gap:.45rem;padding:.45rem .8rem;border-radius:9999px;background:#f1f5f9;color:#0f172a;font-size:.85rem}
+        .badge{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .65rem;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;font-size:.78rem;white-space:nowrap}
+        .kpi{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:.9rem 1rem;min-width:160px}
+        .kpi b{font-size:1.35rem;line-height:1;font-weight:800}
+        .tab{padding:.55rem 1rem;border-radius:12px;background:#eef2f5;color:#334155}
+        .tab.active{background:var(--ink);color:#fff}
+        .progress{height:.6rem;background:#e2e8f0;border-radius:9999px;overflow:hidden}
+        .progress > i{display:block;height:100%;background:#059669;width:0}
+        .btn-primary{background:var(--brand);color:#fff}
+        .btn-primary:hover{filter:brightness(.95)}
+        .btn-ghost{border:1px solid #e5e7eb}
+        /* استپر زمان‌بندی */
+        .step{position:relative;padding-right:2rem}
+        .step:before{content:"";position:absolute;right:.65rem;top:.2rem;bottom:-.2rem;width:2px;background:#e5e7eb}
+        .step:last-child:before{display:none}
+        .step-dot{position:absolute;right:0;top:.15rem;width:1rem;height:1rem;border-radius:9999px;background:#e5e7eb;border:3px solid #fff;box-shadow:0 0 0 2px #e5e7eb}
+        .step-done .step-dot{background:#16a34a;box-shadow:0 0 0 2px #bbf7d0}
+        .doc{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:1rem;border:1px solid #e5e7eb;border-radius:14px;background:#fff}
+        .chip-soft{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .6rem;border-radius:9999px;background:#ecfeff;color:#155e75;border:1px solid #cffafe;font-size:.78rem}
+        .hero-sticky{position:sticky;top:0;z-index:20;background:rgba(248,250,252,.75);backdrop-filter:saturate(130%) blur(4px);box-shadow:0 6px 16px rgba(15,23,42,.06)}
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<!-- Topbar -->
+<header class="bg-white/90 border-b border-slate-200">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+        <a href="index.html" class="text-sm text-slate-600 hover:text-slate-900">← بازگشت به ویترین</a>
+        <h1 class="text-lg md:text-xl font-extrabold">پروفایل صاحب طرح</h1>
+        <span class="text-xs text-slate-400">Demo</span>
+    </div>
+</header>
+
+<!-- Hero -->
+<section id="hero" class="max-w-6xl mx-auto px-4 mt-4">
+    <div class="card p-4 md:p-6">
+        <!-- Row 1 -->
+        <div class="flex items-start justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <img src="https://i.pravatar.cc/160?img=8" class="w-16 h-16 md:w-20 md:h-20 rounded-xl object-cover" alt="Owner">
+                <div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <h2 class="text-xl md:text-2xl font-extrabold">شرکت پلیمر فوم اطلس</h2>
+                        <span class="badge">✅ احراز هویت</span>
+                        <span class="badge">🏛️ قرارداد امضا</span>
+                        <span class="badge">🔒 KYC/AML</span>
+                    </div>
+                    <p class="mt-1 text-slate-600 text-sm md:text-base">
+                        تولید و بسته‌بندی محصولات پلیمری؛ تمرکز بر توسعه ظرفیت و بهینه‌سازی زنجیره تأمین.
+                    </p>
+                </div>
+            </div>
+            <div class="flex flex-wrap gap-2 shrink-0">
+                <a class="btn-primary px-4 py-2 rounded-xl font-semibold">ارتباط با مالک</a>
+                <a class="btn-ghost px-4 py-2 rounded-xl hover:bg-slate-50">دنبال کردن</a>
+            </div>
+        </div>
+
+        <!-- Row 2: KPI belt -->
+        <div class="mt-4 overflow-x-auto">
+            <div class="grid grid-flow-col auto-cols-[minmax(160px,1fr)] md:grid-cols-4 md:auto-cols-auto gap-3">
+                <div class="kpi">
+                    <div class="text-slate-500 text-xs mb-1">سابقه همکاری</div>
+                    <b>۵ سال</b>
+                </div>
+                <div class="kpi">
+                    <div class="text-slate-500 text-xs mb-1">پروژه‌های موفق</div>
+                    <b>۷ مورد</b>
+                </div>
+                <div class="kpi">
+                    <div class="text-slate-500 text-xs mb-1">مجموع جذب سرمایه</div>
+                    <b>۳۲۰ میلیارد</b>
+                </div>
+                <div class="kpi">
+                    <div class="text-slate-500 text-xs mb-1">نرخ وفای به تعهد</div>
+                    <b>%۹۴</b>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: secondary pills -->
+        <div class="mt-3 flex flex-wrap gap-2">
+            <span class="pill">🧾 شناسه ملی: ۱۴۰۰۱۲۳۴۵۶</span>
+            <span class="pill">📍 یزد، شهرک صنعتی</span>
+            <a class="pill hover:underline" href="#">🌐 atlas-polymer.example</a>
+            <span class="chip-soft">👀 ۲ پروژه فعال</span>
+        </div>
+    </div>
+</section>
+
+<!-- Tabs -->
+<section class="max-w-6xl mx-auto px-4 mt-6">
+    <div id="tabs" class="flex flex-wrap gap-2">
+        <button class="tab active" data-tab="overview">نمای کلی</button>
+        <button class="tab" data-tab="company">معرفی و ارزیابی شرکت</button>
+        <button class="tab" data-tab="docs">تضمینات و مستندات</button>
+        <button class="tab" data-tab="schedule">زمان‌بندی طرح و اقساط</button>
+        <button class="tab" data-tab="qa">پرسش و پاسخ</button>
+    </div>
+</section>
+
+<!-- Panel: Overview -->
+<section id="panel-overview" class="max-w-6xl mx-auto px-4 mt-4 panel">
+    <div class="grid gap-6 lg:grid-cols-3">
+        <!-- Performance -->
+        <div class="card p-4 md:p-6 lg:col-span-2">
+            <h3 class="text-lg font-bold">تصویر کلی عملکرد</h3>
+
+            <div class="mt-4 grid sm:grid-cols-2 gap-4">
+                <div class="p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-sm text-slate-600">
+                        <span>تعهدات پرداخت‌شده به‌موقع</span><b>%۹۶</b>
+                    </div>
+                    <div class="progress mt-2"><i style="width:96%"></i></div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-sm text-slate-600">
+                        <span>نسبت تکمیل جذب سرمایه</span><b>%۸۹</b>
+                    </div>
+                    <div class="progress mt-2"><i style="width:89%"></i></div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-sm text-slate-600">
+                        <span>میانگین زمان بازگشت اصل پول</span><b>۱۲٫۸ ماه</b>
+                    </div>
+                    <div class="progress mt-2"><i style="width:72%"></i></div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-sm text-slate-600">
+                        <span>میانگین سود پرداختی</span><b>%۲۶</b>
+                    </div>
+                    <div class="progress mt-2"><i style="width:78%"></i></div>
+                </div>
+            </div>
+
+            <h4 class="mt-6 font-semibold">آخرین پروژه‌ها</h4>
+            <div class="mt-3 grid gap-4 md:grid-cols-2">
+                <!-- Mini project card -->
+                <article class="card overflow-hidden">
+                    <img src="https://picsum.photos/id/1018/640/360" class="w-full aspect-[16/9] object-cover" alt="">
+                    <div class="p-3">
+                        <div class="flex items-center justify-between">
+                            <b>توسعه خط تولید آبمیوه طبیعی</b>
+                            <span class="pill">در حال جذب</span>
+                        </div>
+                        <div class="mt-2 text-xs text-slate-600 flex justify-between">
+                            <span>تأمین‌شده: ۲٬۵۰۰٬۰۰۰٬۰۰۰ ریال</span>
+                            <span>موردنیاز: ۵٬۰۰۰٬۰۰۰٬۰۰۰ ریال</span>
+                        </div>
+                        <div class="progress mt-2"><i style="width:50%"></i></div>
+                        <div class="mt-2 text-sm text-slate-600">ضمانت: سفته، چک بانکی</div>
+                        <div class="mt-2">
+                            <a class="btn-primary px-3 py-1.5 rounded-lg text-sm">مشاهده در ویترین</a>
+                        </div>
+                    </div>
+                </article>
+
+                <article class="card overflow-hidden">
+                    <img src="https://picsum.photos/id/1025/640/360" class="w-full aspect-[16/9] object-cover" alt="">
+                    <div class="p-3">
+                        <div class="flex items-center justify-between">
+                            <b>سرمایه در گردش کارخانه لوازم خانگی</b>
+                            <span class="pill">تکمیل شد</span>
+                        </div>
+                        <div class="mt-2 text-xs text-slate-600 flex justify-between">
+                            <span>تأمین‌شده: ۶٬۰۰۰٬۰۰۰٬۰۰۰ ریال</span>
+                            <span>موردنیاز: ۷٬۵۰۰٬۰۰۰٬۰۰۰ ریال</span>
+                        </div>
+                        <div class="progress mt-2"><i style="width:80%"></i></div>
+                        <div class="mt-2 text-sm text-slate-600">میانگین سود: %۲۴</div>
+                    </div>
+                </article>
+            </div>
+        </div>
+
+        <!-- About & quick trust -->
+        <aside class="card p-4 md:p-6">
+            <h3 class="text-lg font-bold">درباره مالک</h3>
+            <p class="mt-2 text-slate-600 text-sm leading-7">
+                تیم مدیریتی با ۱۲ سال سابقه در صنعت غذایی. استانداردهای ISO 22000 و HACCP رعایت می‌شود.
+                قراردادهای خرید تضمینی با ۳ توزیع‌کننده عمده.
+            </p>
+            <div class="mt-4 space-y-2 text-sm">
+                <div class="doc"><span>صورت‌های مالی حسابرسی‌شده</span><b>۱۴۰۱، ۱۴۰۲</b></div>
+                <div class="doc"><span>ضمانت‌های معمول</span><b>سفته، چک، وثیقه ملکی</b></div>
+                <div class="doc"><span>سقف مجاز بدهی جاری</span><b>۵۰ میلیارد ریال</b></div>
+            </div>
+            <div class="mt-4">
+                <a class="btn-primary w-full inline-flex justify-center items-center gap-2 px-3 py-2 rounded-xl font-semibold">دریافت گزارش اعتبارسنجی (PDF)</a>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<!-- Panel: Company -->
+<section id="panel-company" class="max-w-6xl mx-auto px-4 mt-4 panel hidden">
+    <div class="card p-4 md:p-6">
+        <h3 class="text-lg font-bold">معرفی و ارزیابی شرکت</h3>
+        <div class="mt-4 grid gap-4 md:grid-cols-2">
+            <div class="pill w-full justify-between"><span>نام شرکت</span><b>شرکت یزدان مطهر قائم وسلی</b></div>
+            <div class="pill w-full justify-between"><span>مدیرعامل</span><b>جواد آرین</b></div>
+            <div class="pill w-full justify-between"><span>شناسه ملی</span><b>۱۴۰۰۵۵۹۵۷۱</b></div>
+            <div class="pill w-full justify-between"><span>شماره تماس</span><b>۰۱۱۳۴۳۴۸۰۱۰</b></div>
+            <div class="pill w-full justify-between md:col-span-2"><span>آدرس شرکت</span><b>قائم‌شهر - بلوار بسیج - خ شهید جعفر مهدوی</b></div>
+        </div>
+
+        <div class="mt-6">
+            <h4 class="font-semibold">اعضای هیئت مدیره</h4>
+            <ul class="mt-2 space-y-2 text-sm">
+                <li class="doc"><span>آقای جواد آرین — رئیس هیئت مدیره</span><span class="text-slate-500">شماره ثبت: ۲۱۶۱۷۶۲۹۱۵</span></li>
+                <li class="doc"><span>حمید آرین — نایب رئیس هیئت مدیره</span><span class="text-slate-500">شماره ثبت: ۲۱۶۱۸۴۶۹۶۷۰</span></li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Panel: Docs -->
+<section id="panel-docs" class="max-w-6xl mx-auto px-4 mt-4 panel hidden">
+    <div class="grid gap-6 lg:grid-cols-3">
+        <div class="card p-4 md:p-6 lg:col-span-1">
+            <h3 class="text-lg font-bold">تضمینات و مستندات</h3>
+            <div class="mt-4 space-y-3">
+                <div class="doc">
+                    <div class="flex items-center gap-2"><span>قرارداد</span></div>
+                    <a class="text-sky-700 hover:underline" href="#">دانلود</a>
+                </div>
+                <div class="doc">
+                    <div class="flex items-center gap-2"><span>ارزیابی طرح</span></div>
+                    <a class="text-sky-700 hover:underline" href="#">دانلود</a>
+                </div>
+                <div class="doc">
+                    <div class="flex items-center gap-2"><span>ضمانت‌نامه بانکی</span></div>
+                    <a class="text-sky-700 hover:underline" href="#">دانلود</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card p-4 md:p-6 lg:col-span-2">
+            <h3 class="text-lg font-bold">پیش‌نمایش سند</h3>
+            <div class="mt-3">
+                <img class="w-full max-h-[70vh] object-contain rounded-xl border border-slate-200" src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200&auto=format&fit=crop" alt="doc">
+            </div>
+            <div class="mt-4">
+                <a class="btn-primary w-full inline-flex justify-center items-center gap-2 px-3 py-2 rounded-xl font-semibold">دانلود تصویر ضمانت‌نامه</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Panel: Schedule -->
+<section id="panel-schedule" class="max-w-6xl mx-auto px-4 mt-4 panel hidden">
+    <div class="card p-4 md:p-6">
+        <h3 class="text-lg font-bold">زمان‌بندی طرح و اقساط</h3>
+        <div class="mt-4 grid gap-6 md:grid-cols-2">
+            <div>
+                <div class="step step-done">
+                    <span class="step-dot"></span>
+                    <div class="card p-3 md:p-4 bg-green-50/50 border-green-100">
+                        <div class="flex items-center justify-between">
+                            <b>انتشار عمومی طرح</b>
+                            <span class="text-green-700 text-sm">انجام شد</span>
+                        </div>
+                        <div class="text-slate-600 text-sm mt-1">۱۴۰۴/۰۵/۱۷</div>
+                    </div>
+                </div>
+                <div class="step step-done mt-4">
+                    <span class="step-dot"></span>
+                    <div class="card p-3 md:p-4 bg-green-50/50 border-green-100">
+                        <div class="flex items-center justify-between">
+                            <b>تکمیل جذب سرمایه</b>
+                            <span class="text-green-700 text-sm">انجام شد</span>
+                        </div>
+                        <div class="text-slate-600 text-sm mt-1">۱۴۰۴/۰۶/۲۹</div>
+                    </div>
+                </div>
+                <div class="step mt-4">
+                    <span class="step-dot"></span>
+                    <div class="card p-3 md:p-4">
+                        <b>واریز قسط سود اول</b>
+                        <div class="text-slate-600 text-sm mt-1">۱۴۰۴/۰۹/۱۹ — در انتظار</div>
+                    </div>
+                </div>
+                <div class="step mt-4">
+                    <span class="step-dot"></span>
+                    <div class="card p-3 md:p-4">
+                        <b>واریز قسط سود دوم</b>
+                        <div class="text-slate-600 text-sm mt-1">۱۴۰۴/۱۲/۱۹ — در انتظار</div>
+                    </div>
+                </div>
+                <div class="step mt-4">
+                    <span class="step-dot"></span>
+                    <div class="card p-3 md:p-4">
+                        <b>واریز قسط سوم</b>
+                        <div class="text-slate-600 text-sm mt-1">۱۴۰۵/۰۳/۱۹ — در انتظار</div>
+                    </div>
+                </div>
+                <div class="step mt-4">
+                    <span class="step-dot"></span>
+                    <div class="card p-3 md:p-4">
+                        <b>بازگشت اصل سرمایه</b>
+                        <div class="text-slate-600 text-sm mt-1">۱۴۰۵/۰۶/۱۹ — در انتظار</div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card p-4 md:p-6">
+                    <h4 class="font-semibold">خلاصه پرداختی‌ها</h4>
+                    <ul class="mt-3 space-y-2 text-sm">
+                        <li class="pill w-full justify-between"><span>تعداد اقساط سود</span><b>۴ قسط</b></li>
+                        <li class="pill w-full justify-between"><span>پیش‌بینی نرخ سود سالیانه</span><b>%۲۴ (بدون تضمین)</b></li>
+                        <li class="pill w-full justify-between"><span>روش بازپرداخت اصل</span><b>پایان دوره</b></li>
+                        <li class="pill w-full justify-between"><span>میانگین تاخیر تاریخی</span><b>۲٫۳ روز</b></li>
+                    </ul>
+                    <div class="mt-4">
+                        <div class="text-sm text-slate-600 mb-2">پیشرفت کل طرح</div>
+                        <div class="progress"><i style="width:68%"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Panel: Q&A -->
+<section id="panel-qa" class="max-w-6xl mx-auto px-4 mt-4 mb-10 panel hidden">
+    <div class="card p-4 md:p-6">
+        <h3 class="text-lg font-bold">پرسش و پاسخ</h3>
+        <div class="mt-2 text-slate-500 text-sm">هنوز نظری ثبت نشده است.</div>
+
+        <form class="mt-4 grid gap-3">
+            <label class="text-teal-700 font-semibold">سوال خود را بنویسید:</label>
+            <textarea class="w-full h-36 rounded-xl border border-slate-300 p-3 focus:outline-none focus:ring-2 focus:ring-teal-300" placeholder="سوال خود را اینجا بنویسید ..."></textarea>
+            <div>
+                <button type="button" class="btn-primary px-5 py-2 rounded-xl font-semibold">ارسال سوال</button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<script>
+    // Tabs
+    const tabs = document.querySelectorAll('.tab');
+    const panels = {
+      overview: document.getElementById('panel-overview'),
+      company:  document.getElementById('panel-company'),
+      docs:     document.getElementById('panel-docs'),
+      schedule: document.getElementById('panel-schedule'),
+      qa:       document.getElementById('panel-qa'),
+    };
+    tabs.forEach(b=>{
+      b.addEventListener('click', ()=>{
+        tabs.forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        Object.values(panels).forEach(p=>p.classList.add('hidden'));
+        const id = b.dataset.tab;
+        panels[id].classList.remove('hidden');
+        // اسکرول نرم به ابتدای پنل
+        panels[id].scrollIntoView({behavior:'smooth',block:'start'});
+      });
+    });
+
+    // Subtle sticky hero on scroll
+    const hero = document.getElementById('hero');
+    let ticking=false;
+    window.addEventListener('scroll',()=>{
+      if(!ticking){
+        window.requestAnimationFrame(()=>{
+          if(window.scrollY>16) hero.classList.add('hero-sticky'); else hero.classList.remove('hero-sticky');
+          ticking=false;
+        });
+        ticking=true;
+      }
+    });
+
+    // Animate progress bars on load
+    window.addEventListener('load', ()=>{
+      document.querySelectorAll('.progress > i').forEach(i=>{
+        const w=i.style.width; i.style.width='0'; setTimeout(()=>{ i.style.width=w; i.style.transition='width .6s ease'; },50);
+      });
+    });
+</script>
+
+</body>
+</html>
