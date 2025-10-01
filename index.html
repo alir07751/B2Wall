@@ -8,7 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body{font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
-        /* لیبل درصد: با نوار از راست حرکت کند و داخل آن بماند */
         .progress-wrap{position:relative}
         .progress-label{
           position:absolute; top:50%; transform:translate(50%,-50%);
@@ -31,15 +30,33 @@
 
     <!-- Filters -->
     <div class="mt-4 flex flex-wrap gap-2" id="filters">
-        <button data-filter="all"         class="flt active px-3 py-1.5 rounded-full text-sm border border-blue-600 bg-blue-600 text-white">همه</button>
-        <button data-filter="open"        class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white hover:bg-slate-50">در حال جذب</button>
-        <button data-filter="completed"   class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white hover:bg-slate-50">تکمیل شده</button>
-        <button data-filter="coming_soon" class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white hover:bg-slate-50">به‌زودی</button>
+        <button data-filter="all"
+                class="flt active px-3 py-1.5 rounded-full text-sm border border-blue-600 bg-blue-600 text-white">
+            همه
+        </button>
+
+        <button data-filter="open"
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700
+           hover:bg-slate-100 hover:text-gray-900">
+            در حال جذب
+        </button>
+
+        <button data-filter="completed"
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700
+           hover:bg-slate-100 hover:text-gray-900">
+            تکمیل شده
+        </button>
+
+        <button data-filter="coming_soon"
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700
+           hover:bg-slate-100 hover:text-gray-900">
+            به‌زودی
+        </button>
     </div>
 </header>
 
 <!-- Grid -->
-<main id="grid" class="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3"></main>
+<main id="grid" class="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch"></main>
 
 <script>
     // ---------- Helpers ----------
@@ -49,7 +66,7 @@
     function payoutFa(v){
       if(v == null) return "—";
       const s = String(v).trim();
-      if(!/[A-Za-z]/.test(s)) return s; // ورودی فارسی/متن آزاد
+      if(!/[A-Za-z]/.test(s)) return s;
       const m = {
         "monthly": "ماهانه",
         "weekly": "هفتگی",
@@ -66,66 +83,93 @@
       return m[s.toLowerCase()] || s;
     }
 
-    const statusBadge = s => {
-      const map = {
-        open:       ["در حال جذب","bg-blue-600 text-white"],
-        completed:  ["تکمیل شد","bg-green-600 text-white"],
-        coming_soon:["به‌زودی","bg-yellow-400 text-black"]
-      };
-      const [t,c] = map[s] || ["—","bg-slate-500 text-white"];
-      return `<span class="absolute top-3 right-3 ${c} text-xs px-3 py-1 rounded-full shadow">${t}</span>`;
-    };
+    // تیتر روی تصویر برای وضعیت‌های خاص
+    function statusHeadline(s){
+      if(s === "completed")   return "پروژه با موفقیت تکمیل شد!";
+      if(s === "coming_soon") return "به‌زودی";
+      return null;
+    }
 
-    const chip = (label, value) =>
-      `<span class="px-3 py-1 bg-slate-100 rounded-full text-xs">
-         <span class="opacity-70">${label}:</span>
-         <span class="font-semibold">&nbsp;${value}</span>
-       </span>`;
+    // ردیف اطلاعات (لیست دو ستونه با جداکننده)
+    const row = (label, value) => `
+      <div class="flex items-center justify-between py-2 border-b last:border-0 border-slate-200">
+        <span class="text-slate-500 text-sm">${label}</span>
+        <span class="font-semibold text-sm">${value}</span>
+      </div>`;
 
     // ---------- Card ----------
     function cardHTML(p){
       const raised = p.capital_raised || 0;
       const req    = p.capital_required || 0;
       const progress = req ? Math.min(100, Math.round((raised/req)*100)) : 0;
+      const headTxt = statusHeadline(p.status);
+
+      // ساخت لیست اطلاعات انعطاف‌پذیر
+      let infoHTML = "";
+      if (p.tenor_months) infoHTML += row("مدت طرح", `${numFa(p.tenor_months)} ماه`);
+      if (typeof p.expected_profit_pct === "number") infoHTML += row("سود پیش‌بینی شده", `%${pctFa(p.expected_profit_pct)}`);
+      if (p.payout_schedule) infoHTML += row("مواعد پرداخت سود", payoutFa(p.payout_schedule));
+      if (p.principal_return_months) infoHTML += row("بازگشت اصل پول", `${numFa(p.principal_return_months)} ماه`);
+      if (Array.isArray(p.guarantees) && p.guarantees.length)
+        infoHTML += row("نوع ضمانت", p.guarantees.join("، "));
 
       return `
-      <article class="bg-white rounded-2xl shadow overflow-hidden border border-slate-200">
+      <article class="bg-white rounded-2xl shadow overflow-hidden border border-slate-200 h-full flex flex-col">
+        <!-- تصویر + تیتر وضعیت -->
         <div class="relative">
           ${p.image ? `<img src="${p.image}" alt="${p.title||''}" class="w-full aspect-[16/9] object-cover">`
                      : `<div class="w-full aspect-[16/9] bg-slate-200"></div>`}
-          ${p.status ? statusBadge(p.status) : ""}
+          ${headTxt ? `
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="px-4 py-2 md:px-6 md:py-3 rounded-xl bg-black/45 text-white text-base md:text-2xl font-extrabold">
+                ${headTxt}
+              </div>
+            </div>` : ``}
         </div>
 
-        <div class="p-4">
+        <!-- بدنه کارت: ستون منعطف تا CTA همیشه در پایین بماند -->
+        <div class="p-4 flex flex-col gap-4 grow">
           <h3 class="font-bold text-lg">${p.title || "—"}</h3>
 
-          <div class="mt-3">
+          <div>
             <div class="flex justify-between text-xs text-gray-600">
               <span>تأمین‌شده: <b>${numFa(raised)}</b> ریال</span>
               <span>موردنیاز: <b>${numFa(req)}</b> ریال</span>
             </div>
-
-            <!-- نوار: از راست پُر می‌شود و لیبل هم از راست حرکت می‌کند -->
             <div class="progress-wrap h-3 mt-2 bg-slate-200 rounded-full overflow-hidden" style="--p:${progress}">
               <div class="h-full bg-emerald-600 float-right" style="width:${progress}%"></div>
               <span class="progress-label">%${pctFa(progress)} تکمیل</span>
             </div>
           </div>
 
-          <div class="mt-4 flex flex-wrap gap-2">
-            ${p.tenor_months ? chip("مدت طرح", `${numFa(p.tenor_months)} ماه`) : ""}
-            ${typeof p.expected_profit_pct === "number" ? chip("سود پیش‌بینی شده", `%${pctFa(p.expected_profit_pct)}`) : ""}
-            ${p.payout_schedule ? chip("مواعد پرداخت سود", payoutFa(p.payout_schedule)) : ""}
-            ${p.principal_return_months ? chip("مدت بازگشت اصل پول", `${numFa(p.principal_return_months)} ماه`) : ""}
-          </div>
+          <!-- لیست اطلاعات -->
+          ${infoHTML ? `<div class="bg-slate-50 rounded-xl p-3">${infoHTML}</div>` : ``}
 
-          <!-- CTA: نمایش شماره تماس (با جایگزینی درجا) -->
-          <div class="mt-4">
+          <!-- CTA ها: همیشه چسبیده به پایین کارت -->
+          <div class="mt-auto space-y-2">
             <button type="button"
               class="w-full inline-flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition"
               onclick="showPhone(this)">
               📞 نمایش شماره تماس
             </button>
+
+            ${p.owner ? `
+  <a href="${p.owner.profile_url}" target="_blank" rel="noopener noreferrer"
+     class="w-full block">
+    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow transition bg-white">
+      <div class="flex items-center gap-3">
+        <img src="${p.owner.profile_image}" alt="${p.owner.name}"
+             class="w-10 h-10 rounded-full object-cover">
+        <span class="font-semibold text-slate-800">${p.owner.name}</span>
+      </div>
+      <span class="text-blue-600 text-sm font-semibold flex items-center gap-1">
+        مشاهده کارنامه ↗
+      </span>
+    </div>
+  </a>
+` : ``}
+
+
           </div>
         </div>
       </article>`;
@@ -165,21 +209,26 @@
       const {projects=[]} = await res.json();
       ALL_PROJECTS = projects;
 
-      // ✅ از ابتدا «همه» را فعال و رندر کن
       setFilter("all");
 
-      // رویدادهای فیلتر
       document.querySelectorAll("#filters .flt").forEach(b=>{
         b.addEventListener("click", ()=> setFilter(b.dataset.filter));
       });
     }
 
-    // CTA: نمایش شماره تماس (جایگزینی دکمه)
     function showPhone(el){
       el.textContent = "۰۳۵۳۷۲۸۴۱۱۹";
       el.disabled = true;
       el.classList.remove("bg-blue-600","hover:bg-blue-700","text-white");
       el.classList.add("bg-blue-50","text-blue-700","border","border-blue-200","cursor-default","select-text");
+    }
+
+    function openProfile(url){
+      if(url){
+        window.open(url, "_blank", "noopener,noreferrer");
+      }else{
+        alert("پروفایل صاحب طرح در دسترس نیست.");
+      }
     }
 
     if (document.readyState === "loading") {

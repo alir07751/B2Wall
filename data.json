@@ -10,19 +10,31 @@
       "tenor_months": 18,
       "expected_profit_pct": 28,
       "payout_schedule": "ماهانه",
-      "principal_return_months": 18
+      "principal_return_months": 18,
+      "guarantees": ["سفته", "چک بانکی"],
+      "owner": {
+        "name": "علی رضایی",
+        "profile_image": "https://i.pravatar.cc/100?img=1",
+        "profile_url": "https://example.com/owner/ali"
+      }
     },
     {
       "id": 2,
-      "title": "تأمین سرمایه در گردش کارخانه لوازم خانگی",
+      "title": "نوارتیپ و لوله اتصالات کشاورزی",
       "image": "https://picsum.photos/id/1025/600/400",
-      "capital_required": 7500000000,
-      "capital_raised": 6000000000,
+      "capital_required": 435000000,
+      "capital_raised": 435000000,
       "status": "completed",
-      "tenor_months": 12,
+      "tenor_months": 8,
       "expected_profit_pct": 24,
-      "payout_schedule": "فصلی",
-      "principal_return_months": 12
+      "payout_schedule": "ماهیانه",
+      "principal_return_months": 6,
+      "guarantees": ["چک بانکی صاحب طرح و دو ضامن دیگر"],
+      "owner": {
+        "name": "بهرام سهرابی نیا",
+        "profile_image": "https://i.pravatar.cc/100?img=2",
+        "profile_url": "https://example.com/owner/maryam"
+      }
     },
     {
       "id": 3,
@@ -34,7 +46,13 @@
       "tenor_months": 24,
       "expected_profit_pct": 32,
       "payout_schedule": "پایان دوره",
-      "principal_return_months": 24
+      "principal_return_months": 24,
+      "guarantees": ["وثیقه ملکی", "چک بانکی"],
+      "owner": {
+        "name": "حسین محمدی",
+        "profile_image": "https://i.pravatar.cc/100?img=3",
+        "profile_url": "https://example.com/owner/hossein"
+      }
     }
   ]
 }
