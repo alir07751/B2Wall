@@ -16,7 +16,7 @@
       ],
       "owner": {
         "id": "zahra-babaei",
-        "name": "خانم زهرا بابایی قره تپه",
+        "name": "زهرا بابایی قره تپه",
         "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
         "profile_url": "owner-profile.html?id=zahra-babaei"
       }
@@ -38,7 +38,7 @@
       ],
       "owner": {
         "id": "majid-asaddari",
-        "name": "آقای سید مجید اسددری",
+        "name": "سید مجید اسددری",
         "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
         "profile_url": "owner-profile.html?id=majid-asaddari"
       }
@@ -51,7 +51,7 @@
       "capital_raised": 0,
       "status": "coming_soon",
       "tenor_months": 9,
-      "expected_profit_pct": null,
+      "expected_profit_pct": 5.5,
       "payout_schedule": "ماهانه",
       "principal_return_months": null,
       "guarantees": [
@@ -60,7 +60,7 @@
       ],
       "owner": {
         "id": "sanbar-ahang",
-        "name": "خانم سنبر پیش آهنگ",
+        "name": "سنبر پیش آهنگ",
         "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
         "profile_url": "owner-profile.html?id=sanbar-ahang"
       }
@@ -165,7 +165,7 @@
       ],
       "owner": {
         "id": "yaser-qmarsi",
-        "name": "آقای یاسر کیومرثی",
+        "name": "یاسر کیومرثی",
         "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
         "profile_url": "owner-profile.html?id=yaser-qmarsi"
       }
