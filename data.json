@@ -2,59 +2,194 @@
   "projects": [
     {
       "id": 1,
-      "title": "توسعه خط تولید آبمیوه طبیعی",
-      "image": "https://picsum.photos/id/1018/600/400",
-      "capital_required": 5000000000,
-      "capital_raised": 2500000000,
-      "status": "open",
-      "tenor_months": 18,
-      "expected_profit_pct": 28,
+      "title": "بذر گندم",
+      "image": "projects/گندم.jpg",
+      "capital_required": 6270000000,
+      "capital_raised": 0,
+      "status": "coming_soon",
+      "tenor_months": 4,
+      "expected_profit_pct": 0.04,
       "payout_schedule": "ماهانه",
-      "principal_return_months": 18,
-      "guarantees": ["سفته", "چک بانکی"],
+      "principal_return_months": null,
+      "guarantees": [
+        "دو ضامن حقیقی"
+      ],
       "owner": {
-        "id": "ali-rezaei",
-        "name": "علی رضایی",
-        "profile_image": "https://i.pravatar.cc/100?img=1",
-        "profile_url": "owner-profile.html?id=ali-rezaei"
+        "id": "zahra-babaei",
+        "name": "خانم زهرا بابایی قره تپه",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=zahra-babaei"
       }
     },
     {
       "id": 2,
-      "title": "نوارتیپ و لوله اتصالات کشاورزی",
-      "image": "https://picsum.photos/id/1025/600/400",
-      "capital_required": 435000000,
-      "capital_raised": 435000000,
+      "title": "کمپرسور اسکرو",
+      "image": "projects/کمپرسور.jpg",
+      "capital_required": 4450006000,
+      "capital_raised": 4450006000,
       "status": "completed",
-      "tenor_months": 8,
-      "expected_profit_pct": 24,
-      "payout_schedule": "ماهیانه",
-      "principal_return_months": 6,
-      "guarantees": ["چک بانکی صاحب طرح و دو ضامن دیگر"],
+      "tenor_months": 9,
+      "expected_profit_pct": 0.05,
+      "payout_schedule": "ماهانه",
+      "principal_return_months": null,
+      "guarantees": [
+        "یک ضامن حقیقی",
+        "وثیقه ملکی"
+      ],
       "owner": {
-        "id": "behram-sohrabi-nia",
-        "name": "بهرام سهرابی نیا",
-        "profile_image": "https://i.pravatar.cc/100?img=2",
-        "profile_url": "owner-profile.html?id=behram-sohrabi-nia"
+        "id": "majid-asaddari",
+        "name": "آقای سید مجید اسددری",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=majid-asaddari"
       }
     },
     {
       "id": 3,
-      "title": "راه‌اندازی مزرعه پرورش ماهی",
-      "image": "https://picsum.photos/id/1043/600/400",
-      "capital_required": 3000000000,
-      "capital_raised": 1200000000,
+      "title": "کود",
+      "image": "projects/کشاورزی.jpg",
+      "capital_required": 4600000000,
+      "capital_raised": 0,
       "status": "coming_soon",
-      "tenor_months": 24,
-      "expected_profit_pct": 32,
-      "payout_schedule": "پایان دوره",
-      "principal_return_months": 24,
-      "guarantees": ["وثیقه ملکی", "چک بانکی"],
+      "tenor_months": 9,
+      "expected_profit_pct": null,
+      "payout_schedule": "ماهانه",
+      "principal_return_months": null,
+      "guarantees": [
+        "تراکتور",
+        "دو ضامن حقیقی"
+      ],
       "owner": {
-        "id": "hossein-mohammadi",
-        "name": "حسین محمدی",
-        "profile_image": "https://i.pravatar.cc/100?img=3",
-        "profile_url": "owner-profile.html?id=hossein-mohammadi"
+        "id": "sanbar-ahang",
+        "name": "خانم سنبر پیش آهنگ",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=sanbar-ahang"
+      }
+    },
+    {
+      "id": 4,
+      "title": "لوله پلی اتیلن",
+      "image": "projects/اتصالات.jpg",
+      "capital_required": 3151006716,
+      "capital_raised": 3151006716,
+      "status": "completed",
+      "tenor_months": 10,
+      "expected_profit_pct": 0.04928310470446198,
+      "payout_schedule": "سه ماهه",
+      "principal_return_months": null,
+      "guarantees": [
+        "دو ضامن حقیقی"
+      ],
+      "owner": {
+        "id": "Abbas-Sharifi",
+        "name": "عباس شریفی علی آباد",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=Abbas-Sharifi"
+      }
+    },
+    {
+      "id": 5,
+      "title": "بذر گندم- گل گاوزبان\nغنچه گل محمدی",
+      "image": "projects/گندم.jpg",
+      "capital_required": 4000000000,
+      "capital_raised": 4000000000,
+      "status": "completed",
+      "tenor_months": 9,
+      "expected_profit_pct": 0.05700000555555556,
+      "payout_schedule": "پایان دوره",
+      "principal_return_months": null,
+      "guarantees": [
+        "سه ضامن حقیقی"
+      ],
+      "owner": {
+        "id": "zahra-babaei",
+        "name": "زهرا بابائی قره تپه",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=zahra-babaei"
+      }
+    },
+    {
+      "id": 6,
+      "title": "لوله استاندارد پلی اتیلن و نوارتیپ",
+      "image": "projects/اتصالات.jpg",
+      "capital_required": 1896385920,
+      "capital_raised": 1896385920,
+      "status": "completed",
+      "tenor_months": 6,
+      "expected_profit_pct": 0.08226286205148228,
+      "payout_schedule": "پایان دوره",
+      "principal_return_months": null,
+      "guarantees": [
+        "دو ضامن حقیقی"
+      ],
+      "owner": {
+        "id": "majid-asaddari",
+        "name": "سید مجید اسددری",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=majid-asaddari"
+      }
+    },
+    {
+      "id": 7,
+      "title": "دی آمونیوم فسفات",
+      "image": "projects/آمونیوم.jpg",
+      "capital_required": 7600000000,
+      "capital_raised": 7600000000,
+      "status": "completed",
+      "tenor_months": 7,
+      "expected_profit_pct": 0.056499350569548856,
+      "payout_schedule": "پایان دوره",
+      "principal_return_months": null,
+      "guarantees": [
+        "دو ضامن حقیقی"
+      ],
+      "owner": {
+        "id": "eslam-roydel",
+        "name": "اسلام روی‌دل",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=eslam-roydel"
+      }
+    },
+    {
+      "id": 8,
+      "title": "یونجه و جو خوراک دام",
+      "image": "projects/دام.jpg",
+      "capital_required": 6500040000,
+      "capital_raised": 6500040000,
+      "status": "completed",
+      "tenor_months": 9,
+      "expected_profit_pct": 0.05,
+      "payout_schedule": "سه ماهه",
+      "principal_return_months": null,
+      "guarantees": [
+        "دو ضامن حقیقی"
+      ],
+      "owner": {
+        "id": "yaser-qmarsi",
+        "name": "آقای یاسر کیومرثی",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=yaser-qmarsi"
+      }
+    },
+    {
+      "id": 9,
+      "title": "لوله استاندارد پلی اتیلن و نوارتیپ",
+      "image": "projects/اتصالات.jpg",
+      "capital_required": 4352699890,
+      "capital_raised": 4352699890,
+      "status": "completed",
+      "tenor_months": 8,
+      "expected_profit_pct": 0.04636363636363636,
+      "payout_schedule": "دو ماهه",
+      "principal_return_months": null,
+      "guarantees": [
+        "تراکتور",
+        "دو ضامن حقیقی"
+      ],
+      "owner": {
+        "id": "hasan-sohrabi",
+        "name": "حسن سهرابی نیا",
+        "profile_image": "data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20viewBox%3D%270%200%2024%2024%27%3E%3Ccircle%20cx%3D%2712%27%20cy%3D%278%27%20r%3D%274%27%20fill%3D%27%2364748b%27%2F%3E%3Cpath%20d%3D%27M4%2020c0-4%204-6%208-6s8%202%208%206%27%20fill%3D%27%2364748b%27%2F%3E%3C%2Fsvg%3E",
+        "profile_url": "owner-profile.html?id=hasan-sohrabi"
       }
     }
   ]

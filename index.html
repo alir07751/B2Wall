@@ -6,26 +6,105 @@
     <title>ویترین پروژه‌ها</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+
     <style>
-        body{font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
-        .progress-wrap{position:relative}
+        /* ==========================
+           🎯 TOKENS — قابل ویرایش سریع
+           ========================== */
+        :root{
+          /* Success (Completed) */
+          --success:        16 185 129;  /* emerald-500 */
+          --success-strong:  5 150 105;  /* emerald-600 */
+
+          /* Warning (Coming Soon) */
+          --warning:       245 158  11;  /* amber-500 */
+          --warning-strong:217 119   6;  /* amber-600 */
+
+          /* شدت افکت روی تصویرِ کارت‌های وضعیت‌دار */
+          --status-img-blur: 2px;
+          --status-img-scale: 1.03;
+
+          /* شدت لایهٔ رنگی روی تصویر */
+          --overlay-success: .30;  /* 0 → 1 */
+          --overlay-warning: .26;  /* 0 → 1 */
+        }
+
+        /* فونت کلی */
+        body{
+          font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif
+        }
+
+        /* برچسب درصد پیشرفت روی نوار */
+        .progress-wrap{ position:relative }
         .progress-label{
           position:absolute; top:50%; transform:translate(50%,-50%);
           right:clamp(8px, calc(var(--p,0) * 1%), calc(100% - 8px));
           background-color:rgba(255,255,255,.92);
-          border:1px solid rgb(226,232,240);
+          border:1px solid rgb(226 232 240);
           font-size:10px; padding:2px 6px; border-radius:9999px; color:#334155;
           white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.06);
           pointer-events:none;
         }
+
+        /* ==========================
+           🧩 COMPONENT — کارت
+           ========================== */
+        .card{ position:relative }
+        .image-wrap{ position:relative; overflow:hidden }
+        .image-wrap img{ transition: filter .35s ease, transform .35s ease }
+
+        /* برچسب تیتر وضعیت (روی تصویر) */
+        .status-badge{
+          padding:.6rem 1rem;
+          border-radius:14px;
+          font-weight:800;
+          color:#fff;
+          border:1px solid transparent;
+          backdrop-filter: blur(6px);
+          box-shadow:0 6px 18px rgba(0,0,0,.25);
+        }
+
+        /* ===== حالت «تکمیل‌شده» ===== */
+        .card[data-status="completed"] .image-wrap::after{
+          content:""; position:absolute; inset:0;
+          background: rgb(var(--success) / var(--overlay-success));
+          pointer-events:none;
+        }
+        .card[data-status="completed"] .image-wrap img{
+          filter: blur(var(--status-img-blur)) brightness(.85) saturate(.95);
+          transform: scale(var(--status-img-scale));
+        }
+        .card[data-status="completed"] .status-badge{
+          background: rgb(var(--success-strong) / .94);
+          border-color: rgb(var(--success-strong) / .98);
+        }
+
+        /* ===== حالت «به‌زودی» ===== */
+        .card[data-status="coming_soon"] .image-wrap::after{
+          content:""; position:absolute; inset:0;
+          background: rgb(var(--warning) / var(--overlay-warning));
+          pointer-events:none;
+        }
+        .card[data-status="coming_soon"] .image-wrap img{
+          filter: blur(1px) brightness(.90) saturate(.95);
+          transform: scale(1.015);
+        }
+        .card[data-status="coming_soon"] .status-badge{
+          background: rgb(var(--warning-strong) / .94);
+          border-color: rgb(var(--warning-strong) / .98);
+        }
     </style>
 </head>
+
 <body class="bg-slate-50 text-gray-800">
+
 <!-- Header -->
 <header class="max-w-6xl mx-auto px-4 py-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
         <h1 class="text-2xl md:text-3xl font-bold">ویترین پروژه‌ها</h1>
-        <span class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm">نسخه آزمایشی</span>
+        <span class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm">
+        نسخه آزمایشی
+      </span>
     </div>
 
     <!-- Filters -->
@@ -36,20 +115,17 @@
         </button>
 
         <button data-filter="open"
-                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700
-           hover:bg-slate-100 hover:text-gray-900">
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
             در حال جذب
         </button>
 
         <button data-filter="completed"
-                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700
-           hover:bg-slate-100 hover:text-gray-900">
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
             تکمیل شده
         </button>
 
         <button data-filter="coming_soon"
-                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700
-           hover:bg-slate-100 hover:text-gray-900">
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
             به‌زودی
         </button>
     </div>
@@ -59,75 +135,76 @@
 <main id="grid" class="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch"></main>
 
 <script>
-    // ---------- Helpers ----------
+    /* ==========================
+       🔧 HELPERS
+       ========================== */
     const numFa = n => (typeof n === "number") ? n.toLocaleString("fa-IR") : (n ?? "—");
-    const pctFa = n => (typeof n === "number") ? Math.round(n).toLocaleString("fa-IR") : n;
+    const pctFa = n => {
+  if (typeof n !== "number") return n;
+  const v = (n > 0 && n < 1) ? n * 100 : n; // تبدیل اعشار به درصد
+  return v.toLocaleString("fa-IR", { maximumFractionDigits: v < 10 ? 2 : 0 });
+};
 
     function payoutFa(v){
       if(v == null) return "—";
       const s = String(v).trim();
       if(!/[A-Za-z]/.test(s)) return s;
       const m = {
-        "monthly": "ماهانه",
-        "weekly": "هفتگی",
-        "biweekly": "دو هفته یکبار",
-        "bi-weekly": "دو هفته یکبار",
-        "fortnightly": "دو هفته یکبار",
-        "quarterly": "فصلی",
-        "yearly": "سالیانه",
-        "annually": "سالیانه",
-        "end_of_term": "پایان دوره",
-        "end-of-term": "پایان دوره",
-        "end of term": "پایان دوره"
+        "monthly":"ماهانه","weekly":"هفتگی",
+        "biweekly":"دو هفته یکبار","bi-weekly":"دو هفته یکبار","fortnightly":"دو هفته یکبار",
+        "quarterly":"فصلی","yearly":"سالیانه","annually":"سالیانه",
+        "end_of_term":"پایان دوره","end-of-term":"پایان دوره","end of term":"پایان دوره"
       };
       return m[s.toLowerCase()] || s;
     }
 
-    // تیتر روی تصویر برای وضعیت‌های خاص
     function statusHeadline(s){
       if(s === "completed")   return "پروژه با موفقیت تکمیل شد!";
       if(s === "coming_soon") return "به‌زودی";
       return null;
     }
 
-    // ردیف اطلاعات (لیست دو ستونه با جداکننده)
+    /* یک ردیف اطلاعات در کارت */
     const row = (label, value) => `
       <div class="flex items-center justify-between py-2 border-b last:border-0 border-slate-200">
         <span class="text-slate-500 text-sm">${label}</span>
         <span class="font-semibold text-sm">${value}</span>
       </div>`;
 
-    // ---------- Card ----------
+    /* ==========================
+       🧩 CARD RENDERER
+       ========================== */
     function cardHTML(p){
-      const raised = p.capital_raised || 0;
-      const req    = p.capital_required || 0;
+      const raised   = p.capital_raised || 0;
+      const req      = p.capital_required || 0;
       const progress = req ? Math.min(100, Math.round((raised/req)*100)) : 0;
-      const headTxt = statusHeadline(p.status);
+      const headTxt  = statusHeadline(p.status);
 
-      // ساخت لیست اطلاعات انعطاف‌پذیر
       let infoHTML = "";
       if (p.tenor_months) infoHTML += row("مدت طرح", `${numFa(p.tenor_months)} ماه`);
-      if (typeof p.expected_profit_pct === "number") infoHTML += row("سود پیش‌بینی شده", `%${pctFa(p.expected_profit_pct)}`);
+      if (typeof p.expected_profit_pct === "number") infoHTML += row("سود محقق شده", `%${pctFa(p.expected_profit_pct)}`);
       if (p.payout_schedule) infoHTML += row("مواعد پرداخت سود", payoutFa(p.payout_schedule));
       if (p.principal_return_months) infoHTML += row("بازگشت اصل پول", `${numFa(p.principal_return_months)} ماه`);
       if (Array.isArray(p.guarantees) && p.guarantees.length)
         infoHTML += row("نوع ضمانت", p.guarantees.join("، "));
 
       return `
-      <article class="bg-white rounded-2xl shadow overflow-hidden border border-slate-200 h-full flex flex-col">
+      <article class="card bg-white rounded-2xl shadow overflow-hidden border border-slate-200 h-full flex flex-col"
+               data-status="${p.status || ''}">
+
         <!-- تصویر + تیتر وضعیت -->
-        <div class="relative">
-          ${p.image ? `<img src="${p.image}" alt="${p.title||''}" class="w-full aspect-[16/9] object-cover">`
-                     : `<div class="w-full aspect-[16/9] bg-slate-200"></div>`}
+        <div class="image-wrap">
+          ${p.image
+            ? `<img src="${p.image}" alt="${p.title||''}" class="w-full aspect-[16/9] object-cover">`
+            : `<div class="w-full aspect-[16/9] bg-slate-200"></div>`}
+
           ${headTxt ? `
-            <div class="absolute inset-0 flex items-center justify-center">
-              <div class="px-4 py-2 md:px-6 md:py-3 rounded-xl bg-black/45 text-white text-base md:text-2xl font-extrabold">
-                ${headTxt}
-              </div>
+            <div class="absolute inset-0 flex items-center justify-center p-2">
+              <div class="status-badge text-base md:text-xl">${headTxt}</div>
             </div>` : ``}
         </div>
 
-        <!-- بدنه کارت: ستون منعطف تا CTA همیشه در پایین بماند -->
+        <!-- بدنه کارت -->
         <div class="p-4 flex flex-col gap-4 grow">
           <h3 class="font-bold text-lg">${p.title || "—"}</h3>
 
@@ -142,10 +219,8 @@
             </div>
           </div>
 
-          <!-- لیست اطلاعات -->
           ${infoHTML ? `<div class="bg-slate-50 rounded-xl p-3">${infoHTML}</div>` : ``}
 
-          <!-- CTA ها: همیشه چسبیده به پایین کارت -->
           <div class="mt-auto space-y-2">
             <button type="button"
               class="w-full inline-flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition"
@@ -153,29 +228,24 @@
               📞 نمایش شماره تماس
             </button>
 
-           ${p.owner ? `
-  <a href="owner-profile.html?id=${p.owner.id}"
-     class="w-full block">
-    <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow transition bg-white">
-      <div class="flex items-center gap-3">
-        <img src="${p.owner.profile_image}" alt="${p.owner.name}" class="w-10 h-10 rounded-full object-cover">
-        <span class="font-semibold text-slate-800">${p.owner.name}</span>
-      </div>
-      <span class="text-blue-600 text-sm font-semibold flex items-center gap-1">
-        مشاهده کارنامه ↗
-      </span>
-    </div>
-  </a>
-` : ``}
-
-
-
+            ${p.owner ? `
+              <a href="owner-profile.html?id=${p.owner.id}" class="w-full block">
+                <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow transition bg-white">
+                  <div class="flex items-center gap-3">
+                    <img src="${p.owner.profile_image}" alt="${p.owner.name}" class="w-10 h-10 rounded-full object-cover">
+                    <span class="font-semibold text-slate-800">${p.owner.name}</span>
+                  </div>
+                  <span class="text-blue-600 text-sm font-semibold flex items-center gap-1">مشاهده کارنامه ↗</span>
+                </div>
+              </a>` : ``}
           </div>
         </div>
       </article>`;
     }
 
-    // ---------- Render & Filter ----------
+    /* ==========================
+       📦 STATE + FILTER
+       ========================== */
     let ALL_PROJECTS = [];
     let currentFilter = "all";
 
@@ -216,19 +286,14 @@
       });
     }
 
+    /* ==========================
+       🧭 MISC ACTIONS
+       ========================== */
     function showPhone(el){
       el.textContent = "۰۳۵۳۷۲۸۴۱۱۹";
       el.disabled = true;
       el.classList.remove("bg-blue-600","hover:bg-blue-700","text-white");
       el.classList.add("bg-blue-50","text-blue-700","border","border-blue-200","cursor-default","select-text");
-    }
-
-    function openProfile(url){
-      if(url){
-        window.open(url, "_blank", "noopener,noreferrer");
-      }else{
-        alert("پروفایل صاحب طرح در دسترس نیست.");
-      }
     }
 
     if (document.readyState === "loading") {
