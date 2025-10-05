@@ -103,28 +103,28 @@
     }
 
     function card(p) {
-      const img = p.image ? `<img src="\${p.image}" alt="" loading="lazy" class="w-full h-40 object-cover">` : `<div class="w-full h-40 bg-slate-100"></div>`;
+      const img = p.image ? `<img src="${p.image}" alt="" loading="lazy" class="w-full h-40 object-cover">` : `<div class="w-full h-40 bg-slate-100"></div>`;
       const pct = (typeof p.expected_profit_pct === 'number') ? (p.expected_profit_pct>1?p.expected_profit_pct:p.expected_profit_pct*100) : null;
       const prg = progress(p.capital_raised, p.capital_required);
-      const owner = p.owner && p.owner.name ? `<span class="text-xs text-slate-500">مالک: \${p.owner.name}</span>` : '';
+      const owner = p.owner && p.owner.name ? `<span class="text-xs text-slate-500">مالک: ${p.owner.name}</span>` : '';
       return `
         <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition">
-          \${img}
+          ${img}
           <div class="p-3 space-y-2">
             <div class="flex items-center justify-between gap-2">
-              <h3 class="font-bold line-clamp-1">\${p.title || '—'}</h3>
-              <div>\${badge(p.status)}</div>
+              <h3 class="font-bold line-clamp-1">${p.title || '—'}</h3>
+              <div>${badge(p.status)}</div>
             </div>
             <div class="text-sm text-slate-600 grid grid-cols-2 gap-x-3">
-              <div>موردنیاز: <b class="text-slate-800">\${fmt(p.capital_required)}</b></div>
-              <div>تأمین‌شده: <b class="text-slate-800">\${fmt(p.capital_raised)}</b></div>
-              <div>مدت: <b class="text-slate-800">\${p.tenor_months ?? '—'}</b> ماه</div>
-              <div>سود: <b class="text-slate-800">\${pct!=null?('%'+(+pct.toFixed(2))):'—'}</b></div>
+              <div>موردنیاز: <b class="text-slate-800">${fmt(p.capital_required)}</b></div>
+              <div>تأمین‌شده: <b class="text-slate-800">${fmt(p.capital_raised)}</b></div>
+              <div>مدت: <b class="text-slate-800">${p.tenor_months ?? '—'}</b> ماه</div>
+              <div>سود: <b class="text-slate-800">${pct!=null?('%'+(+pct.toFixed(2))):'—'}</b></div>
             </div>
             <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-600" style="width: \${prg}%"></div>
+              <div class="h-full bg-blue-600" style="width: ${prg}%"></div>
             </div>
-            \${owner}
+            ${owner}
           </div>
         </div>`;
     }
