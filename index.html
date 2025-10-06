@@ -141,6 +141,28 @@
     // ✅ Data source: Google Sheets Web App
     const API_URL = "https://script.google.com/macros/s/AKfycbyr5xE9Zt9L5P4_JrZ84pGUmDBAQPt6S06zDCxSmLKVxOLjr6NktDhK65rTzsF4oxM/exec";
 
+    // 🔧 Image helpers
+    // Default avatar (inline SVG, light gray)
+    const DEFAULT_AVATAR = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><defs><linearGradient id="g" x1="0" x2="1" y1="0" y2="1"><stop stop-color="%23E5E7EB"/><stop offset="1" stop-color="%23F3F4F6"/></linearGradient></defs><rect width="40" height="40" rx="20" fill="url(%23g)"/><circle cx="20" cy="16" r="7" fill="%239CA3AF"/><path d="M7 34c2.5-6.5 9-8 13-8s10.5 1.5 13 8" fill="%239CA3AF"/></svg>';
+
+    // Normalize different Google Drive link formats into a direct-view URL,
+    // also passes through http(s) and data:image URLs as-is.
+    function toPublicUrl(u){
+      if(!u) return u;
+      let url = (''+u).trim();
+      if(/^data:image\//i.test(url)) return url;         // data-uri
+      if(/^https?:\/\//i.test(url)) {
+        if (url.includes('drive.google.com')) {
+          const m = url.match(/\/d\/([\w-]+)/) || url.match(/[?&]id=([\w-]+)/);
+          if (m) return 'https://drive.google.com/uc?export=view&id=' + m[1];
+        }
+        return url;
+      }
+      if (url.startsWith('drive.google.com')) return 'https://' + url;
+      if (url.startsWith('//')) return 'https:' + url;
+      return url;
+    }
+
     const numFa = n => (typeof n === "number") ? n.toLocaleString("fa-IR") : (n ?? "—");
     const pctFa = n => {
   if (typeof n !== "number") return n;
@@ -284,6 +306,7 @@
         const json = await res.json();
         projects = Array.isArray(json) ? json : (json.projects || []);
       } catch (err) {
+        // fallback to local data.json if API is unreachable
         try {
           const res = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
           const json = await res.json();
@@ -292,19 +315,30 @@
           projects = [];
         }
       }
-      ALL_PROJECTS = projects;
-      // 🔢 Order by status: open → coming_soon → completed/close, then by id desc
+
+      // Normalize images and owner avatar
+      projects = projects.map(p => ({
+        ...p,
+        image: toPublicUrl(p.image),
+        owner: p.owner ? { 
+          ...p.owner,
+          profile_image: p.owner.profile_image ? toPublicUrl(p.owner.profile_image) : DEFAULT_AVATAR
+        } : null
+      }));
+
+      // Order by status: open → coming_soon → completed/close/closed, then by id desc
       const STATUS_ORDER = { open: 0, coming_soon: 1, completed: 2, close: 2, closed: 2 };
-      ALL_PROJECTS.sort((a,b)=>{
+      projects.sort((a,b)=>{
         const sa = STATUS_ORDER[a.status] ?? 99;
         const sb = STATUS_ORDER[b.status] ?? 99;
         if (sa !== sb) return sa - sb;
         return (b.id||0) - (a.id||0);
       });
 
+      ALL_PROJECTS = projects;
 
+      // initial render & filter buttons wiring (exactly like before)
       setFilter("all");
-
       document.querySelectorAll("#filters .flt").forEach(b=>{
         b.addEventListener("click", ()=> setFilter(b.dataset.filter));
       });
