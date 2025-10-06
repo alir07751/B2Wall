@@ -1,189 +1,330 @@
-
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ویترین پروژه‌ها</title>
-  <meta name="description" content="نمایش پروژه‌ها با دریافت مستقیم از Google Sheets (بدون نیاز به ویرایش فایل JSON)">
-  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body{font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
-    .badge{font-size:12px; font-weight:700; padding:.25rem .5rem; border-radius:9999px; border:1px solid}
-    .badge-open{background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe}
-    .badge-completed{background:#ecfdf5; color:#047857; border-color:#a7f3d0}
-    .badge-coming_soon{background:#fffbeb; color:#b45309; border-color:#fde68a}
-    .skeleton{background:linear-gradient(90deg,#e5e7eb,#f3f4f6,#e5e7eb); background-size:200% 100%; animation:shimmer 1.2s infinite linear}
-    @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
-  </style>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>ویترین پروژه‌ها</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        /* ==========================
+           🎯 TOKENS — قابل ویرایش سریع
+           ========================== */
+        :root{
+          /* Success (Completed) */
+          --success:        16 185 129;  /* emerald-500 */
+          --success-strong:  5 150 105;  /* emerald-600 */
+
+          /* Warning (Coming Soon) */
+          --warning:       245 158  11;  /* amber-500 */
+          --warning-strong:217 119   6;  /* amber-600 */
+
+          /* شدت افکت روی تصویرِ کارت‌های وضعیت‌دار */
+          --status-img-blur: 2px;
+          --status-img-scale: 1.03;
+
+          /* شدت لایهٔ رنگی روی تصویر */
+          --overlay-success: .30;  /* 0 → 1 */
+          --overlay-warning: .26;  /* 0 → 1 */
+        }
+
+        /* فونت کلی */
+        body{
+          font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif
+        }
+
+        /* برچسب درصد پیشرفت روی نوار */
+        .progress-wrap{ position:relative }
+        .progress-label{
+          position:absolute; top:50%; transform:translate(50%,-50%);
+          right:clamp(8px, calc(var(--p,0) * 1%), calc(100% - 8px));
+          background-color:rgba(255,255,255,.92);
+          border:1px solid rgb(226 232 240);
+          font-size:10px; padding:2px 6px; border-radius:9999px; color:#334155;
+          white-space:nowrap; box-shadow:0 1px 2px rgba(0,0,0,.06);
+          pointer-events:none;
+        }
+
+        /* ==========================
+           🧩 COMPONENT — کارت
+           ========================== */
+        .card{ position:relative }
+        .image-wrap{ position:relative; overflow:hidden }
+        .image-wrap img{ transition: filter .35s ease, transform .35s ease }
+
+        /* برچسب تیتر وضعیت (روی تصویر) */
+        .status-badge{
+          padding:.6rem 1rem;
+          border-radius:14px;
+          font-weight:800;
+          color:#fff;
+          border:1px solid transparent;
+          backdrop-filter: blur(6px);
+          box-shadow:0 6px 18px rgba(0,0,0,.25);
+        }
+
+        /* ===== حالت «تکمیل‌شده» ===== */
+        .card[data-status="completed"] .image-wrap::after{
+          content:""; position:absolute; inset:0;
+          background: rgb(var(--success) / var(--overlay-success));
+          pointer-events:none;
+        }
+        .card[data-status="completed"] .image-wrap img{
+          filter: blur(var(--status-img-blur)) brightness(.85) saturate(.95);
+          transform: scale(var(--status-img-scale));
+        }
+        .card[data-status="completed"] .status-badge{
+          background: rgb(var(--success-strong) / .94);
+          border-color: rgb(var(--success-strong) / .98);
+        }
+
+        /* ===== حالت «به‌زودی» ===== */
+        .card[data-status="coming_soon"] .image-wrap::after{
+          content:""; position:absolute; inset:0;
+          background: rgb(var(--warning) / var(--overlay-warning));
+          pointer-events:none;
+        }
+        .card[data-status="coming_soon"] .image-wrap img{
+          filter: blur(1px) brightness(.90) saturate(.95);
+          transform: scale(1.015);
+        }
+        .card[data-status="coming_soon"] .status-badge{
+          background: rgb(var(--warning-strong) / .94);
+          border-color: rgb(var(--warning-strong) / .98);
+        }
+    </style>
 </head>
-<body class="bg-slate-50 text-slate-800">
-  <header class="max-w-6xl mx-auto px-4 py-6">
+
+<body class="bg-slate-50 text-gray-800">
+
+<!-- Header -->
+<header class="max-w-6xl mx-auto px-4 py-6">
     <div class="flex flex-wrap items-center justify-between gap-3">
-      <h1 class="text-2xl md:text-3xl font-bold">ویترین پروژه‌ها</h1>
-      <span class="px-2 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700 border border-emerald-200">منبع: Google Sheets</span>
+        <h1 class="text-2xl md:text-3xl font-bold">ویترین پروژه‌ها</h1>
+        <span class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm">
+        نسخه آزمایشی
+      </span>
     </div>
 
-    <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-      <div class="flex items-center gap-2 text-sm">
-        <span class="px-2 py-0.5 rounded-full text-xs bg-slate-100 text-slate-700 border border-slate-200">مجموع: <b id="count" class="mx-1">۰</b> پروژه</span>
-      </div>
-      <div class="sm:col-span-2 flex flex-wrap items-center justify-end gap-2">
-        <input id="q" type="search" placeholder="جستجو در عنوان..." class="px-3 py-2 rounded-xl border border-slate-300 w-full sm:w-64">
-        <select id="filter-status" class="px-3 py-2 rounded-xl border border-slate-300">
-          <option value="all">همه وضعیت‌ها</option>
-          <option value="open">در حال جذب</option>
-          <option value="completed">تکمیل شده</option>
-          <option value="coming_soon">به‌زودی</option>
-        </select>
-        <select id="sort-by" class="px-3 py-2 rounded-xl border border-slate-300">
-          <option value="id_desc">مرتب‌سازی: جدیدترین</option>
-          <option value="id_asc">قدیمی‌تر</option>
-          <option value="raised_desc">تأمین‌شده (زیاد → کم)</option>
-          <option value="raised_asc">تأمین‌شده (کم → زیاد)</option>
-        </select>
-      </div>
+    <!-- Filters -->
+    <div class="mt-4 flex flex-wrap gap-2" id="filters">
+        <button data-filter="all"
+                class="flt active px-3 py-1.5 rounded-full text-sm border border-blue-600 bg-blue-600 text-white">
+            همه
+        </button>
+
+        <button data-filter="open"
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
+            در حال جذب
+        </button>
+
+        <button data-filter="completed"
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
+            تکمیل شده
+        </button>
+
+        <button data-filter="coming_soon"
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
+            به‌زودی
+        </button>
     </div>
-  </header>
+</header>
 
-  <main class="max-w-6xl mx-auto px-4 pb-24">
-    <div id="grid" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      <!-- skeletons -->
-      <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div class="h-40 skeleton"></div>
-        <div class="p-3 space-y-2">
-          <div class="h-5 w-3/4 skeleton rounded"></div>
-          <div class="h-4 w-1/2 skeleton rounded"></div>
-          <div class="h-3 w-full skeleton rounded"></div>
-        </div>
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div class="h-40 skeleton"></div>
-        <div class="p-3 space-y-2">
-          <div class="h-5 w-3/4 skeleton rounded"></div>
-          <div class="h-4 w-1/2 skeleton rounded"></div>
-          <div class="h-3 w-full skeleton rounded"></div>
-        </div>
-      </div>
-      <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden">
-        <div class="h-40 skeleton"></div>
-        <div class="p-3 space-y-2">
-          <div class="h-5 w-3/4 skeleton rounded"></div>
-          <div class="h-4 w-1/2 skeleton rounded"></div>
-          <div class="h-3 w-full skeleton rounded"></div>
-        </div>
-      </div>
-    </div>
+<!-- Grid -->
+<main id="grid" class="max-w-6xl mx-auto px-4 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 items-stretch"></main>
 
-    <p id="empty" class="hidden mt-8 text-center text-slate-500">موردی یافت نشد.</p>
-  </main>
-
-  <footer class="max-w-6xl mx-auto px-4 pb-8 text-xs text-slate-400">
-    <p>این صفحه داده‌ها را مستقیماً از Google Sheets می‌خواند. اگر API در دسترس نبود، می‌توانید به صورت موقت از <code>data.json</code> استفاده کنید.</p>
-  </footer>
-
-  <script>
+<script>
+    /* ==========================
+       🔧 HELPERS
+       ========================== */
+    // ✅ Data source: Google Sheets Web App
     const API_URL = "https://script.google.com/macros/s/AKfycbyr5xE9Zt9L5P4_JrZ84pGUmDBAQPt6S06zDCxSmLKVxOLjr6NktDhK65rTzsF4oxM/exec";
-    const fa = new Intl.NumberFormat('fa-IR');
-    const fmt = n => n==null ? '—' : fa.format(n);
 
-    const state = { items: [], filter: { q:'', status:'all', sort:'id_desc' } };
+    const numFa = n => (typeof n === "number") ? n.toLocaleString("fa-IR") : (n ?? "—");
+    const pctFa = n => {
+  if (typeof n !== "number") return n;
+  const v = (n > 0 && n < 1) ? n * 100 : n; // تبدیل اعشار به درصد
+  return v.toLocaleString("fa-IR", { maximumFractionDigits: v < 10 ? 2 : 0 });
+};
 
-    function badge(status) {
-      if (status === 'completed') return '<span class="badge badge-completed">تکمیل شده</span>';
-      if (status === 'coming_soon') return '<span class="badge badge-coming_soon">به‌زودی</span>';
-      return '<span class="badge badge-open">در حال جذب</span>';
+    function payoutFa(v){
+      if(v == null) return "—";
+      const s = String(v).trim();
+      if(!/[A-Za-z]/.test(s)) return s;
+      const m = {
+        "monthly":"ماهانه","weekly":"هفتگی",
+        "biweekly":"دو هفته یکبار","bi-weekly":"دو هفته یکبار","fortnightly":"دو هفته یکبار",
+        "quarterly":"فصلی","yearly":"سالیانه","annually":"سالیانه",
+        "end_of_term":"پایان دوره","end-of-term":"پایان دوره","end of term":"پایان دوره"
+      };
+      return m[s.toLowerCase()] || s;
     }
 
-    function progress(raised, required) {
-      if (!required || required <= 0) return 0;
-      const p = Math.max(0, Math.min(100, Math.round((raised||0) * 100 / required)));
-      return p;
+    function statusHeadline(s){
+      if(s === "completed")   return "پروژه با موفقیت تکمیل شد!";
+      if(s === "coming_soon") return "به‌زودی";
+      return null;
     }
 
-    function card(p) {
-      const img = p.image ? `<img src="${p.image}" alt="" loading="lazy" class="w-full h-40 object-cover">` : `<div class="w-full h-40 bg-slate-100"></div>`;
-      const pct = (typeof p.expected_profit_pct === 'number') ? (p.expected_profit_pct>1?p.expected_profit_pct:p.expected_profit_pct*100) : null;
-      const prg = progress(p.capital_raised, p.capital_required);
-      const owner = p.owner && p.owner.name ? `<span class="text-xs text-slate-500">مالک: ${p.owner.name}</span>` : '';
+    /* یک ردیف اطلاعات در کارت */
+    const row = (label, value) => `
+      <div class="flex items-center justify-between py-2 border-b last:border-0 border-slate-200">
+        <span class="text-slate-500 text-sm">${label}</span>
+        <span class="font-semibold text-sm">${value}</span>
+      </div>`;
+
+    /* ==========================
+       🧩 CARD RENDERER
+       ========================== */
+    function cardHTML(p){
+      const raised   = p.capital_raised || 0;
+      const req      = p.capital_required || 0;
+      const progress = req ? Math.min(100, Math.round((raised/req)*100)) : 0;
+      const headTxt  = statusHeadline(p.status);
+
+      let infoHTML = "";
+      if (p.tenor_months) infoHTML += row("مدت طرح", `${numFa(p.tenor_months)} ماه`);
+      if (typeof p.expected_profit_pct === "number") infoHTML += row("سود محقق شده", `%${pctFa(p.expected_profit_pct)}`);
+      if (p.payout_schedule) infoHTML += row("مواعد پرداخت سود", payoutFa(p.payout_schedule));
+      if (p.principal_return_months) infoHTML += row("بازگشت اصل پول", `${numFa(p.principal_return_months)} ماه`);
+      if (Array.isArray(p.guarantees) && p.guarantees.length)
+        infoHTML += row("نوع ضمانت", p.guarantees.join("، "));
+
       return `
-        <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden hover:shadow-md transition">
-          ${img}
-          <div class="p-3 space-y-2">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="font-bold line-clamp-1">${p.title || '—'}</h3>
-              <div>${badge(p.status)}</div>
+      <article class="card bg-white rounded-2xl shadow overflow-hidden border border-slate-200 h-full flex flex-col"
+               data-status="${p.status || ''}">
+
+        <!-- تصویر + تیتر وضعیت -->
+        <div class="image-wrap">
+          ${p.image
+            ? `<img src="${p.image}" alt="${p.title||''}" class="w-full aspect-[16/9] object-cover">`
+            : `<div class="w-full aspect-[16/9] bg-slate-200"></div>`}
+
+          ${headTxt ? `
+            <div class="absolute inset-0 flex items-center justify-center p-2">
+              <div class="status-badge text-base md:text-xl">${headTxt}</div>
+            </div>` : ``}
+        </div>
+
+        <!-- بدنه کارت -->
+        <div class="p-4 flex flex-col gap-4 grow">
+          <h3 class="font-bold text-lg">${p.title || "—"}</h3>
+
+          <div>
+            <div class="flex justify-between text-xs text-gray-600">
+              <span>تأمین‌شده: <b>${numFa(raised)}</b> ریال</span>
+              <span>موردنیاز: <b>${numFa(req)}</b> ریال</span>
             </div>
-            <div class="text-sm text-slate-600 grid grid-cols-2 gap-x-3">
-              <div>موردنیاز: <b class="text-slate-800">${fmt(p.capital_required)}</b></div>
-              <div>تأمین‌شده: <b class="text-slate-800">${fmt(p.capital_raised)}</b></div>
-              <div>مدت: <b class="text-slate-800">${p.tenor_months ?? '—'}</b> ماه</div>
-              <div>سود: <b class="text-slate-800">${pct!=null?('%'+(+pct.toFixed(2))):'—'}</b></div>
+            <div class="progress-wrap h-3 mt-2 bg-slate-200 rounded-full overflow-hidden" style="--p:${progress}">
+              <div class="h-full bg-emerald-600 float-right" style="width:${progress}%"></div>
+              <span class="progress-label">%${pctFa(progress)} تکمیل</span>
             </div>
-            <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div class="h-full bg-blue-600" style="width: ${prg}%"></div>
-            </div>
-            ${owner}
           </div>
-        </div>`;
+
+          ${infoHTML ? `<div class="bg-slate-50 rounded-xl p-3">${infoHTML}</div>` : ``}
+
+          <div class="mt-auto space-y-2">
+            <button type="button"
+              class="w-full inline-flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition"
+              onclick="showPhone(this)">
+              📞 نمایش شماره تماس
+            </button>
+
+            ${p.owner ? `
+              <a href="owner-profile.html?id=${p.owner.id}" class="w-full block">
+                <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow transition bg-white">
+                  <div class="flex items-center gap-3">
+                    <img src="${p.owner.profile_image}" alt="${p.owner.name}" class="w-10 h-10 rounded-full object-cover">
+                    <span class="font-semibold text-slate-800">${p.owner.name}</span>
+                  </div>
+                  <span class="text-blue-600 text-sm font-semibold flex items-center gap-1">مشاهده کارنامه ↗</span>
+                </div>
+              </a>` : ``}
+          </div>
+        </div>
+      </article>`;
     }
 
-    function applyFilterSort(items) {
-      const {q,status,sort} = state.filter;
-      let list = items;
-      if (q) list = list.filter(p => (p.title||'').includes(q));
-      if (status !== 'all') list = list.filter(p => (p.status||'') === status);
-      if (sort === 'id_desc') list = list.slice().sort((a,b) => (b.id||0) - (a.id||0));
-      else if (sort === 'id_asc') list = list.slice().sort((a,b) => (a.id||0) - (b.id||0));
-      else if (sort === 'raised_desc') list = list.slice().sort((a,b)=> (b.capital_raised||0)-(a.capital_raised||0));
-      else if (sort === 'raised_asc') list = list.slice().sort((a,b)=> (a.capital_raised||0)-(b.capital_raised||0));
-      return list;
+    /* ==========================
+       📦 STATE + FILTER
+       ========================== */
+    let ALL_PROJECTS = [];
+    let currentFilter = "all";
+
+    function applyFilter(){
+      if(currentFilter === "all") return ALL_PROJECTS;
+      return ALL_PROJECTS.filter(p => p.status === currentFilter);
     }
 
-    function render() {
-      const grid = document.getElementById('grid');
-      const empty = document.getElementById('empty');
-      const list = applyFilterSort(state.items);
-      document.getElementById('count').textContent = state.items.length.toLocaleString('fa-IR');
-      if (!list.length) {
-        grid.innerHTML = '';
-        empty.classList.remove('hidden');
-        return;
+    function render(projects){
+      const grid = document.getElementById("grid");
+      if(!grid) return;
+      grid.innerHTML = projects.map(cardHTML).join("");
+    }
+
+    function setFilter(key){
+      currentFilter = key;
+      document.querySelectorAll("#filters .flt").forEach(btn=>{
+        btn.classList.remove("active","bg-blue-600","text-white","border-blue-600");
+        btn.classList.add("bg-white","text-gray-700","border-slate-300");
+      });
+      const btn = document.querySelector(`#filters .flt[data-filter="${key}"]`);
+      if(btn){
+        btn.classList.remove("bg-white","text-gray-700","border-slate-300");
+        btn.classList.add("active","bg-blue-600","text-white","border-blue-600");
       }
-      empty.classList.add('hidden');
-      grid.innerHTML = list.map(card).join('');
+      render(applyFilter());
     }
 
-    async function loadFromAPI() {
-      const res = await fetch(API_URL + '?action=list', { cache:'no-store' });
-      const data = await res.json();
-      return Array.isArray(data) ? data : (data.projects || []);
-    }
-
-    async function loadData() {
+    async function main(){
+      let projects = [];
       try {
-        const data = await loadFromAPI();
-        return data;
-      } catch (e) {
-        console.warn('API error, fallback to data.json', e);
+        const res = await fetch(API_URL + '?action=list', { cache: 'no-store' });
+        const json = await res.json();
+        projects = Array.isArray(json) ? json : (json.projects || []);
+      } catch (err) {
         try {
-          const res = await fetch('data.json?v=' + Date.now(), {cache:'no-store'});
-          return res.json();
-        } catch (e2) {
-          return [];
+          const res = await fetch('data.json?v=' + Date.now(), { cache: 'no-store' });
+          const json = await res.json();
+          projects = Array.isArray(json) ? json : (json.projects || []);
+        } catch (e) {
+          projects = [];
         }
       }
+      ALL_PROJECTS = projects;
+      // 🔢 Order by status: open → coming_soon → completed/close, then by id desc
+      const STATUS_ORDER = { open: 0, coming_soon: 1, completed: 2, close: 2, closed: 2 };
+      ALL_PROJECTS.sort((a,b)=>{
+        const sa = STATUS_ORDER[a.status] ?? 99;
+        const sb = STATUS_ORDER[b.status] ?? 99;
+        if (sa !== sb) return sa - sb;
+        return (b.id||0) - (a.id||0);
+      });
+
+
+      setFilter("all");
+
+      document.querySelectorAll("#filters .flt").forEach(b=>{
+        b.addEventListener("click", ()=> setFilter(b.dataset.filter));
+      });
     }
 
-    document.getElementById('q').addEventListener('input', e=>{ state.filter.q = e.target.value.trim(); render(); });
-    document.getElementById('filter-status').addEventListener('change', e=>{ state.filter.status = e.target.value; render(); });
-    document.getElementById('sort-by').addEventListener('change', e=>{ state.filter.sort = e.target.value; render(); });
+    /* ==========================
+       🧭 MISC ACTIONS
+       ========================== */
+    function showPhone(el){
+      el.textContent = "۰۳۵۳۷۲۸۴۱۱۹";
+      el.disabled = true;
+      el.classList.remove("bg-blue-600","hover:bg-blue-700","text-white");
+      el.classList.add("bg-blue-50","text-blue-700","border","border-blue-200","cursor-default","select-text");
+    }
 
-    (async ()=>{
-      state.items = await loadData();
-      render();
-    })();
-  </script>
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", main);
+    } else {
+      main();
+    }
+</script>
 </body>
 </html>
