@@ -207,7 +207,12 @@
 
       let infoHTML = "";
       if (p.tenor_months) infoHTML += row("مدت طرح", `${numFa(p.tenor_months)} ماه`);
-      if (typeof p.expected_profit_pct === "number") infoHTML += row("سود محقق شده", `%${pctFa(p.expected_profit_pct)}`);
+      if (typeof p.expected_profit_pct === "number") {
+        const _profitLabel = (["completed","close","closed"].includes((p.status||"").toLowerCase()))
+          ? "سود محقق شده"
+          : "سود پیش‌بینی شده";
+        infoHTML += row(_profitLabel, `%${pctFa(p.expected_profit_pct)}`);
+      }
       if (p.payout_schedule) infoHTML += row("مواعد پرداخت سود", payoutFa(p.payout_schedule));
       if (p.principal_return_months) infoHTML += row("بازگشت اصل پول", `${numFa(p.principal_return_months)} ماه`);
       if (Array.isArray(p.guarantees) && p.guarantees.length)
@@ -253,16 +258,10 @@
               📞 نمایش شماره تماس
             </button>
 
-            ${p.owner ? `
-              <a href="owner-profile.html?id=${p.owner.id}" class="w-full block">
-                <div class="flex items-center justify-between p-3 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow transition bg-white">
-                  <div class="flex items-center gap-3">
-                    <img src="${p.owner.profile_image}" alt="${p.owner.name}" class="w-10 h-10 rounded-full object-cover">
-                    <span class="font-semibold text-slate-800">${p.owner.name}</span>
-                  </div>
-                  <span class="text-blue-600 text-sm font-semibold flex items-center gap-1">مشاهده کارنامه ↗</span>
-                </div>
-              </a>` : ``}
+            
+            <a href="project.html?id=${p.id}" class="w-full inline-flex justify-center items-center gap-2 bg-white border border-slate-300 hover:border-blue-400 hover:shadow text-blue-700 px-3 py-2 rounded-xl font-semibold transition">
+              اطلاعات بیشتر
+            </a>
           </div>
         </div>
       </article>`;
