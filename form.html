@@ -349,24 +349,24 @@
     }
 
     function updateSuggestedRange(){
-  const win   = $('#prWindow');
-  const badge = $('#prRangeBadge');
-  const left  = $('#prLeftEnd');
-  const right = $('#prRightEnd');
-  const ticks = $('#prTicks');
-  const MIN=3, MAX=10;
-  function toPos(v){ return ((Math.max(MIN, Math.min(MAX, v))-MIN)/(MAX-MIN))*100; }
-  function fmt(v){ const n=(Number.isInteger(v)? v : v.toFixed(1))+'٪'; return n.replace('.', '٫'); }
-  if(!win && !badge && !left && !right && !ticks) return;
-  if(ticks){ ticks.innerHTML=''; for(let v=MIN+1; v<=MAX-1; v++){ const t=document.createElement('div'); t.className='pr-tick'; t.style.right = toPos(v)+'%'; ticks.appendChild(t);}}
-  let r = {min:4, max:6};
-  try{ if(typeof computeSuggestedRange==='function'){ r = computeSuggestedRange(); } }catch(_){}
-  const rp = toPos(r.min), lp = toPos(r.max);
-  if(win){ win.style.right = rp+'%'; win.style.width = (lp-rp)+'%'; }
-  setText(badge, fmt(r.min)+' – '+fmt(r.max));
-  setText(left,  fmt(MIN));
-  setText(right, fmt(MAX));
-}
+      const [min, max] = calcRange();
+      el('#minPct').textContent = toFaDigits(min.toFixed(1).replace('.', '٫'));
+      el('#maxPct').textContent = toFaDigits(max.toFixed(1).replace('.', '٫'));
+
+      // scale 0..30
+      const scaleMin = 0, scaleMax = 30;
+      const toPct = (v)=> ((v - scaleMin) / (scaleMax - scaleMin)) * 100;
+      const left = toPct(min), right = toPct(max);
+      el('#rangeWindow').style.left = left + '%';
+      el('#rangeWindow').style.width = Math.max(2, right - left) + '%';
+
+      const user = Number(el('#expected_profit_pct').value);
+      const p = Number.isFinite(user) ? user : (min + max) / 2;
+      const px = toPct(p);
+      const pointer = el('#rangePointer');
+      pointer.style.left = Math.min(100, Math.max(0, px)) + '%';
+      el('#pointerLabel').textContent = toFaDigits((Number.isFinite(user) ? user : p).toFixed(1).replace('.', '٫')) + '٪';
+    }
 
     // inputs affecting range
     ['#expected_profit_pct','#tenor_months','#capital_required','#payout_every_n','#principal_every_n'].forEach(sel => {
@@ -506,50 +506,74 @@ document.querySelectorAll('form').forEach(f=>{
 const $ = (s, r=document) => r.querySelector(s);
 const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
 
-const steps = $$("#wizard [data-step]").map(el => Number(el.dataset.step)).sort((a,b)=>a-b);
-let current = steps[0] || 1;
+const wizard = $('#wizard');
+const sections = $$('#wizard [data-step]');
+const steps = sections.map(sec => Number(sec.dataset.step)).sort((a,b)=>a-b);
+let currentIndex = 0;
 
-function show(step){
-  current = step;
-  $$("#wizard [data-step]").forEach(sec => {
-    sec.classList.toggle("hidden", Number(sec.dataset.step)!==current);
-  });
-  // ctrl buttons
-  $('#prevBtn')?.classList.toggle('hidden', current===steps[0]);
-  $('#nextBtn')?.classList.toggle('hidden', current===steps.at(-1));
+const stepIndicator = document.querySelector('[data-step-indicator]') || document.querySelector('.step-indicator');
+const stepChip = document.querySelector('[data-step-chip]');
+
+function sectionTitle(sec){
+  const h = sec.querySelector('h2, h3, h4, [data-title]');
+  return h ? h.textContent.trim() : ('مرحله ' + sec.dataset.step);
 }
 
-function validateStep(step){
-  const sec = $(`#wizard [data-step="${step}"]`);
+function showStepByIndex(idx){
+  currentIndex = Math.max(0, Math.min(steps.length-1, idx));
+  const step = steps[currentIndex];
+  sections.forEach(sec => sec.classList.toggle('hidden', Number(sec.dataset.step)!==step));
+  if(stepIndicator){ stepIndicator.textContent = `مرحله ${currentIndex+1} از ${steps.length}`; }
+  if(stepChip){ stepChip.textContent = sectionTitle(sections[currentIndex]); }
+  syncNextDisabled();
+}
+
+function validateCurrent(){
+  const sec = sections[currentIndex];
   if(!sec) return true;
-  const invalid = $$("[required]", sec).some(inp => {
-    if(inp.type==='radio'){
-      const name = inp.name;
-      const grp = $$(`input[type=radio][name="${name}"]`, sec);
-      return !grp.some(r=>r.checked);
+  const requiredInputs = $$('[required]', sec);
+  for(const inp of requiredInputs){
+    if(inp.type === 'radio'){
+      const group = $$(`input[type="radio"][name="${inp.name}"]`, sec);
+      if(!group.some(r=>r.checked)) return false;
+    }else{
+      if(!String(inp.value||'').trim()) return false;
     }
-    return !inp.value?.trim();
-  });
-  return !invalid;
+  }
+  return true;
 }
 
-$('#nextBtn')?.addEventListener('click', async () => {
-  if(!validateStep(current)) { return; }
-  const idx = steps.indexOf(current);
-  if(idx<steps.length-1){ show(steps[idx+1]); }
+function syncNextDisabled(){
+  const nextBtn = $('#nextBtn');
+  if(!nextBtn) return;
+  const ok = validateCurrent();
+  nextBtn.disabled = !ok;
+  nextBtn.classList.toggle('opacity-50', !ok);
+  nextBtn.classList.toggle('cursor-not-allowed', !ok);
+}
+
+$('#nextBtn')?.addEventListener('click', (e)=>{
+  if(!validateCurrent()) return;
+  showStepByIndex(currentIndex+1);
 });
 
-$('#prevBtn')?.addEventListener('click', () => {
-  const idx = steps.indexOf(current);
-  if(idx>0){ show(steps[idx-1]); }
+$('#prevBtn')?.addEventListener('click', (e)=>{
+  showStepByIndex(currentIndex-1);
 });
 
-// block default submit on Enter in intermediate steps
-$("#wizard")?.addEventListener('submit', (e)=>{
-  if(current !== steps.at(-1)) e.preventDefault();
+['input','change','keyup','blur'].forEach(evt=>{
+  wizard?.addEventListener(evt, (e)=>{
+    if(!sections[currentIndex].contains(e.target)) return;
+    syncNextDisabled();
+  });
 });
 
-// init
-show(current);
+wizard?.addEventListener('submit', (e)=>{
+  if(currentIndex < steps.length-1){
+    e.preventDefault();
+  }
+});
+
+showStepByIndex(0);
 </script></body>
 </html>
