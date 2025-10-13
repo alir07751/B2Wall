@@ -191,7 +191,7 @@
 <!-- Actions -->
 <div class="flex items-center pt-2 gap-2" id="actions">
 <button class="btn btn-ghost hidden" id="prevBtn" type="button">قبلی</button>
-<button class="btn btn-primary" id="nextBtn" type="submit">مرحله بعد</button>
+<button class="btn btn-primary" id="nextBtn" type="button">مرحله بعد</button>
 </div>
 </form>
 <!-- Success -->
@@ -208,8 +208,7 @@
 </section>
 </div>
 </main>
-<script>(async()=>{
-
+<script type="module">
     // ---- Utilities ----
     // === API (Google Apps Script or your backend) ===
     const API_URL  = 'https://script.google.com/macros/s/AKfycbyr5xE9Zt9L5P4_JrZ84pGUmDBAQPt6S06zDCxSmLKVxOLjr6NktDhK65rTzsF4oxM/exec';
@@ -422,9 +421,8 @@
     setupRadios();
     showStep(1);
     updateSuggestedRange();
-  
-})();</script>
-<script>
+  </script>
+<script type="module">
 (function(){
   var MIN_SCALE=3, MAX_SCALE=10;
   function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
@@ -493,6 +491,17 @@
   buildTicks();
   render();
 })();
+</script>
+
+<script type="module">
+document.querySelectorAll('form').forEach(f=>{
+  f.addEventListener('submit', (e)=>{
+    // If a JS wizard is present, block default GET navigation
+    if (document.getElementById('wizard') || document.querySelector('[data-step]')) {
+      e.preventDefault();
+    }
+  });
+});
 </script>
 </body>
 </html>
