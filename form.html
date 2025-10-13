@@ -285,7 +285,7 @@
 
     // Prev/Next
     el('#prevBtn').addEventListener('click', ()=> showStep(Math.max(1, current-1)));
-    el('#wizard').addEventListener('submit', (e)=>{
+    el('#wizard').addEventListener('submit', async (e)=>{
       e.preventDefault();
       const currentFieldset = el(`[data-step="${current}"]`);
       if(!currentFieldset.checkValidity()){
@@ -494,7 +494,7 @@
 </script>
 <script type="module">
 document.querySelectorAll('form').forEach(f=>{
-  f.addEventListener('submit', (e)=>{
+  f.addEventListener('submit', async (e)=>{
     // If a JS wizard is present, block default GET navigation
     if (document.getElementById('wizard') || document.querySelector('[data-step]')) {
       e.preventDefault();
