@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>ثبت پروژه برای تأمین مالی</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<style>
+    body{ font-family:'Vazirmatn',system-ui; }
+    .card{ background:#fff; border:1px solid #e5e7eb; border-radius:1rem; box-shadow:0 8px 20px rgba(0,0,0,.05) }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.6rem 1rem; border-radius:.75rem; font-weight:700 }
+    .btn-primary{ background:#2563eb; color:#fff } .btn-primary:hover{ background:#1d4ed8 }
+    .btn-ghost{ background:#fff; color:#1f2937; border:1px solid #cbd5e1 }
+    .hint{ font-size:.75rem; color:#64748b }
+    .bar{ height:8px; background:#e2e8f0; border-radius:9999px; overflow:hidden }
+    .bar > i{ display:block; height:100%; background:#2563eb; width:0% }
+    .field{ display:flex; flex-direction:column; gap:.375rem }
+    .pill{ background:#f1f5f9; border:1px solid #e2e8f0; padding:.25rem .5rem; border-radius:9999px; font-size:.75rem }
+
+    /* Suggested range – clean & responsive */
+    .sr{ border:1px solid #e2e8f0; border-radius:12px; padding:12px; background:#fafafa }
+    .sr-bar{ position:relative; height:12px; border-radius:9999px;
+             background:linear-gradient(90deg,#fee2e2,#fde68a,#dcfce7); }
+    .sr-window{ position:absolute; top:-5px; height:22px; border-radius:9999px;
+                background:rgba(37,99,235,.10); border:1px solid rgba(37,99,235,.35) }
+    .sr-pointer{ position:absolute; top:-14px; transform:translateX(-50%); }
+    .sr-badge{ background:#1d4ed8; color:#fff; font-size:.70rem; padding:.15rem .45rem; border-radius:9999px; white-space:nowrap }
+    .sr-tick{ position:absolute; top:14px; width:1px; height:10px; background:#94a3b8 }
+    .sr-tick-label{ position:absolute; top:28px; transform:translateX(-50%); font-size:.70rem; color:#64748b }
+    @media (max-width: 640px){
+      .sr{ padding:10px }
+      .sr-badges{ flex-direction:column; align-items:flex-start; gap:.25rem }
+    }
+  
+/* LTR fix for phone input (placeholder and value) */
+.ltr{direction:ltr;text-align:left}
+.ltr::placeholder{direction:ltr;text-align:left;unicode-bidi:plaintext}
+
+/* --- Profit range (final agreed) --- */
+.pr{--rail-h:12px;--tick-w:2px;--tick-h:10px;--window-h:12px;--rail:#0b1220;--muted:#6b7280;
+    position:relative;padding-top:32px}
+.pr-rail{position:relative;height:var(--rail-h);background:var(--rail);border-radius:9999px;
+        box-shadow:inset 0 1px 0 rgba(255,255,255,.08), inset 0 -1px 0 rgba(0,0,0,.25)}
+.pr-cap{position:absolute;top:50%;width:20px;height:20px;background:#111827;border-radius:50%;
+       transform:translateY(-50%);box-shadow:0 2px 6px rgba(0,0,0,.25)}
+.pr-cap--left{right:-10px}
+.pr-cap--right{left:-10px}
+.pr-window{position:absolute;top:0;height:var(--window-h);background:transparent!important;border:none!important;box-shadow:none!important}
+.pr-range-badge{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#2563eb;color:#fff;font-weight:700;font-size:.78rem;padding:.12rem .55rem;border-radius:9999px;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.pr-ticks{position:absolute;inset:0;pointer-events:none}
+.pr-tick{position:absolute;top:50%;width:var(--tick-w);height:var(--tick-h);background:rgba(255,255,255,.75);
+  transform:translate(-50%,-50%);border-radius:1px;opacity:.75}
+.pr-ends{display:flex;justify-content:space-between;margin-top:.35rem;color:#0f172a;font-weight:700}
+.pr-end{font-feature-settings:"tnum" 1}
+.pr-legend{margin-top:.6rem;color:#4b5563;font-size:.85rem;line-height:1.7;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:.6rem .75rem}
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+<header class="max-w-3xl mx-auto px-4 py-6">
+<h1 class="text-2xl md:text-3xl font-bold">ثبت پروژه برای تأمین مالی</h1>
+<p class="text-slate-600 mt-2">در چند قدم کوتاه اطلاعات پروژه‌ات را بفرست؛ باقی مسیر با ماست.</p>
+</header>
+<main class="max-w-3xl mx-auto px-4 pb-28">
+<div class="card p-4 sm:p-6">
+<!-- Progress header -->
+<div class="flex items-center justify-between mb-3">
+<div class="flex items-center gap-2">
+<span class="pill" id="stepTitle">اطلاعات تماس</span>
+</div>
+<div class="text-sm text-slate-600"><span id="stepLabel">مرحله ۱ از ۴</span></div>
+</div>
+<div aria-hidden="true" class="bar mb-4"><i id="progress"></i></div>
+<form id="wizard" novalidate="">
+<!-- STEP 1 -->
+<fieldset class="space-y-4" data-step="1">
+<h2 class="font-bold text-lg">۱) اطلاعات تماس</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="field">
+<label class="text-sm" for="full_name">نام و نام خانوادگی</label>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="full_name" name="full_name" placeholder="مثلاً علی حریری" required="" type="text"/>
+</div>
+<div class="field">
+<label class="text-sm" for="phone">شماره تماس</label>
+<input class="px-3 py-2 rounded-xl border border-slate-300 ltr" dir="ltr" id="phone" name="phone" placeholder="۰۹xxxxxxxxx" required="" type="tel"/>
+<p class="hint">این شماره برای هماهنگی و نمایش گزینه «تماس» در ویترین استفاده می‌شود.</p>
+</div>
+</div>
+</fieldset>
+<!-- STEP 2 -->
+<fieldset class="space-y-4 hidden" data-step="2" disabled="">
+<h2 class="font-bold text-lg">۲) مشخصات پروژه</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="field sm:col-span-2">
+<label class="text-sm" for="project_title">عنوان پروژه</label>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="project_title" name="project_title" placeholder="مثلاً تجهیز کارگاه دامداری" required="" type="text"/>
+</div>
+<div class="field">
+<label class="text-sm" for="capital_required">مبلغ سرمایه موردنیاز (ریال)</label>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="capital_required" name="capital_required" placeholder="مثلاً ۲۵۰۰۰۰۰۰۰۰۰" required="" type="number"/>
+<p class="hint">عدد را بدون ویرگول وارد کنید.</p>
+</div>
+<div class="field">
+<label class="text-sm" for="tenor_months">مدت اجرای پروژه (ماه)</label>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="tenor_months" name="tenor_months" placeholder="مثلاً ۱۲" required="" type="number"/>
+</div>
+</div>
+</fieldset>
+<!-- STEP 3 -->
+<fieldset class="space-y-4 hidden" data-step="3" disabled="">
+<h2 class="font-bold text-lg">۳) شرایط مالی</h2>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+<fieldset class="border border-slate-200 rounded-xl p-4">
+<legend class="px-2 text-sm text-slate-500">نحوه پرداخت سود</legend>
+<div class="space-y-2">
+<label class="flex items-center gap-2"><input checked="" name="payout" type="radio" value="ماهانه"/> <span>ماهانه</span></label>
+<label class="flex items-center gap-2"><input name="payout" type="radio" value="یکجا"/> <span>یکجا (پایان دوره)</span></label>
+<label class="flex items-center gap-2"><input name="payout" type="radio" value="custom"/> <span>سفارشی</span></label>
+<div class="hidden" id="payout-custom">
+<select class="mt-2 px-3 py-2 rounded-xl border border-slate-300 w-full" id="payout_every_n">
+<option value="2">دو ماه یکبار</option>
+<option value="3">سه ماه یکبار</option>
+<option value="6">شش ماه یکبار</option>
+</select>
+</div>
+</div>
+</fieldset>
+<fieldset class="border border-slate-200 rounded-xl p-4">
+<legend class="px-2 text-sm text-slate-500">بازپرداخت اصل پول</legend>
+<div class="space-y-2">
+<label class="flex items-center gap-2"><input checked="" name="principal" type="radio" value="ماهانه"/> <span>ماهانه</span></label>
+<label class="flex items-center gap-2"><input name="principal" type="radio" value="یکجا"/> <span>یکجا (پایان دوره)</span></label>
+<label class="flex items-center gap-2"><input name="principal" type="radio" value="custom"/> <span>سفارشی</span></label>
+<div class="hidden" id="principal-custom">
+<select class="mt-2 px-3 py-2 rounded-xl border border-slate-300 w-full" id="principal_every_n">
+<option value="2">دو ماه یکبار</option>
+<option value="3">سه ماه یکبار</option>
+<option value="6">شش ماه یکبار</option>
+</select>
+</div>
+</div>
+</fieldset>
+</div>
+<!-- Suggested profit range (clean & mobile-friendly) -->
+<div class="pr" dir="rtl" id="profitRange" style="margin-top:14px">
+<div class="pr-rail" id="prRail">
+<div class="pr-cap pr-cap--left"></div>
+<div class="pr-cap pr-cap--right"></div>
+<div class="pr-window" id="prWindow">
+<span class="pr-range-badge" id="prRangeBadge">۴٫۳٪ – ۶٫۳٪</span>
+</div>
+<div class="pr-ticks" id="prTicks"></div>
+</div>
+<div class="pr-ends">
+<!-- agreed: left=3%, right=10% -->
+<span class="pr-end pr-end--left" id="prLeftEnd">۳٪</span>
+<span class="pr-end pr-end--right" id="prRightEnd">۱۰٪</span>
+</div>
+<p class="pr-legend">هرچه سود پیشنهادی شما به بیشینه نزدیک‌تر باشد، احتمال جذب سرمایه افزایش می‌یابد؛ و هرچه به کمینه نزدیک‌تر باشد، احتمال تأمین سرمایه کمتر خواهد شد. این بازه صرفاً راهنماست.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
+<div class="field">
+<label class="text-sm" for="expected_profit_pct">سود پیشنهادی شما (درصد سالانه)</label>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="expected_profit_pct" name="expected_profit_pct" placeholder="مثلاً ۵٫۵" step="0.01" type="number"/>
+</div>
+</div>
+</fieldset>
+<!-- STEP 4 -->
+<fieldset class="space-y-4 hidden" data-step="4" disabled="">
+<h2 class="font-bold text-lg">۴) ضمانت و ارسال</h2>
+<fieldset class="border border-slate-200 rounded-xl p-4">
+<legend class="px-2 text-sm text-slate-500">نوع ضمانت پیشنهادی</legend>
+<div class="space-y-2">
+<label class="flex items-center gap-2"><input class="g" type="checkbox" value="ضامن حقیقی"/> <span>ضامن حقیقی</span></label>
+<label class="flex items-center gap-2"><input class="g" type="checkbox" value="سند ملکی"/> <span>سند ملکی</span></label>
+<label class="flex items-center gap-2">
+<input class="g" id="g_other_chk" type="checkbox" value="سایر"/> <span>سایر اسناد</span>
+</label>
+<input class="mt-2 px-3 py-2 rounded-xl border border-slate-300 hidden" id="g_other_text" name="guarantee_other" placeholder="نام سند یا توضیح کوتاه" type="text"/>
+</div>
+</fieldset>
+<div class="space-y-2">
+<label class="flex items-start gap-2">
+<input class="mt-1" id="agree" name="agree" required="" type="checkbox"/>
+<span class="text-sm leading-6">اطلاعات فوق صحیح است و اجازه می‌دهم پس از بررسی اولیه، پروژه‌ام در ویترین نمایش داده شود.</span>
+</label>
+</div>
+</fieldset>
+<!-- Actions -->
+<div class="flex items-center pt-2 gap-2" id="actions">
+<button class="btn btn-ghost hidden" id="prevBtn" type="button">قبلی</button>
+<button class="btn btn-primary" id="nextBtn" type="submit">مرحله بعد</button>
+</div>
+</form>
+<!-- Success -->
+<section class="hidden text-center py-10" id="success">
+<div class="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
+<svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-width="2"></path></svg>
+</div>
+<h3 class="text-xl font-bold mt-4">درخواست شما ثبت شد</h3>
+<p class="text-slate-600 mt-2">خلاصه اطلاعات در پایین قابل مشاهده است. به‌زودی با شما تماس می‌گیریم.</p>
+<pre class="text-left bg-slate-50 border border-slate-200 rounded-xl p-3 mt-6 overflow-auto text-xs" id="payloadView"></pre>
+<div class="mt-6 flex items-center justify-center gap-2">
+<a class="btn btn-ghost" href="index.html">بازگشت به ویترین</a>
+</div>
+</section>
+</div>
+</main>
+<script>(async()=>{
+
+    // ---- Utilities ----
+    // === API (Google Apps Script or your backend) ===
+    const API_URL  = 'https://script.google.com/macros/s/AKfycbyr5xE9Zt9L5P4_JrZ84pGUmDBAQPt6S06zDCxSmLKVxOLjr6NktDhK65rTzsF4oxM/exec';
+    const API_TOKEN= '10HyRsljb1Q05x3RGyOMZDdVJB2xFwUnughr3'; // optional, if used on backend
+
+    async function sendToBackend(project){
+      try{
+        const body = new URLSearchParams({ action:'create', token: API_TOKEN, payload: JSON.stringify({ project }) });
+        const res  = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, body });
+        const data = await res.json().catch(()=>({ ok:false, error:'Bad JSON' }));
+        if(!data.ok){ throw new Error(data.error || 'خطا در ثبت اطلاعات'); }
+        return { ok:true, data };
+      }catch(err){
+        return { ok:false, error: err.message || 'NETWORK_ERROR' };
+      }
+    }
+    
+    const steps = [1,2,3,4];
+    let current = 1;
+
+    const el = s => document.querySelector(s);
+    const els = s => Array.from(document.querySelectorAll(s));
+
+    const toFaDigits = s => String(s).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
+    const faPercent = n => toFaDigits(n.toFixed(1).replace('.', '٫')) + '٪';
+
+    function setProgress(){
+      const percent = (current-1)/(steps.length-1)*100;
+      el('#progress').style.width = percent + '%';
+      el('#stepLabel').textContent = `مرحله ${toFaDigits(current)} از ${toFaDigits(steps.length)}`;
+      const titles = ['اطلاعات تماس','مشخصات پروژه','شرایط مالی','ضمانت و ارسال'];
+      el('#stepTitle').textContent = titles[current-1];
+      // CTA: step 1 -> visually left (ml-auto)
+      const next = el('#nextBtn');
+      if(current === 1){ next.classList.add('ml-auto'); }
+      else{ next.classList.remove('ml-auto'); }
+      // Prev visibility
+      el('#prevBtn').classList.toggle('hidden', current === 1);
+    }
+    function showStep(n){
+      steps.forEach(i => {
+        const sec = el(`[data-step="${i}"]`);
+        if(!sec) return;
+        sec.classList.toggle('hidden', i !== n);
+        sec.disabled = i !== n;                 // avoid validation on hidden
+      });
+      current = n;
+      setProgress();
+      el('#nextBtn').textContent = (current === steps.length) ? 'ارسال درخواست' : 'مرحله بعد';
+    }
+
+    function setupRadios(){
+      const payoutRadios = els('input[name="payout"]');
+      const principalRadios = els('input[name="principal"]');
+      const pc = el('#payout-custom');
+      const prc = el('#principal-custom');
+      function refresh(){
+        const p = payoutRadios.find(r=>r.checked)?.value;
+        pc.classList.toggle('hidden', p!=='custom');
+        const pr = principalRadios.find(r=>r.checked)?.value;
+        prc.classList.toggle('hidden', pr!=='custom');
+        updateSuggestedRange();
+      }
+      payoutRadios.forEach(r=> r.addEventListener('change', refresh));
+      principalRadios.forEach(r=> r.addEventListener('change', refresh));
+      refresh();
+    }
+
+    // guarantees other
+    el('#g_other_chk').addEventListener('change', e=>{
+      el('#g_other_text').classList.toggle('hidden', !e.target.checked);
+      updateSuggestedRange();
+    });
+
+    // Prev/Next
+    el('#prevBtn').addEventListener('click', ()=> showStep(Math.max(1, current-1)));
+    el('#wizard').addEventListener('submit', (e)=>{
+      e.preventDefault();
+      const currentFieldset = el(`[data-step="${current}"]`);
+      if(!currentFieldset.checkValidity()){
+        currentFieldset.reportValidity();
+        return;
+      }
+      if(current < steps.length){ showStep(current+1); return; }
+      if(!el('#agree').checked){ currentFieldset.reportValidity(); return; }
+
+      const payload = collect();
+      el('#payloadView').textContent = 'در حال ارسال...';
+      const res = await sendToBackend(payload);
+      if(res.ok){
+        el('#wizard').classList.add('hidden');
+        el('#success').classList.remove('hidden');
+        el('#payloadView').textContent = JSON.stringify(payload, null, 2);
+      }else{
+        alert(res.error||'خطا');
+        el('#payloadView').textContent = 'خطا در ارسال: '+(res.error||'');
+      }
+    });
+
+    // ---- Suggested Profit Calculation ----
+    function number(v){ const n = Number(v); return Number.isFinite(n) ? n : 0 }
+
+    function calcRange(){
+      // baseline annual min/max
+      let min = 4.0, max = 8.0; // درصد سالانه، تقریبی
+      const tenor = number(el('#tenor_months').value);
+      if(tenor){
+        const delta = tenor - 12;
+        min += (delta/6) * 0.3;
+        max += (delta/6) * 0.5;
+      }
+      const payout = document.querySelector('input[name="payout"]:checked')?.value;
+      if(payout === 'ماهانه'){ min -= 0.4; max -= 0.4; }
+      else if(payout === 'یکجا'){ min += 0.4; max += 0.6; }
+      else if(payout === 'custom'){
+        const n = number(el('#payout_every_n').value);
+        if(n === 2){ min -= 0.2; max -= 0.1; }
+        if(n === 3){ /* neutral */ }
+        if(n === 6){ min += 0.2; max += 0.3; }
+      }
+      const principal = document.querySelector('input[name="principal"]:checked')?.value;
+      if(principal === 'ماهانه'){ min -= 0.4; max -= 0.4; }
+      else if(principal === 'یکجا'){ min += 0.4; max += 0.6; }
+      else if(principal === 'custom'){
+        const n = number(el('#principal_every_n').value);
+        if(n === 2){ min -= 0.2; max -= 0.1; }
+        if(n === 3){ /* neutral */ }
+        if(n === 6){ min += 0.2; max += 0.3; }
+      }
+      const gs = Array.from(document.querySelectorAll('.g')).filter(x=>x.checked).map(x=>x.value);
+      if(gs.includes('سند ملکی')) { min -= 0.4; max -= 0.5; }
+      if(gs.includes('ضامن حقیقی')) { min -= 0.2; max -= 0.3; }
+      if(gs.length === 0) { min += 0.3; max += 0.5; }
+
+      min = Math.max(1.5, Math.min(min, 20));
+      max = Math.max(min+0.5, Math.min(max, 30));
+      return [min, max];
+    }
+
+    function updateSuggestedRange(){
+      const [min, max] = calcRange();
+      el('#minPct').textContent = toFaDigits(min.toFixed(1).replace('.', '٫'));
+      el('#maxPct').textContent = toFaDigits(max.toFixed(1).replace('.', '٫'));
+
+      // scale 0..30
+      const scaleMin = 0, scaleMax = 30;
+      const toPct = (v)=> ((v - scaleMin) / (scaleMax - scaleMin)) * 100;
+      const left = toPct(min), right = toPct(max);
+      el('#rangeWindow').style.left = left + '%';
+      el('#rangeWindow').style.width = Math.max(2, right - left) + '%';
+
+      const user = Number(el('#expected_profit_pct').value);
+      const p = Number.isFinite(user) ? user : (min + max) / 2;
+      const px = toPct(p);
+      const pointer = el('#rangePointer');
+      pointer.style.left = Math.min(100, Math.max(0, px)) + '%';
+      el('#pointerLabel').textContent = toFaDigits((Number.isFinite(user) ? user : p).toFixed(1).replace('.', '٫')) + '٪';
+    }
+
+    // inputs affecting range
+    ['#expected_profit_pct','#tenor_months','#capital_required','#payout_every_n','#principal_every_n'].forEach(sel => {
+      const n = el(sel);
+      if(n) n.addEventListener('input', updateSuggestedRange);
+      if(n) n.addEventListener('change', updateSuggestedRange);
+    });
+
+    // ---- Collect payload ----
+    function collect(){
+      const payoutSel = document.querySelector('input[name="payout"]:checked')?.value;
+      let payout_schedule = payoutSel;
+      if(payoutSel === 'custom'){
+        const n = el('#payout_every_n').value;
+        payout_schedule = 'سفارشی: هر ' + n + ' ماه';
+      } else if(payoutSel === 'یکجا'){ payout_schedule = 'پایان دوره'; }
+
+      const prSel = document.querySelector('input[name="principal"]:checked')?.value;
+      let principal = prSel;
+      if(prSel === 'custom'){
+        const n = el('#principal_every_n').value;
+        principal = 'سفارشی: هر ' + n + ' ماه';
+      } else if(prSel === 'یکجا'){ principal = 'پایان دوره'; }
+
+      const gs = els('.g').filter(x=>x.checked).map(x=> x.value);
+      const other = el('#g_other_chk').checked ? (el('#g_other_text').value.trim() || 'سایر') : null;
+      if(other) gs.push('سایر: ' + other);
+
+      let profit = el('#expected_profit_pct').value.trim();
+      profit = profit ? Number(profit.replace(',', '.')) : null;
+
+      const [minS, maxS] = calcRange();
+
+      return {
+        owner: { name: el('#full_name').value.trim(), phone: el('#phone').value.trim() },
+        title: el('#project_title').value.trim(),
+        description: '',
+        image: null,
+        status: 'به زودی',
+        capital_required: Number(el('#capital_required').value),
+        capital_raised: 0,
+        tenor_months: Number(el('#tenor_months').value),
+        expected_profit_pct: Number.isFinite(profit) ? profit : null,
+        suggested_profit_pct_range: [minS, maxS],
+        payout_schedule,
+        principal_return: principal,
+        guarantees: gs
+      };
+    }
+
+    // init
+    setupRadios();
+    showStep(1);
+    updateSuggestedRange();
+  
+})();</script>
+<script>
+(function(){
+  var MIN_SCALE=3, MAX_SCALE=10;
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  function toPos(v){ return ((clamp(v, MIN_SCALE, MAX_SCALE)-MIN_SCALE)/(MAX_SCALE-MIN_SCALE))*100; } // percent from right
+  function en2fa(s){ return (s+'').replace(/[0-9]/g, d=>'۰۱۲۳۴۵۶۷۸۹'[d]); }
+  function fa2en(s){ return (s+'').replace(/[\u06F0-\u06F9]/g, d=> '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)); }
+  function fmt(v){ return en2fa((Number.isInteger(v)? v : v.toFixed(1)) + '٪'); }
+  function getNum(id, defVal){
+    var el=document.getElementById(id); if(!el) return defVal;
+    var n=parseFloat(fa2en(el.value||el.getAttribute('value')||''));
+    return isNaN(n)?defVal:n;
+  }
+  function getRadio(name, defVal){
+    var els=document.querySelectorAll('input[type=radio][name="'+name+'"]');
+    for(var i=0;i<els.length;i++) if(els[i].checked) return els[i].value;
+    return defVal;
+  }
+  function computeSuggestedRange(){
+    var capital = getNum('capital_required', 0);
+    var months  = getNum('tenor_months', 12);
+    var principal = getRadio('principal','ماهانه');
+    var payout    = getRadio('payout',   'ماهانه');
+    var amountB = capital/1e9;
+    var base = 4.5;
+    var durAdj = clamp((months-12)*0.08,-0.6,1.2);
+    var amtAdj = clamp(Math.log10(Math.max(1, amountB))*0.15,0,0.9);
+    var princAdj = (principal==='یکجا'?0.6: principal==='custom'?0.3: -0.3);
+    var payAdj   = (payout==='یکجا'?0.3: payout==='custom'?0.15: -0.15);
+    var center = base+durAdj+amtAdj+princAdj+payAdj;
+    var spread = 0.5 + clamp(months/24,0,0.8);
+    var min = clamp(center - spread, MIN_SCALE, MAX_SCALE);
+    var max = clamp(center + spread, MIN_SCALE, MAX_SCALE);
+    if (max-min<0.2){ var mid=(min+max)/2; min=clamp(mid-0.1,MIN_SCALE,MAX_SCALE); max=clamp(mid+0.1,MIN_SCALE,MAX_SCALE); }
+    return {min:min, max:max};
+  }
+  var win   = document.getElementById('prWindow');
+  var badge = document.getElementById('prRangeBadge');
+  var leftEnd  = document.getElementById('prLeftEnd');
+  var rightEnd = document.getElementById('prRightEnd');
+  var ticksWrap= document.getElementById('prTicks');
+  function buildTicks(){
+    if (!ticksWrap) return;
+    ticksWrap.innerHTML='';
+    for (var v=MIN_SCALE+1; v<=MAX_SCALE-1; v++){
+      var t=document.createElement('div');
+      t.className='pr-tick';
+      t.style.right = toPos(v)+'%'; // RTL: distance from right
+      ticksWrap.appendChild(t);
+    }
+  }
+  function render(){
+    var r = computeSuggestedRange();
+    var leftPct = toPos(r.min);   // min → right
+    var rightPct= toPos(r.max);   // max → left
+    if (win){
+      win.style.right = leftPct+'%';
+      win.style.width = (rightPct-leftPct)+'%';
+    }
+    if (badge){ badge.textContent = fmt(r.min) + ' – ' + fmt(r.max); }
+    // agreed ends: left=3%, right=10%
+    if (leftEnd)  leftEnd.textContent  = fmt(MIN_SCALE);
+    if (rightEnd) rightEnd.textContent = fmt(MAX_SCALE);
+  }
+  ['#capital_required','#tenor_months','input[type=radio][name=principal]','input[type=radio][name=payout]']
+    .forEach(function(sel){ document.querySelectorAll(sel).forEach(function(el){ el.addEventListener('input', render); el.addEventListener('change', render); }); });
+  buildTicks();
+  render();
+})();
+</script>
+</body>
+</html>
