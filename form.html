@@ -285,7 +285,7 @@
 
     // Prev/Next
     el('#prevBtn').addEventListener('click', ()=> showStep(Math.max(1, current-1)));
-    el('#wizard').addEventListener('submit', async (e)=>{
+    el('#wizard').addEventListener('submit', (e)=>{
       e.preventDefault();
       const currentFieldset = el(`[data-step="${current}"]`);
       if(!currentFieldset.checkValidity()){
@@ -307,10 +307,6 @@
         el('#payloadView').textContent = 'خطا در ارسال: '+(res.error||'');
       }
     });
-
-      // tiny DOM helpers used by updateSuggestedRange
-  function $(s, root=document){ try{ return root.querySelector(s);}catch(_){return null;} }
-  function setText(el, t){ if(el) el.textContent = t; }
 
     // ---- Suggested Profit Calculation ----
     function number(v){ const n = Number(v); return Number.isFinite(n) ? n : 0 }
@@ -506,5 +502,54 @@ document.querySelectorAll('form').forEach(f=>{
   });
 });
 </script>
-</body>
+<script type="module">
+const $ = (s, r=document) => r.querySelector(s);
+const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+const steps = $$("#wizard [data-step]").map(el => Number(el.dataset.step)).sort((a,b)=>a-b);
+let current = steps[0] || 1;
+
+function show(step){
+  current = step;
+  $$("#wizard [data-step]").forEach(sec => {
+    sec.classList.toggle("hidden", Number(sec.dataset.step)!==current);
+  });
+  // ctrl buttons
+  $('#prevBtn')?.classList.toggle('hidden', current===steps[0]);
+  $('#nextBtn')?.classList.toggle('hidden', current===steps.at(-1));
+}
+
+function validateStep(step){
+  const sec = $(`#wizard [data-step="${step}"]`);
+  if(!sec) return true;
+  const invalid = $$("[required]", sec).some(inp => {
+    if(inp.type==='radio'){
+      const name = inp.name;
+      const grp = $$(`input[type=radio][name="${name}"]`, sec);
+      return !grp.some(r=>r.checked);
+    }
+    return !inp.value?.trim();
+  });
+  return !invalid;
+}
+
+$('#nextBtn')?.addEventListener('click', async () => {
+  if(!validateStep(current)) { return; }
+  const idx = steps.indexOf(current);
+  if(idx<steps.length-1){ show(steps[idx+1]); }
+});
+
+$('#prevBtn')?.addEventListener('click', () => {
+  const idx = steps.indexOf(current);
+  if(idx>0){ show(steps[idx-1]); }
+});
+
+// block default submit on Enter in intermediate steps
+$("#wizard")?.addEventListener('submit', (e)=>{
+  if(current !== steps.at(-1)) e.preventDefault();
+});
+
+// init
+show(current);
+</script></body>
 </html>
