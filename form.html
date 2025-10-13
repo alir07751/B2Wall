@@ -57,7 +57,13 @@
 .pr-end{font-feature-settings:"tnum" 1}
 .pr-legend{margin-top:.6rem;color:#4b5563;font-size:.85rem;line-height:1.7;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:.6rem .75rem}
 </style>
-</head>
+<style>
+#wizHeader{position:relative;margin-bottom:.75rem}
+#wizStepIndicator{font-size:.95rem;color:#334155;margin-bottom:.5rem}
+#wizProgress{height:6px;background:#e5e7eb;border-radius:9999px;overflow:hidden}
+#wizProgressBar{height:100%;width:0;background:#2563eb;border-radius:9999px;transition:width .25s}
+#wizChip{position:absolute;inset-inline-end:0;top:-6px;background:#eef2ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:.15rem .6rem;border-radius:9999px;font-weight:700;font-size:.85rem}
+        </style></head>
 <body class="bg-slate-50 text-slate-800">
 <header class="max-w-3xl mx-auto px-4 py-6">
 <h1 class="text-2xl md:text-3xl font-bold">ثبت پروژه برای تأمین مالی</h1>
@@ -77,7 +83,7 @@
 <!-- STEP 1 -->
 <fieldset class="space-y-4" data-step="1">
 <h2 class="font-bold text-lg">۱) اطلاعات تماس</h2>
-<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div id="wizHeader"><div data-step-indicator="1/4" id="wizStepIndicator">مرحله 1 از 4</div><div id="wizProgress"><div id="wizProgressBar"></div></div><div data-step-chip="true" id="wizChip">اطلاعات تماس</div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <div class="field">
 <label class="text-sm" for="full_name">نام و نام خانوادگی</label>
 <input class="px-3 py-2 rounded-xl border border-slate-300" id="full_name" name="full_name" placeholder="مثلاً علی حریری" required="" type="text"/>
@@ -503,77 +509,81 @@ document.querySelectorAll('form').forEach(f=>{
 });
 </script>
 <script type="module">
-const $ = (s, r=document) => r.querySelector(s);
-const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
-
+const $  = (s, r=document)=>r.querySelector(s);
+const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
 const wizard = $('#wizard');
 const sections = $$('#wizard [data-step]');
-const steps = sections.map(sec => Number(sec.dataset.step)).sort((a,b)=>a-b);
-let currentIndex = 0;
+const total = sections.length;
+let idx = 0;
 
-const stepIndicator = document.querySelector('[data-step-indicator]') || document.querySelector('.step-indicator');
-const stepChip = document.querySelector('[data-step-chip]');
-
-function sectionTitle(sec){
-  const h = sec.querySelector('h2, h3, h4, [data-title]');
-  return h ? h.textContent.trim() : ('مرحله ' + sec.dataset.step);
+function titleOf(sec){
+  const h = sec?.querySelector('[data-title], h2, h3, h4, legend');
+  return h ? h.textContent.trim() : ('مرحله ' + (Number(sec?.dataset.step)||idx+1));
 }
-
-function showStepByIndex(idx){
-  currentIndex = Math.max(0, Math.min(steps.length-1, idx));
-  const step = steps[currentIndex];
-  sections.forEach(sec => sec.classList.toggle('hidden', Number(sec.dataset.step)!==step));
-  if(stepIndicator){ stepIndicator.textContent = `مرحله ${currentIndex+1} از ${steps.length}`; }
-  if(stepChip){ stepChip.textContent = sectionTitle(sections[currentIndex]); }
+function enableSection(sec, on){
+  $$('input,select,textarea', sec).forEach(el=>{
+    el.disabled = !on;
+    el.readOnly = !on;
+    el.classList.toggle('pointer-events-none', !on);
+  });
+}
+function show(i){
+  idx = Math.max(0, Math.min(total-1, i));
+  sections.forEach((sec,k)=>{
+    const active = k===idx;
+    sec.classList.toggle('hidden', !active);
+    enableSection(sec, active);
+  });
+  // step indicator
+  const ind = $('#wizStepIndicator');
+  if(ind) ind.textContent = `مرحله ${idx+1} از ${total}`;
+  // chip
+  const chip = $('#wizChip');
+  if(chip) chip.textContent = titleOf(sections[idx]);
+  // progress
+  const bar = $('#wizProgressBar');
+  if(bar) bar.style.width = ((idx)/(Math.max(1,total-1)))*100 + '%';
   syncNextDisabled();
 }
-
 function validateCurrent(){
-  const sec = sections[currentIndex];
+  const sec = sections[idx];
   if(!sec) return true;
-  const requiredInputs = $$('[required]', sec);
-  for(const inp of requiredInputs){
-    if(inp.type === 'radio'){
-      const group = $$(`input[type="radio"][name="${inp.name}"]`, sec);
-      if(!group.some(r=>r.checked)) return false;
+  const reqs = $$('[required]', sec);
+  for(const inp of reqs){
+    if (inp.type==='radio'){
+      const grp = $$(`input[type="radio"][name="${inp.name}"]`, sec);
+      if (!grp.some(r=>r.checked)) return false;
     }else{
-      if(!String(inp.value||'').trim()) return false;
+      if (!String(inp.value||'').trim()) return false;
     }
   }
   return true;
 }
-
 function syncNextDisabled(){
-  const nextBtn = $('#nextBtn');
-  if(!nextBtn) return;
+  const next = $('#nextBtn');
+  if(!next) return;
   const ok = validateCurrent();
-  nextBtn.disabled = !ok;
-  nextBtn.classList.toggle('opacity-50', !ok);
-  nextBtn.classList.toggle('cursor-not-allowed', !ok);
+  next.disabled = !ok;
+  next.classList.toggle('opacity-50', !ok);
+  next.classList.toggle('cursor-not-allowed', !ok);
 }
-
-$('#nextBtn')?.addEventListener('click', (e)=>{
+$('#nextBtn')?.addEventListener('click', ()=>{
   if(!validateCurrent()) return;
-  showStepByIndex(currentIndex+1);
+  show(idx+1);
 });
+$('#prevBtn')?.addEventListener('click', ()=> show(idx-1));
 
-$('#prevBtn')?.addEventListener('click', (e)=>{
-  showStepByIndex(currentIndex-1);
-});
-
-['input','change','keyup','blur'].forEach(evt=>{
-  wizard?.addEventListener(evt, (e)=>{
-    if(!sections[currentIndex].contains(e.target)) return;
-    syncNextDisabled();
+['input','change','keyup','blur'].forEach(ev=>{
+  wizard?.addEventListener(ev, (e)=>{
+    const sec = sections[idx];
+    if (sec && sec.contains(e.target)) syncNextDisabled();
   });
 });
-
 wizard?.addEventListener('submit', (e)=>{
-  if(currentIndex < steps.length-1){
-    e.preventDefault();
-  }
+  if(idx < total-1) e.preventDefault();
 });
 
-showStepByIndex(0);
+// init
+show(0);
 </script></body>
 </html>
