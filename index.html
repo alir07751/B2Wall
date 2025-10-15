@@ -7,6 +7,90 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
 
+    <!-- Microsoft Clarity Tracking Code -->
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "tqiesaifez");
+        
+        // Function to capture user identifier from URL
+        function getUserIdentifier() {
+            // Get user identifier from URL parameter
+            const urlParams = new URLSearchParams(window.location.search);
+            const userParam = urlParams.get('user');
+            
+            if (userParam) {
+                // Store in localStorage for session persistence
+                localStorage.setItem('b2wall_user_identifier', userParam);
+                return userParam;
+            }
+            
+            // Check if user identifier exists in localStorage from previous visit
+            const storedUser = localStorage.getItem('b2wall_user_identifier');
+            if (storedUser) {
+                return storedUser;
+            }
+            
+            // Default identifier if none provided
+            return 'anonymous_user';
+        }
+        
+        // Function to capture UTM parameters
+        function captureUTMParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const utmParams = {};
+            
+            // Capture standard UTM parameters
+            const utmKeys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'];
+            utmKeys.forEach(key => {
+                const value = urlParams.get(key);
+                if (value) {
+                    utmParams[key] = value;
+                }
+            });
+            
+            // Store UTM params in localStorage for session persistence
+            if (Object.keys(utmParams).length > 0) {
+                localStorage.setItem('b2wall_utm_params', JSON.stringify(utmParams));
+            }
+            
+            return utmParams;
+        }
+        
+        // Set user identifier and UTM parameters for Clarity tracking once Clarity is loaded
+        window.addEventListener('load', function() {
+            if (typeof window.clarity === 'function') {
+                const userIdentifier = getUserIdentifier();
+                window.clarity("set", "userIdentifier", userIdentifier);
+                
+                // Set UTM parameters in Clarity
+                const utmParams = captureUTMParameters();
+                Object.keys(utmParams).forEach(key => {
+                    window.clarity("set", key, utmParams[key]);
+                });
+                
+                // Log to console for debugging (remove in production)
+                console.log("User Identifier:", userIdentifier);
+                console.log("UTM Parameters:", utmParams);
+            }
+        });
+        
+        // Function to track custom link clicks
+        function trackUserLink(linkName) {
+            if (typeof window.clarity === 'function') {
+                const userIdentifier = getUserIdentifier();
+                window.clarity("event", "userLinkClick", {
+                    userIdentifier: userIdentifier,
+                    linkName: linkName,
+                    timestamp: new Date().toISOString()
+                });
+            }
+        }
+    </script>
+    <!-- End Microsoft Clarity Tracking Code -->
+
     <style>
         /* ==========================
            🎯 TOKENS — قابل ویرایش سریع
@@ -110,22 +194,26 @@
     <!-- Filters -->
     <div class="mt-4 flex flex-wrap gap-2" id="filters">
         <button data-filter="all"
-                class="flt active px-3 py-1.5 rounded-full text-sm border border-blue-600 bg-blue-600 text-white">
+                class="flt active px-3 py-1.5 rounded-full text-sm border border-blue-600 bg-blue-600 text-white"
+                onclick="trackUserLink('filter_all')">
             همه
         </button>
 
         <button data-filter="open"
-                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900"
+                onclick="trackUserLink('filter_open')">
             در حال جذب
         </button>
 
         <button data-filter="completed"
-                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900"
+                onclick="trackUserLink('filter_completed')">
             تکمیل شده
         </button>
 
         <button data-filter="coming_soon"
-                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900">
+                class="flt px-3 py-1.5 rounded-full text-sm border border-slate-300 bg-white text-gray-700 hover:bg-slate-100 hover:text-gray-900"
+                onclick="trackUserLink('filter_coming_soon')">
             به‌زودی
         </button>
     </div>
@@ -259,7 +347,8 @@
             </button>
 
             
-            <a href="project.html?id=${p.id}" class="w-full inline-flex justify-center items-center gap-2 bg-white border border-slate-300 hover:border-blue-400 hover:shadow text-blue-700 px-3 py-2 rounded-xl font-semibold transition">
+            <a href="project.html?id=${p.id}" class="w-full inline-flex justify-center items-center gap-2 bg-white border border-slate-300 hover:border-blue-400 hover:shadow text-blue-700 px-3 py-2 rounded-xl font-semibold transition"
+               onclick="trackUserLink('project_${p.id}')">
               اطلاعات بیشتر
             </a>
           </div>
