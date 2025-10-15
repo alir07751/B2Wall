@@ -11,7 +11,7 @@
     body{ font-family:'Vazirmatn',system-ui; }
     .card{ background:#fff; border:1px solid #e5e7eb; border-radius:1rem; box-shadow:0 8px 20px rgba(0,0,0,.05) }
     .btn{ display:inline-flex; align-items:center; justify-content:center; gap:.5rem; padding:.6rem 1rem; border-radius:.75rem; font-weight:700 }
-    .btn-primary{ background:#2563eb; color:#fff } .btn-primary:hover{ background:#1d4ed8 }
+    .btn-primary{ background:#2563eb; color:#fff } .btn-primary:hover{ background:#1d4ed8 }\n.btn-secondary{ background:#e5e7eb; color:#111827; border:1px solid #cbd5e1 } .btn-secondary:hover{ background:#d1d5db }
     .btn-ghost{ background:#fff; color:#1f2937; border:1px solid #cbd5e1 }
     .hint{ font-size:.75rem; color:#64748b }
     .bar{ height:8px; background:#e2e8f0; border-radius:9999px; overflow:hidden }
@@ -57,13 +57,7 @@
 .pr-end{font-feature-settings:"tnum" 1}
 .pr-legend{margin-top:.6rem;color:#4b5563;font-size:.85rem;line-height:1.7;background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;padding:.6rem .75rem}
 </style>
-<style>
-#wizHeader{position:relative;margin-bottom:.75rem}
-#wizStepIndicator{font-size:.95rem;color:#334155;margin-bottom:.5rem}
-#wizProgress{height:6px;background:#e5e7eb;border-radius:9999px;overflow:hidden}
-#wizProgressBar{height:100%;width:0;background:#2563eb;border-radius:9999px;transition:width .25s}
-#wizChip{position:absolute;inset-inline-end:0;top:-6px;background:#eef2ff;color:#1d4ed8;border:1px solid #bfdbfe;padding:.15rem .6rem;border-radius:9999px;font-weight:700;font-size:.85rem}
-        </style></head>
+</head>
 <body class="bg-slate-50 text-slate-800">
 <header class="max-w-3xl mx-auto px-4 py-6">
 <h1 class="text-2xl md:text-3xl font-bold">ثبت پروژه برای تأمین مالی</h1>
@@ -83,7 +77,7 @@
 <!-- STEP 1 -->
 <fieldset class="space-y-4" data-step="1">
 <h2 class="font-bold text-lg">۱) اطلاعات تماس</h2>
-<div id="wizHeader"><div data-step-indicator="1/4" id="wizStepIndicator">مرحله 1 از 4</div><div id="wizProgress"><div id="wizProgressBar"></div></div><div data-step-chip="true" id="wizChip">اطلاعات تماس</div></div><div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
 <div class="field">
 <label class="text-sm" for="full_name">نام و نام خانوادگی</label>
 <input class="px-3 py-2 rounded-xl border border-slate-300" id="full_name" name="full_name" placeholder="مثلاً علی حریری" required="" type="text"/>
@@ -105,12 +99,12 @@
 </div>
 <div class="field">
 <label class="text-sm" for="capital_required">مبلغ سرمایه موردنیاز (ریال)</label>
-<input class="px-3 py-2 rounded-xl border border-slate-300" id="capital_required" name="capital_required" placeholder="مثلاً ۲۵۰۰۰۰۰۰۰۰۰" required="" type="number"/>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="capital_required" name="capital_required" placeholder="مثلاً ۲۵۰۰۰۰۰۰۰۰۰" required="" />
 <p class="hint">عدد را بدون ویرگول وارد کنید.</p>
 </div>
 <div class="field">
 <label class="text-sm" for="tenor_months">مدت اجرای پروژه (ماه)</label>
-<input class="px-3 py-2 rounded-xl border border-slate-300" id="tenor_months" name="tenor_months" placeholder="مثلاً ۱۲" required="" type="number"/>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="tenor_months" name="tenor_months" placeholder="مثلاً ۱۲" required="" />
 </div>
 </div>
 </fieldset>
@@ -169,7 +163,7 @@
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-3">
 <div class="field">
 <label class="text-sm" for="expected_profit_pct">سود پیشنهادی شما (درصد سالانه)</label>
-<input class="px-3 py-2 rounded-xl border border-slate-300" id="expected_profit_pct" name="expected_profit_pct" placeholder="مثلاً ۵٫۵" step="0.01" type="number"/>
+<input class="px-3 py-2 rounded-xl border border-slate-300" id="expected_profit_pct" name="expected_profit_pct" placeholder="مثلاً ۵٫۵" step="0.01" />
 </div>
 </div>
 </fieldset>
@@ -195,9 +189,9 @@
 </div>
 </fieldset>
 <!-- Actions -->
-<div class="flex items-center pt-2 gap-2" id="actions">
-<button class="btn btn-ghost hidden" id="prevBtn" type="button">قبلی</button>
-<button class="btn btn-primary" id="nextBtn" type="button">مرحله بعد</button>
+<div class="flex items-center pt-2 gap-2 justify-end" id="actions">
+<button class="btn btn-secondary ml-2 hidden" id="prevBtn" type="button">قبلی</button>
+<button class="btn btn-primary" id="nextBtn" type="submit">مرحله بعد</button>
 </div>
 </form>
 <!-- Success -->
@@ -247,11 +241,7 @@
       el('#stepLabel').textContent = `مرحله ${toFaDigits(current)} از ${toFaDigits(steps.length)}`;
       const titles = ['اطلاعات تماس','مشخصات پروژه','شرایط مالی','ضمانت و ارسال'];
       el('#stepTitle').textContent = titles[current-1];
-      // CTA: step 1 -> visually left (ml-auto)
-      const next = el('#nextBtn');
-      if(current === 1){ next.classList.add('ml-auto'); }
-      else{ next.classList.remove('ml-auto'); }
-      // Prev visibility
+            // Prev visibility
       el('#prevBtn').classList.toggle('hidden', current === 1);
     }
     function showStep(n){
@@ -264,6 +254,7 @@
       current = n;
       setProgress();
       el('#nextBtn').textContent = (current === steps.length) ? 'ارسال درخواست' : 'مرحله بعد';
+      el('#prevBtn').classList.toggle('hidden', current === 1);
     }
 
     function setupRadios(){
@@ -282,6 +273,20 @@
       principalRadios.forEach(r=> r.addEventListener('change', refresh));
       refresh();
     }
+
+    function normalizeNumericInputs(root){
+      (root || document).querySelectorAll('input[data-numeric="true"]').forEach(inp => {
+        // Convert Persian/Arabic digits to English for processing/storage
+        const en = fa2enDigits(inp.value).replace(/[^0-9.]/g, '');
+        inp.value = en;
+      });
+    }
+    // On blur, normalize silently so validation sees English digits
+    document.addEventListener('blur', e=>{
+      if(e.target && e.target.matches('input[data-numeric="true"]')){
+        e.target.value = fa2enDigits(e.target.value).replace(/[^0-9.]/g,'');
+      }
+    }, true);
 
     // guarantees other
     el('#g_other_chk').addEventListener('change', e=>{
@@ -391,18 +396,21 @@
       } else if(payoutSel === 'یکجا'){ payout_schedule = 'پایان دوره'; }
 
       const prSel = document.querySelector('input[name="principal"]:checked')?.value;
-      let principal = prSel;
+      let principal_return_months = '';
       if(prSel === 'custom'){
-        const n = el('#principal_every_n').value;
-        principal = 'سفارشی: هر ' + n + ' ماه';
-      } else if(prSel === 'یکجا'){ principal = 'پایان دوره'; }
+        const n = Number(fa2en(el('#principal_every_n').value));
+        principal_return_months = Number.isFinite(n) ? n : '';
+      } else if(prSel === 'یکجا'){
+        const t = Number(fa2en(el('#tenor_months').value));
+        principal_return_months = Number.isFinite(t) ? t : '';
+      } else { principal_return_months = 1; }
 
       const gs = els('.g').filter(x=>x.checked).map(x=> x.value);
       const other = el('#g_other_chk').checked ? (el('#g_other_text').value.trim() || 'سایر') : null;
       if(other) gs.push('سایر: ' + other);
 
       let profit = el('#expected_profit_pct').value.trim();
-      profit = profit ? Number(profit.replace(',', '.')) : null;
+      profit = profit ? Number(fa2en(profit).replace(',', '.')) : null;
 
       const [minS, maxS] = calcRange();
 
@@ -411,17 +419,23 @@
         title: el('#project_title').value.trim(),
         description: '',
         image: null,
-        status: 'به زودی',
-        capital_required: Number(el('#capital_required').value),
+        status: 'coming_soon',
+        capital_required: Number(fa2en(el('#capital_required').value)),
         capital_raised: 0,
-        tenor_months: Number(el('#tenor_months').value),
+        tenor_months: Number(fa2en(el('#tenor_months').value)),
         expected_profit_pct: Number.isFinite(profit) ? profit : null,
         suggested_profit_pct_range: [minS, maxS],
         payout_schedule,
-        principal_return: principal,
+        principal_return_months,
         guarantees: gs
       };
     }
+
+    // init
+    setupRadios();
+    showStep(1);
+    updateSuggestedRange();
+  </script>
 
     // init
     setupRadios();
@@ -509,56 +523,65 @@ document.querySelectorAll('form').forEach(f=>{
 });
 </script>
 <script type="module">
-const $  = (s, r=document)=>r.querySelector(s);
-const $$ = (s, r=document)=>Array.from(r.querySelectorAll(s));
-const wizard = $('#wizard');
-const sections = $$('#wizard [data-step]');
-const total = sections.length;
-let idx = 0;
+// Minimal wiring using existing DOM only (no new nodes)
+const $ = (s, r=document)=>r.querySelector(s);
+const $$= (s, r=document)=>Array.from(r.querySelectorAll(s));
+
+const wizard   = $('#wizard');
+function en2faDigits(s){return String(s).replace(/[0-9]/g,d=>'۰۱۲۳۴۵۶۷۸۹'[Number(d)]);}
+const stepsEls = $$('#wizard [data-step]');
+const total    = stepsEls.length;
+
+const chip     = $('#stepTitle'); // pill chip
+const stepTxt  = $('#stepLabel'); // "مرحله ۱ از ۴"
+const bar      = $('#progress');  // inner <i> of progress
+
+let current = 1;
 
 function titleOf(sec){
-  const h = sec?.querySelector('[data-title], h2, h3, h4, legend');
-  return h ? h.textContent.trim() : ('مرحله ' + (Number(sec?.dataset.step)||idx+1));
+  const h = sec.querySelector('h2, [data-title]');
+  return h ? h.textContent.trim().replace(/^\d+\)\s*/, '') : '';
 }
-function enableSection(sec, on){
+
+function enable(sec, on){
   $$('input,select,textarea', sec).forEach(el=>{
     el.disabled = !on;
     el.readOnly = !on;
     el.classList.toggle('pointer-events-none', !on);
   });
 }
-function show(i){
-  idx = Math.max(0, Math.min(total-1, i));
-  sections.forEach((sec,k)=>{
-    const active = k===idx;
+
+function showStep(n){
+  current = Math.max(1, Math.min(total, n));
+  stepsEls.forEach(sec => {
+    const active = Number(sec.dataset.step) === current;
     sec.classList.toggle('hidden', !active);
-    enableSection(sec, active);
+    // Ensure the whole fieldset isn't disabled when active
+    sec.disabled = !active;
+    enable(sec, active);
   });
-  // step indicator
-  const ind = $('#wizStepIndicator');
-  if(ind) ind.textContent = `مرحله ${idx+1} از ${total}`;
-  // chip
-  const chip = $('#wizChip');
-  if(chip) chip.textContent = titleOf(sections[idx]);
-  // progress
-  const bar = $('#wizProgressBar');
-  if(bar) bar.style.width = ((idx)/(Math.max(1,total-1)))*100 + '%';
+  // update header bits with Persian digits
+  if(stepTxt) stepTxt.textContent = `مرحله ${en2faDigits(current)} از ${en2faDigits(total)}`;
+  if(chip)    chip.textContent    = titleOf(stepsEls[current-1]) || chip.textContent;
+  if(bar)     bar.style.width     = ((current-1)/Math.max(1,total-1))*100 + '%';
   syncNextDisabled();
 }
+
 function validateCurrent(){
-  const sec = sections[idx];
+  const sec = stepsEls[current-1];
   if(!sec) return true;
   const reqs = $$('[required]', sec);
   for(const inp of reqs){
-    if (inp.type==='radio'){
-      const grp = $$(`input[type="radio"][name="${inp.name}"]`, sec);
-      if (!grp.some(r=>r.checked)) return false;
+    if(inp.type==='radio'){
+      const group = $$(`input[type="radio"][name="${inp.name}"]`, sec);
+      if(!group.some(r=>r.checked)) return false;
     }else{
-      if (!String(inp.value||'').trim()) return false;
+      if(!String(inp.value||'').trim()) return false;
     }
   }
   return true;
 }
+
 function syncNextDisabled(){
   const next = $('#nextBtn');
   if(!next) return;
@@ -567,23 +590,38 @@ function syncNextDisabled(){
   next.classList.toggle('opacity-50', !ok);
   next.classList.toggle('cursor-not-allowed', !ok);
 }
+
 $('#nextBtn')?.addEventListener('click', ()=>{
   if(!validateCurrent()) return;
-  show(idx+1);
+  showStep(current+1);
 });
-$('#prevBtn')?.addEventListener('click', ()=> show(idx-1));
+$('#prevBtn')?.addEventListener('click', ()=> showStep(current-1));
 
 ['input','change','keyup','blur'].forEach(ev=>{
   wizard?.addEventListener(ev, (e)=>{
-    const sec = sections[idx];
-    if (sec && sec.contains(e.target)) syncNextDisabled();
+    const sec = stepsEls[current-1];
+    if(sec && sec.contains(e.target)) syncNextDisabled();
   });
 });
-wizard?.addEventListener('submit', (e)=>{
-  if(idx < total-1) e.preventDefault();
-});
 
+wizard?.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  if(current < total){ return; }
+  const sec = stepsEls[current-1];
+  if(!sec || !$('#agree')?.checked){ sec?.reportValidity(); return; }
+  const payload = collect();
+  $('#payloadView').textContent = 'در حال ارسال...';
+  const res = await sendToBackend(payload);
+  if(res.ok){
+    $('#wizard').classList.add('hidden');
+    $('#success').classList.remove('hidden');
+    $('#payloadView').textContent = JSON.stringify(payload, null, 2);
+  }else{
+    alert(res.error||'خطا');
+    $('#payloadView').textContent = 'خطا در ارسال: ' + (res.error||'');
+  }
+});
 // init
-show(0);
+showStep(1);
 </script></body>
 </html>

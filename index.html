@@ -254,7 +254,7 @@
           <div class="mt-auto space-y-2">
             <button type="button"
               class="w-full inline-flex justify-center items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-xl font-semibold transition"
-              onclick="showPhone(this)">
+              data-phone="${(p.owner && p.owner.phone) ? p.owner.phone : ''}" onclick="showPhone(this)">
               📞 نمایش شماره تماس
             </button>
 
@@ -347,11 +347,14 @@
        🧭 MISC ACTIONS
        ========================== */
     function showPhone(el){
-      el.textContent = "۰۳۵۳۷۲۸۴۱۱۹";
-      el.disabled = true;
-      el.classList.remove("bg-blue-600","hover:bg-blue-700","text-white");
-      el.classList.add("bg-blue-50","text-blue-700","border","border-blue-200","cursor-default","select-text");
-    }
+  const phone = (el && el.dataset && el.dataset.phone) ? el.dataset.phone : '';
+  if(!phone){ alert('شماره تماس موجود نیست'); return; }
+  el.textContent = phone;
+  el.disabled = true;
+  el.classList.remove('bg-blue-600','hover:bg-blue-700','text-white');
+  el.classList.add('bg-blue-50','text-blue-700','border','border-blue-200','cursor-default','select-text');
+}
+
 
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", main);
