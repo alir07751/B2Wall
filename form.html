@@ -191,7 +191,7 @@
 <!-- Actions -->
 <div class="flex items-center pt-2 gap-2 justify-end" id="actions">
 <button class="btn btn-secondary ml-2 hidden" id="prevBtn" type="button">قبلی</button>
-<button class="btn btn-primary" id="nextBtn" type="submit">مرحله بعد</button>
+<button id="nextBtn"<button class="btn btn-primary" id="nextBtn" type="submit"> مرحله بعد </button>
 </div>
 </form>
 <!-- Success -->
@@ -214,7 +214,7 @@
     const API_URL  = 'https://script.google.com/macros/s/AKfycbyr5xE9Zt9L5P4_JrZ84pGUmDBAQPt6S06zDCxSmLKVxOLjr6NktDhK65rTzsF4oxM/exec';
     const API_TOKEN= '10HyRsljb1Q05x3RGyOMZDdVJB2xFwUnughr3'; // optional, if used on backend
 
-    async async function sendToBackend(project){
+    async function sendToBackend(project){
       try{
         const body = new URLSearchParams({ action:'create', token: API_TOKEN, payload: JSON.stringify({ project }) });
         const res  = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, body });
@@ -231,6 +231,7 @@
 
     const el = s => document.querySelector(s);
     const els = s => Array.from(document.querySelectorAll(s));
+    const fa2en = s => (s+'').replace(/[\u06F0-\u06F9]/g, d=> '۰۱۲۳۴۵۶۷۸۹'.indexOf(d));
 
     const toFaDigits = s => String(s).replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[Number(d)]);
     const faPercent = n => toFaDigits(n.toFixed(1).replace('.', '٫')) + '٪';
@@ -244,9 +245,12 @@
             // Prev visibility
       el('#prevBtn').classList.toggle('hidden', current === 1);
     }
-    function showStep(n){
+    function showStep(n) {
       steps.forEach(i => {
-        const sec = el(`[data-step="${i}"]`);
+        const sec = el(`[data-step="${i
+  const nextBtn = document.getElementById('nextBtn');
+  if(nextBtn){ nextBtn.textContent = (current===steps.length ? 'ارسال اطلاعات' : 'مرحله بعد'); }
+}"]`);
         if(!sec) return;
         sec.classList.toggle('hidden', i !== n);
         sec.disabled = i !== n;                 // avoid validation on hidden
@@ -428,11 +432,14 @@
       };
     }
 
-    // init
+    document.addEventListener('DOMContentLoaded', function(){
+  try{
     setupRadios();
     showStep(1);
     updateSuggestedRange();
-  </script>
+  }catch(e){ console.error(e); }
+});
+</script>
 <script type="module">
 (function(){
   var MIN_SCALE=3, MAX_SCALE=10;
@@ -595,27 +602,11 @@ $('#prevBtn')?.addEventListener('click', ()=> showStep(current-1));
   });
 });
 
-wizard?.addEventListener('submit', async (e)=>{
-  e.preventDefault();
-  if(current < total){ return; }
-  const sec = stepsEls[current-1];
-  if(!sec || !el('#agree')?.checked){ sec?.reportValidity(); return; }
-  const payload = collect();
-  el('#payloadView').textContent = 'در حال ارسال...';
-  const res = await sendToBackend(payload);
-  if(res.ok){
-    el('#wizard').classList.add('hidden');
-    el('#success').classList.remove('hidden');
-    el('#payloadView').textContent = JSON.stringify(payload, null, 2);
-  }else{
-    alert(res.error||'خطا');
-    el('#payloadView').textContent = 'خطا در ارسال: ' + (res.error||'');
-  }
+wizard?.addEventListener('submit', (e)=>{
+  if(current < total){ e.preventDefault(); }
 });
-// init
-setupRadios();
-showStep(1);
-updateSuggestedRange();
 
+// init
+showStep(1);
 </script></body>
 </html>
