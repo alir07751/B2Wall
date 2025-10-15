@@ -247,10 +247,7 @@
     }
     function showStep(n) {
       steps.forEach(i => {
-        const sec = el(`[data-step="${i
-  const nextBtn = document.getElementById('nextBtn');
-  if(nextBtn){ nextBtn.textContent = (current===steps.length ? 'ارسال اطلاعات' : 'مرحله بعد'); }
-}"]`);
+        const sec = el(`[data-step="${i}"]`);
         if(!sec) return;
         sec.classList.toggle('hidden', i !== n);
         sec.disabled = i !== n;                 // avoid validation on hidden
@@ -300,7 +297,7 @@
 
     // Prev/Next
     el('#prevBtn').addEventListener('click', ()=> showStep(Math.max(1, current-1)));
-    el('#wizard').addEventListener('submit', (e)=>{
+    el('#wizard').addEventListener('submit', async (e)=>{  // Make this async
       e.preventDefault();
       const currentFieldset = el(`[data-step="${current}"]`);
       if(!currentFieldset.checkValidity()){
@@ -312,7 +309,7 @@
 
       const payload = collect();
       el('#payloadView').textContent = 'در حال ارسال...';
-      const res = await sendToBackend(payload);
+      const res = await sendToBackend(payload);  // Now await is valid
       if(res.ok){
         el('#wizard').classList.add('hidden');
         el('#success').classList.remove('hidden');
@@ -533,8 +530,6 @@ const total    = stepsEls.length;
 const chip     = $('#stepTitle'); // pill chip
 const stepTxt  = $('#stepLabel'); // "مرحله ۱ از ۴"
 const bar      = $('#progress');  // inner <i> of progress
-
-let current = 1;
 
 function titleOf(sec){
   const h = sec.querySelector('h2, [data-title]');
