@@ -194,14 +194,22 @@
 <button id="nextBtn"<button class="btn btn-primary" id="nextBtn" type="submit"> مرحله بعد </button>
 </div>
 </form>
+<!-- Loading -->
+<section class="hidden text-center py-10" id="loading">
+<div class="flex justify-center mb-4">
+<div class="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+</div>
+<h3 class="text-xl font-bold mt-4">در حال ثبت اطلاعات</h3>
+<p class="text-slate-600 mt-2">لطفاً صبر کنید، اطلاعات شما در حال ثبت است...</p>
+</section>
+
 <!-- Success -->
 <section class="hidden text-center py-10" id="success">
 <div class="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
 <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="m5 13 4 4L19 7" stroke-linecap="round" stroke-width="2"></path></svg>
 </div>
 <h3 class="text-xl font-bold mt-4">درخواست شما ثبت شد</h3>
-<p class="text-slate-600 mt-2">خلاصه اطلاعات در پایین قابل مشاهده است. به‌زودی با شما تماس می‌گیریم.</p>
-<pre class="text-left bg-slate-50 border border-slate-200 rounded-xl p-3 mt-6 overflow-auto text-xs" id="payloadView"></pre>
+<p class="text-slate-600 mt-2">اطلاعات شما با موفقیت ثبت شد. به‌زودی با شما تماس می‌گیریم.</p>
 <div class="mt-6 flex items-center justify-center gap-2">
 <a class="btn btn-ghost" href="index.html">بازگشت به ویترین</a>
 </div>
@@ -308,15 +316,27 @@
       if(!el('#agree').checked){ currentFieldset.reportValidity(); return; }
 
       const payload = collect();
-      el('#payloadView').textContent = 'در حال ارسال...';
+      
+      // Hide the form elements and show loading indicator
+      el('#stepTitle').parentElement.classList.add('hidden');
+      el('#progress').parentElement.classList.add('hidden');
+      el('#wizard').classList.add('hidden');
+      el('#loading').classList.remove('hidden');
+      
       const res = await sendToBackend(payload);  // Now await is valid
+      
+      // Hide loading indicator
+      el('#loading').classList.add('hidden');
+      
       if(res.ok){
-        el('#wizard').classList.add('hidden');
+        // Show success section
         el('#success').classList.remove('hidden');
-        el('#payloadView').textContent = JSON.stringify(payload, null, 2);
       }else{
+        // Show form again if there's an error
+        el('#stepTitle').parentElement.classList.remove('hidden');
+        el('#progress').parentElement.classList.remove('hidden');
+        el('#wizard').classList.remove('hidden');
         alert(res.error||'خطا');
-        el('#payloadView').textContent = 'خطا در ارسال: '+(res.error||'');
       }
     });
 
@@ -393,34 +413,49 @@
       let payout_schedule = payoutSel;
       if(payoutSel === 'custom'){
         const n = el('#payout_every_n').value;
-        payout_schedule = 'سفارشی: هر ' + n + ' ماه';
+        payout_schedule = 'هر ' + n + ' ماه';
       } else if(payoutSel === 'یکجا'){ payout_schedule = 'پایان دوره'; }
 
       const prSel = document.querySelector('input[name="principal"]:checked')?.value;
       let principal = prSel;
       if(prSel === 'custom'){
         const n = el('#principal_every_n').value;
-        principal = 'سفارشی: هر ' + n + ' ماه';
+        principal = 'هر ' + n + ' ماه';
       } else if(prSel === 'یکجا'){ principal = 'پایان دوره'; }
 
       const gs = els('.g').filter(x=>x.checked).map(x=> x.value);
       const other = el('#g_other_chk').checked ? (el('#g_other_text').value.trim() || 'سایر') : null;
-      if(other) gs.push('سایر: ' + other);
+      // Remove the "سایر" checkbox value and only add the custom text
+      const otherIndex = gs.indexOf('سایر');
+      if(otherIndex !== -1) {
+        gs.splice(otherIndex, 1);
+        if(other) gs.push(other);
+      }
 
+      // Convert Persian digits to English for all text inputs
       let profit = el('#expected_profit_pct').value.trim();
-      profit = profit ? Number(profit.replace(',', '.')) : null;
+      profit = profit ? Number(fa2en(profit).replace(',', '.')) : null;
+      
+      let capitalRequired = el('#capital_required').value.trim();
+      capitalRequired = capitalRequired ? Number(fa2en(capitalRequired)) : null;
+      
+      let tenorMonths = el('#tenor_months').value.trim();
+      tenorMonths = tenorMonths ? Number(fa2en(tenorMonths)) : null;
 
       const [minS, maxS] = calcRange();
 
       return {
-        owner: { name: el('#full_name').value.trim(), phone: el('#phone').value.trim() },
+        owner: { 
+          name: el('#full_name').value.trim(), 
+          phone: fa2en(el('#phone').value.trim()) // Convert Persian digits in phone
+        },
         title: el('#project_title').value.trim(),
         description: '',
         image: null,
         status: 'به زودی',
-        capital_required: Number(el('#capital_required').value),
+        capital_required: capitalRequired,
         capital_raised: 0,
-        tenor_months: Number(el('#tenor_months').value),
+        tenor_months: tenorMonths,
         expected_profit_pct: Number.isFinite(profit) ? profit : null,
         suggested_profit_pct_range: [minS, maxS],
         payout_schedule,
