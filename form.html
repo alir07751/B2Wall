@@ -214,7 +214,7 @@
     const API_URL  = 'https://script.google.com/macros/s/AKfycbyr5xE9Zt9L5P4_JrZ84pGUmDBAQPt6S06zDCxSmLKVxOLjr6NktDhK65rTzsF4oxM/exec';
     const API_TOKEN= '10HyRsljb1Q05x3RGyOMZDdVJB2xFwUnughr3'; // optional, if used on backend
 
-    async function sendToBackend(project){
+    async async function sendToBackend(project){
       try{
         const body = new URLSearchParams({ action:'create', token: API_TOKEN, payload: JSON.stringify({ project }) });
         const res  = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, body });
@@ -396,21 +396,18 @@
       } else if(payoutSel === 'یکجا'){ payout_schedule = 'پایان دوره'; }
 
       const prSel = document.querySelector('input[name="principal"]:checked')?.value;
-      let principal_return_months = '';
+      let principal = prSel;
       if(prSel === 'custom'){
-        const n = Number(fa2en(el('#principal_every_n').value));
-        principal_return_months = Number.isFinite(n) ? n : '';
-      } else if(prSel === 'یکجا'){
-        const t = Number(fa2en(el('#tenor_months').value));
-        principal_return_months = Number.isFinite(t) ? t : '';
-      } else { principal_return_months = 1; }
+        const n = el('#principal_every_n').value;
+        principal = 'سفارشی: هر ' + n + ' ماه';
+      } else if(prSel === 'یکجا'){ principal = 'پایان دوره'; }
 
       const gs = els('.g').filter(x=>x.checked).map(x=> x.value);
       const other = el('#g_other_chk').checked ? (el('#g_other_text').value.trim() || 'سایر') : null;
       if(other) gs.push('سایر: ' + other);
 
       let profit = el('#expected_profit_pct').value.trim();
-      profit = profit ? Number(fa2en(profit).replace(',', '.')) : null;
+      profit = profit ? Number(profit.replace(',', '.')) : null;
 
       const [minS, maxS] = calcRange();
 
@@ -419,24 +416,20 @@
         title: el('#project_title').value.trim(),
         description: '',
         image: null,
-        status: 'coming_soon',
-        capital_required: Number(fa2en(el('#capital_required').value)),
+        status: 'به زودی',
+        capital_required: Number(el('#capital_required').value),
         capital_raised: 0,
-        tenor_months: Number(fa2en(el('#tenor_months').value)),
+        tenor_months: Number(el('#tenor_months').value),
         expected_profit_pct: Number.isFinite(profit) ? profit : null,
         suggested_profit_pct_range: [minS, maxS],
         payout_schedule,
-        principal_return_months,
+        principal_return: principal,
         guarantees: gs
       };
     }
 
-    // setupRadios();
-    showStep(1);
-    updateSuggestedRange();
-  </script>
-
-    // setupRadios();
+    // init
+    setupRadios();
     showStep(1);
     updateSuggestedRange();
   </script>
@@ -606,20 +599,23 @@ wizard?.addEventListener('submit', async (e)=>{
   e.preventDefault();
   if(current < total){ return; }
   const sec = stepsEls[current-1];
-  if(!sec || !$('#agree')?.checked){ sec?.reportValidity(); return; }
+  if(!sec || !el('#agree')?.checked){ sec?.reportValidity(); return; }
   const payload = collect();
-  $('#payloadView').textContent = 'در حال ارسال...';
+  el('#payloadView').textContent = 'در حال ارسال...';
   const res = await sendToBackend(payload);
   if(res.ok){
-    $('#wizard').classList.add('hidden');
-    $('#success').classList.remove('hidden');
-    $('#payloadView').textContent = JSON.stringify(payload, null, 2);
+    el('#wizard').classList.add('hidden');
+    el('#success').classList.remove('hidden');
+    el('#payloadView').textContent = JSON.stringify(payload, null, 2);
   }else{
     alert(res.error||'خطا');
-    $('#payloadView').textContent = 'خطا در ارسال: ' + (res.error||'');
+    el('#payloadView').textContent = 'خطا در ارسال: ' + (res.error||'');
   }
 });
 // init
+setupRadios();
 showStep(1);
+updateSuggestedRange();
+
 </script></body>
 </html>
