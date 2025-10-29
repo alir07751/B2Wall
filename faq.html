@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>سوالات متداول | B2Wall</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Vazirmatn', system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic", sans-serif;
+        }
+
+        .faq-item {
+            transition: all 0.3s ease;
+        }
+
+        .faq-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 500px;
+            padding-top: 1rem;
+        }
+
+        .faq-item.active .faq-icon {
+            transform: rotate(180deg);
+        }
+
+        .faq-icon {
+            transition: transform 0.3s ease;
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        /* Floating CTA Styles */
+        .cta-box {
+            transition: all 0.5s ease-out;
+        }
+
+        .cta-box.floating {
+            position: fixed;
+            left: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1000;
+            animation: slideInFromLeft 0.5s ease-out;
+        }
+
+        @keyframes slideInFromLeft {
+            from {
+                left: -350px;
+                opacity: 0;
+            }
+            to {
+                left: 20px;
+                opacity: 1;
+            }
+        }
+
+        .cta-box.floating:hover {
+            transform: translateY(-50%) scale(1.02);
+        }
+
+        @media (max-width: 1024px) {
+            .cta-box.floating {
+                position: fixed;
+                left: 50%;
+                top: auto;
+                bottom: 20px;
+                transform: translateX(-50%);
+                width: calc(100% - 40px);
+                max-width: 400px;
+            }
+
+            .cta-box.floating:hover {
+                transform: translateX(-50%) scale(1.02);
+            }
+
+            @keyframes slideInFromLeft {
+                from {
+                    bottom: -250px;
+                    opacity: 0;
+                }
+                to {
+                    bottom: 20px;
+                    opacity: 1;
+                }
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-gray-800">
+
+<!-- Header -->
+<header class="max-w-4xl mx-auto px-4 py-8">
+    <div class="text-center">
+        <h1 class="text-3xl md:text-4xl font-bold mb-3">سوالات متداول</h1>
+        <p class="text-gray-600 text-lg">پاسخ سوالات رایج در مورد پلتفرم B2Wall</p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-6 flex flex-col sm:flex-row justify-center items-center gap-3">
+        <a href="https://b2wall.darkube.app/" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition font-semibold min-w-[200px]">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            بازگشت به صفحه اصلی
+        </a>
+        
+        <!-- Static CTA (will become floating on scroll) -->
+        <div id="ctaBox" class="cta-box">
+            <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg px-6 py-3 min-w-[200px]">
+                <a href="form.html" class="flex items-center justify-center gap-2 text-white font-semibold hover:text-blue-100 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    ثبت درخواست تامین مالی
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Box -->
+    <div class="mt-6">
+        <div class="relative">
+            <input type="text" id="searchBox" placeholder="جستجوی سوال..." 
+                   class="w-full px-4 py-3 pr-12 rounded-xl border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+            <svg class="w-5 h-5 absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+        </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="mt-4 flex flex-wrap gap-2 justify-center">
+        <button class="category-filter active category-badge bg-blue-600 text-white" data-category="all">همه</button>
+        <button class="category-filter category-badge bg-white text-gray-700 border border-slate-300" data-category="general">عمومی</button>
+        <button class="category-filter category-badge bg-white text-gray-700 border border-slate-300" data-category="loan">وام و تامین مالی</button>
+        <button class="category-filter category-badge bg-white text-gray-700 border border-slate-300" data-category="contact">تماس و آدرس</button>
+        <button class="category-filter category-badge bg-white text-gray-700 border border-slate-300" data-category="requirements">مدارک و شرایط</button>
+    </div>
+</header>
+
+<!-- FAQ Content -->
+<main class="max-w-4xl mx-auto px-4 pb-12">
+    <div id="faqContainer" class="space-y-4">
+        <!-- FAQ items will be inserted here by JavaScript -->
+    </div>
+
+    <div id="noResults" class="hidden text-center py-12">
+        <svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <p class="text-gray-500 text-lg">متأسفانه نتیجه‌ای یافت نشد</p>
+    </div>
+</main>
+
+<!-- Footer -->
+<footer class="max-w-4xl mx-auto px-4 py-8 border-t border-slate-200">
+    <div class="text-center text-gray-600">
+        <p class="mb-4 text-lg font-semibold">سوال دیگری دارید؟</p>
+        <div class="space-y-3">
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <a href="tel:03537284118" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                    </svg>
+                    03537284118
+                </a>
+                <span class="hidden sm:inline text-gray-400">|</span>
+                <a href="tel:09215065925" class="inline-flex items-center gap-2 text-blue-600 hover:text-blue-700 font-semibold">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                    </svg>
+                    09215065925
+                </a>
+            </div>
+            <p class="text-sm text-gray-500">یزد، خیابان شهید مطهری، پارک فناوری اقبال</p>
+        </div>
+    </div>
+</footer>
+
+<script>
+    // FAQ Data - Optimized and Sorted by Importance
+    const faqData = [
+        // 1. What is B2Wall? - Most fundamental question
+        {
+            category: "general",
+            question: "B2Wall چیست؟",
+            answer: "B2Wall یک پلتفرم تامین مالی است که به کسب‌وکارهای تولیدی کمک می‌کند تا مواد اولیه و تجهیزات مورد نیاز خود را تهیه کنند. ما هزینه را مستقیماً به فروشنده پرداخت کرده و مبلغ را به‌صورت اقساطی از شما دریافت می‌کنیم."
+        },
+        // 2. Contact Information - Critical for engagement
+        {
+            category: "contact",
+            question: "چگونه می‌توانم با شما تماس بگیرم و اطلاعات بیشتری دریافت کنم؟",
+            answer: "تلفن ثابت: 03537284118<br>تلفن همراه: 09215065925<br><br>برای مشاهده پروژه‌های تامین‌مالی شده و یا پروژه‌های تکمیل شده، می‌توانید به <a href='https://b2wall.darkube.app/' class='text-blue-600 hover:underline' target='_blank'>صفحه اصلی</a> مراجعه کنید."
+        },
+        // 3. Financing Method - Core service explanation
+        {
+            category: "loan",
+            question: "تامین مالی در مجموعه شما به چه صورت انجام می‌شود؟",
+            answer: "محور اصلی خدمات ما، تأمین مواد اولیه و تجهیزات مورد نیاز کسب‌وکار شماست. بدین صورت که ما هزینه را مستقیماً به فروشنده پرداخت کرده و مبلغ را به‌صورت اقساطی از شما دریافت می‌کنیم. این روش باعث تسهیل در فرآیند خرید و کاهش دغدغه‌های نقدینگی می‌شود."
+        },
+        // 4. Loan Ceiling - Key financial info
+        {
+            category: "loan",
+            question: "سقف وام برای اولین درخواست چقدر است؟",
+            answer: "حداکثر مبلغ وام برای اولین درخواست، ۱ میلیارد تومان در نظر گرفته شده است. این سقف در صورتی که بتوانید وثیقه ملکی یا ضمانت‌نامه بانکی در اختیار ما قراردهید، می‌تواند افزایش یابد."
+        },
+        // 5. Required Documents - Essential for application
+        {
+            category: "requirements",
+            question: "مدارک لازم برای دریافت وام چیست؟",
+            answer: "مدارک مورد نیاز شامل موارد زیر است:<br>• فاکتور رسمی خرید کالا یا تجهیزات<br>• چک صیادی ضامن و خریدار<br>• اعتبارسنجی بانکی<br>• گردش حساب یکساله با فرمت اکسل<br>• تصویر کارت ملی و شناسنامه"
+        },
+        // 6. Interest Rate - Major decision factor
+        {
+            category: "loan",
+            question: "نرخ سود و شرایط پرداخت اقساط چگونه است؟",
+            answer: "نرخ سود و طرح پرداخت اقساط، مبتنی بر ارزیابی جامع از پرونده شما شامل: اعتبارسنجی، گردش مالی، مبلغ درخواستی و نوع تضامین است. برای دریافت جزییات دقیق، کارشناسان ما پس از بررسی مدارک، طرح اختصاصی شما را اعلام می‌کنند.<br><br>می‌توانید برای دریافت توضیحات تکمیلی و حدود نرخ سود با ما تماس بگیرید: 03537284118"
+        },
+        // 7. Loan Duration - Important timing info
+        {
+            category: "loan",
+            question: "مدت زمان طرح‌ها و اقساط به چه صورت است؟",
+            answer: "اغلب تامین مالی‌ها با مدت زمان نهایتاً ۱۲ ماهه صورت می‌پذیرد مگر در مواردی که امکان تغییر شرایط طی مذاکره امکان پذیر باشد."
+        },
+        // 8. Collateral Requirements - Critical for approval
+        {
+            category: "requirements",
+            question: "نوع و میزان تضامین (ضمانت) مورد نیاز چگونه تعیین می‌شود؟",
+            answer: "نوع وثیقه یا تضمین دریافتی، مستقیماً به اعتبارسنجی بانکی بستگی دارد. برای دریافت اعتبارسنجی بانکی خودتان می‌توانید با ما تماس بگیرید: 03537284118<br><br>لازم به ذکر است با افزایش مبلغ، سطح تضمین‌های مورد نیاز نیز تغییر می‌کند."
+        },
+        // 9. Credit Issues - Common concern
+        {
+            category: "requirements",
+            question: "اگر در اعتبارسنجی مشکل داشته باشم (مانند چک برگشتی یا مسدودی حساب)، آیا همچنان می‌توانم وام دریافت کنم؟",
+            answer: "بله، این مسئله به‌طور کلی شما را از دریافت خدمات محروم نمی‌کند. ما شرایط هر متقاضی را به‌صورت موردی بررسی می‌کنیم. راه‌حل‌هایی مانند در نظر گرفتن ضامن معتبر (مانند همسر با رتبه اعتباری مناسب) یا تمرکز بر سابقه گردش حساب کسب‌وکار شما می‌تواند مؤثر واقع شود."
+        },
+        // 10. Company Address - Important contact info
+        {
+            category: "contact",
+            question: "آدرس و اطلاعات تماس شرکت کجاست؟",
+            answer: "یزد، خیابان شهید مطهری، پارک فناوری اقبال<br><br>لازم به ذکر است برای تشکیل پرونده و شروع فرآیند تامین مالی نیازی به مراجعه حضوری وجود نخواهد داشت."
+        },
+        // 11. Eligible Businesses - Service scope
+        {
+            category: "general",
+            question: "آیا می‌توانیم برای راه‌اندازی مغازه فروش کفش، کالا‌های پر مصرف و .... از تامین مالی شما استفاده کنیم؟",
+            answer: "بله، در حال حاضر تامین مالی در طرح‌های فوق و موارد مشابه نیز میسر است."
+        },
+        // 12. Vehicle Purchase - Service limitation
+        {
+            category: "general",
+            question: "آیا می‌توانیم برای خرید اتومبیل یا هر وسیله نقلیه‌ای (بجز تجهیزات و ماشین آلات کشاورزی، دامداری و صنعتی) از تامین مالی شما استفاده کنیم؟",
+            answer: "خیر، در حال حاضر امکان تامین مالی برای خرید وسائل نقلیه و اتومبیل (حتی مرتبط با کسب و کار) وجود ندارد."
+        }
+    ];
+
+    // Render FAQ items
+    function renderFAQ(items) {
+        const container = document.getElementById('faqContainer');
+        const noResults = document.getElementById('noResults');
+
+        if (items.length === 0) {
+            container.innerHTML = '';
+            noResults.classList.remove('hidden');
+            return;
+        }
+
+        noResults.classList.add('hidden');
+        
+        const categoryLabels = {
+            general: 'عمومی',
+            loan: 'وام و تامین مالی',
+            contact: 'تماس و آدرس',
+            requirements: 'مدارک و شرایط'
+        };
+
+        const categoryColors = {
+            general: 'bg-blue-100 text-blue-700',
+            loan: 'bg-green-100 text-green-700',
+            contact: 'bg-purple-100 text-purple-700',
+            requirements: 'bg-amber-100 text-amber-700'
+        };
+
+        container.innerHTML = items.map((item, index) => `
+            <div class="faq-item bg-white rounded-xl shadow-sm border border-slate-200 p-5 cursor-pointer" data-index="${index}">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1">
+                        <div class="mb-2">
+                            <span class="category-badge ${categoryColors[item.category]}">${categoryLabels[item.category]}</span>
+                        </div>
+                        <h3 class="font-bold text-lg text-gray-800">${item.question}</h3>
+                        <div class="faq-answer text-gray-600 leading-relaxed">
+                            ${item.answer}
+                        </div>
+                    </div>
+                    <svg class="faq-icon w-6 h-6 text-blue-600 flex-shrink-0 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+            </div>
+        `).join('');
+
+        // Add click handlers
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.addEventListener('click', () => {
+                item.classList.toggle('active');
+            });
+        });
+    }
+
+    // Filter by category
+    let currentCategory = 'all';
+    let currentSearchTerm = '';
+
+    function filterFAQ() {
+        let filtered = faqData;
+
+        // Filter by category
+        if (currentCategory !== 'all') {
+            filtered = filtered.filter(item => item.category === currentCategory);
+        }
+
+        // Filter by search term
+        if (currentSearchTerm) {
+            filtered = filtered.filter(item => 
+                item.question.includes(currentSearchTerm) || 
+                item.answer.includes(currentSearchTerm)
+            );
+        }
+
+        renderFAQ(filtered);
+    }
+
+    // Category filter buttons
+    document.querySelectorAll('.category-filter').forEach(btn => {
+        btn.addEventListener('click', () => {
+            // Update active state
+            document.querySelectorAll('.category-filter').forEach(b => {
+                b.classList.remove('active', 'bg-blue-600', 'text-white');
+                b.classList.add('bg-white', 'text-gray-700', 'border', 'border-slate-300');
+            });
+            btn.classList.remove('bg-white', 'text-gray-700', 'border', 'border-slate-300');
+            btn.classList.add('active', 'bg-blue-600', 'text-white');
+
+            currentCategory = btn.dataset.category;
+            filterFAQ();
+        });
+    });
+
+    // Search functionality
+    const searchBox = document.getElementById('searchBox');
+    searchBox.addEventListener('input', (e) => {
+        currentSearchTerm = e.target.value.trim();
+        filterFAQ();
+    });
+
+    // Initial render
+    renderFAQ(faqData);
+
+    // CTA scroll behavior - transform from static to floating
+    const ctaBox = document.getElementById('ctaBox');
+    const ctaOriginalParent = ctaBox.parentElement;
+    const ctaPlaceholder = document.createElement('div');
+    let isFloating = false;
+
+    window.addEventListener('scroll', () => {
+        const scrollPosition = window.scrollY;
+        
+        // Transform to floating after scrolling 150px
+        if (scrollPosition > 150 && !isFloating) {
+            // Create placeholder to maintain layout
+            ctaPlaceholder.style.height = ctaBox.offsetHeight + 'px';
+            ctaPlaceholder.style.width = ctaBox.offsetWidth + 'px';
+            ctaPlaceholder.style.display = 'inline-block';
+            
+            // Replace original with placeholder
+            ctaOriginalParent.insertBefore(ctaPlaceholder, ctaBox);
+            
+            // Transform to floating with expanded content
+            ctaBox.innerHTML = `
+                <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-2xl shadow-2xl p-6 max-w-xs">
+                    <div class="text-white text-center">
+                        <svg class="w-12 h-12 mx-auto mb-3 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-xl font-bold mb-2">آماده دریافت وام؟</h3>
+                        <p class="text-blue-50 text-sm mb-4">در چند قدم ساده درخواست خود را ثبت کنید</p>
+                        <a href="form.html" class="block w-full bg-white text-blue-600 font-bold py-3 px-4 rounded-lg hover:bg-blue-50 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
+                            ثبت درخواست تامین مالی
+                        </a>
+                        <a href="tel:03537284118" class="block w-full mt-3 bg-blue-800 bg-opacity-50 text-white font-semibold py-2 px-4 rounded-lg hover:bg-opacity-70 transition-all text-sm">
+                            <svg class="w-4 h-4 inline-block ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
+                            </svg>
+                            <span dir="ltr">تماس فوری: 03537284118</span>
+                        </a>
+                        <p class="text-blue-100 text-xs mt-3">✨ بدون نیاز به مراجعه حضوری</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(ctaBox);
+            ctaBox.classList.add('floating');
+            isFloating = true;
+            
+        } else if (scrollPosition <= 150 && isFloating) {
+            // Restore to original static position
+            ctaBox.classList.remove('floating');
+            ctaBox.innerHTML = `
+                <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg px-6 py-3 min-w-[200px]">
+                    <a href="form.html" class="flex items-center justify-center gap-2 text-white font-semibold hover:text-blue-100 transition-all">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        ثبت درخواست تامین مالی
+                    </a>
+                </div>
+            `;
+            
+            ctaOriginalParent.replaceChild(ctaBox, ctaPlaceholder);
+            isFloating = false;
+        }
+    });
+</script>
+
+</body>
+</html>
