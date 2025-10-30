@@ -205,6 +205,32 @@
 </footer>
 
 <script>
+    // Track referral source from URL query parameters
+    (function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const source = urlParams.get('source') || urlParams.get('ref');
+        
+        if (source) {
+            // Store source in localStorage
+            localStorage.setItem('referralSource', source);
+            localStorage.setItem('referralTimestamp', new Date().toISOString());
+            
+            // Track in Clarity if available
+            if (typeof clarity !== 'undefined') {
+                clarity('set', 'referralSource', source);
+            }
+            
+            // Log for analytics (optional)
+            console.log('Referral source detected:', source);
+        }
+        
+        // Retrieve stored source for current session
+        const storedSource = localStorage.getItem('referralSource');
+        if (storedSource) {
+            console.log('User came from:', storedSource);
+        }
+    })();
+
     // FAQ Data - Optimized and Sorted by Importance
     const faqData = [
         // 1. What is B2Wall? - Most fundamental question
