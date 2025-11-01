@@ -218,19 +218,36 @@
 </main>
 <script type="module">
     // ---- Utilities ----
-    // === API (Google Apps Script or your backend) ===
-    const API_URL  = 'https://script.google.com/macros/s/AKfycbyr5xE9Zt9L5P4_JrZ84pGUmDBAQPt6S06zDCxSmLKVxOLjr6NktDhK65rTzsF4oxM/exec';
-    const API_TOKEN= '10HyRsljb1Q05x3RGyOMZDdVJB2xFwUnughr3'; // optional, if used on backend
+    // === N8n Webhook API ===
+    // Replace this URL with your actual N8n webhook URL after creating the workflow
+    const N8N_WEBHOOK_URL = 'YOUR_N8N_WEBHOOK_URL_HERE';
 
     async function sendToBackend(project){
       try{
-        const body = new URLSearchParams({ action:'create', token: API_TOKEN, payload: JSON.stringify({ project }) });
-        const res  = await fetch(API_URL, { method:'POST', headers:{ 'Content-Type':'application/x-www-form-urlencoded' }, body });
-        const data = await res.json().catch(()=>({ ok:false, error:'Bad JSON' }));
-        if(!data.ok){ throw new Error(data.error || 'خطا در ثبت اطلاعات'); }
-        return { ok:true, data };
+        // Add referral source if available
+        const referralSource = localStorage.getItem('referralSource');
+        const payload = {
+          ...project,
+          referral_source: referralSource || 'direct',
+          submitted_at: new Date().toISOString(),
+          status: 'pending' // Initial status for CRM
+        };
+
+        const res = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        if(!res.ok){
+          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json().catch(() => ({ success: true }));
+        return { ok: true, data };
       }catch(err){
-        return { ok:false, error: err.message || 'NETWORK_ERROR' };
+        console.error('Error sending to N8n:', err);
+        return { ok: false, error: err.message || 'خطا در ارتباط با سرور' };
       }
     }
     

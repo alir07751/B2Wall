@@ -1,0 +1,59 @@
+{
+  "name": "B2Wall CRM - Form to Google Sheets",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "b2wall-form-submission",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Webhook - Form Submission",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [250, 300],
+      "webhookId": "your-unique-webhook-id"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "sheetId": "YOUR_GOOGLE_SHEET_ID",
+        "range": "A:Z",
+        "options": {
+          "valueInputMode": "USER_ENTERED"
+        }
+      },
+      "name": "Google Sheets - Append Row",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 2,
+      "position": [450, 300],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "YOUR_GOOGLE_CREDENTIALS_ID",
+          "name": "Google Sheets Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"success\": true, \"message\": \"درخواست شما با موفقیت ثبت شد\", \"id\": $json.rowNumber } }}"
+      },
+      "name": "Response - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Form Submission": {
+      "main": [[{ "node": "Google Sheets - Append Row", "type": "main", "index": 0 }]]
+    },
+    "Google Sheets - Append Row": {
+      "main": [[{ "node": "Response - Success", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}
