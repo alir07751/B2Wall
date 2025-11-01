@@ -223,7 +223,6 @@
 
     async function sendToBackend(project){
       try{
-        // Data is already flat and optimized in collect() function
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -452,7 +451,7 @@
 
       const [minS, maxS] = calcRange();
 
-      // Optimized flat structure for easy CRM processing
+      // Optimized flat structure for PostgreSQL
       return {
         // Metadata
         submitted_at: new Date().toISOString(),
