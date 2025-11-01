@@ -223,19 +223,11 @@
 
     async function sendToBackend(project){
       try{
-        // Add referral source if available
-        const referralSource = localStorage.getItem('referralSource');
-        const payload = {
-          ...project,
-          referral_source: referralSource || 'direct',
-          submitted_at: new Date().toISOString(),
-          status: 'pending' // Initial status for CRM
-        };
-
+        // Data is already flat and optimized in collect() function
         const res = await fetch(N8N_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
+          body: JSON.stringify(project)
         });
 
         if(!res.ok){
@@ -460,23 +452,34 @@
 
       const [minS, maxS] = calcRange();
 
+      // Optimized flat structure for easy CRM processing
       return {
-        owner: { 
-          name: el('#full_name').value.trim(), 
-          phone: fa2en(el('#phone').value.trim()) // Convert Persian digits in phone
-        },
-        title: el('#project_title').value.trim(),
-        description: '',
-        image: null,
-        status: 'به زودی',
+        // Metadata
+        submitted_at: new Date().toISOString(),
+        status: 'pending',
+        referral_source: localStorage.getItem('referralSource') || 'direct',
+        
+        // Owner/Contact Info
+        owner_name: el('#full_name').value.trim(),
+        owner_phone: fa2en(el('#phone').value.trim()),
+        
+        // Project Details
+        project_title: el('#project_title').value.trim(),
         capital_required: capitalRequired,
-        capital_raised: 0,
         tenor_months: tenorMonths,
+        
+        // Financial Terms
         expected_profit_pct: Number.isFinite(profit) ? profit : null,
-        suggested_profit_pct_range: [minS, maxS],
-        payout_schedule,
+        suggested_profit_min: minS,
+        suggested_profit_max: maxS,
+        payout_schedule: payout_schedule,
         principal_return: principal,
-        guarantees: gs
+        guarantees: gs.join(', '),
+        
+        // CRM Fields (will be filled later)
+        notes: '',
+        approved_at: '',
+        approved_by: ''
       };
     }
 
