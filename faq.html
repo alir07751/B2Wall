@@ -7,15 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700&display=swap" rel="stylesheet">
 
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-        (function(c,l,a,r,i,t,y){
-            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-        })(window, document, "clarity", "script", "tqiesaifez");
-    </script>
-
     <style>
         body {
             font-family: 'Vazirmatn', system-ui, -apple-system, "Segoe UI", Roboto, "Noto Naskh Arabic", sans-serif;
@@ -131,19 +122,11 @@
         <p class="text-gray-600 text-lg">پاسخ سوالات رایج در مورد پلتفرم B2Wall</p>
     </div>
 
-    <!-- Navigation -->
-    <div class="mt-6 flex flex-col sm:flex-row justify-center items-stretch gap-3 max-w-2xl mx-auto">
-        <a href="https://b2wall.darkube.app/" class="flex items-center justify-center gap-2 px-6 py-3 bg-white border border-slate-300 rounded-lg hover:bg-slate-100 transition font-semibold flex-1">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-            </svg>
-            بازگشت به صفحه اصلی
-        </a>
-        
-        <!-- Static CTA (will become floating on scroll) -->
-        <div id="ctaBox" class="cta-box flex-1">
-            <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg px-6 py-3 h-full">
-                <a href="form.html" class="flex items-center justify-center gap-2 text-white font-semibold hover:text-blue-100 transition-all h-full">
+    <!-- Static CTA (will become floating on scroll) -->
+    <div class="mt-6 flex justify-center max-w-md mx-auto">
+        <div id="ctaBox" class="cta-box w-full">
+            <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-lg shadow-lg px-6 py-3">
+                <a href="form.html" class="flex items-center justify-center gap-2 text-white font-semibold hover:text-blue-100 transition-all">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
@@ -214,32 +197,6 @@
 </footer>
 
 <script>
-    // Track referral source from URL query parameters
-    (function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const source = urlParams.get('source') || urlParams.get('ref');
-        
-        if (source) {
-            // Store source in localStorage
-            localStorage.setItem('referralSource', source);
-            localStorage.setItem('referralTimestamp', new Date().toISOString());
-            
-            // Track in Clarity if available
-            if (typeof clarity !== 'undefined') {
-                clarity('set', 'referralSource', source);
-            }
-            
-            // Log for analytics (optional)
-            console.log('Referral source detected:', source);
-        }
-        
-        // Retrieve stored source for current session
-        const storedSource = localStorage.getItem('referralSource');
-        if (storedSource) {
-            console.log('User came from:', storedSource);
-        }
-    })();
-
     // FAQ Data - Optimized and Sorted by Importance
     const faqData = [
         // 1. What is B2Wall? - Most fundamental question
