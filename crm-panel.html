@@ -176,27 +176,39 @@ async function loadApplications() {
         }
         
         const data = await response.json();
-        console.log('Raw data from API:', data); // Debug log
+        console.log('✅ Raw data from API:', data);
+        console.log('📋 Data type:', typeof data);
+        console.log('📋 Is Array:', Array.isArray(data));
         
         // Handle different response formats
         if (Array.isArray(data)) {
             allApplications = data;
+            console.log('✅ Parsed as direct array');
         } else if (data.data && Array.isArray(data.data)) {
             allApplications = data.data;
-        } else if (typeof data === 'object') {
+            console.log('✅ Parsed from data.data property');
+        } else if (typeof data === 'object' && data !== null) {
             allApplications = [data];
+            console.log('✅ Wrapped single object in array');
         } else {
             allApplications = [];
+            console.log('⚠️ No valid data found, using empty array');
         }
         
-        console.log('Processed applications:', allApplications); // Debug log
+        console.log('📦 Total applications:', allApplications.length);
+        if (allApplications.length > 0) {
+            console.log('🔍 First application structure:', allApplications[0]);
+            console.log('🔍 Available fields:', Object.keys(allApplications[0]));
+        }
         
         updateCounts();
         renderApplications();
         hideLoading();
         
     } catch (error) {
-        console.error('Error loading applications:', error);
+        console.error('❌ Error loading applications:', error);
+        console.error('❌ Error details:', error.message);
+        console.error('❌ Error stack:', error.stack);
         showError(error.message);
         hideLoading();
     }
@@ -204,9 +216,11 @@ async function loadApplications() {
 
 // Render applications in Kanban columns
 function renderApplications() {
+    console.log('🎨 Rendering applications...');
     const emptyState = document.getElementById('emptyState');
     
     if (allApplications.length === 0) {
+        console.log('📭 No applications to display');
         emptyState.classList.remove('hidden');
         return;
     }
@@ -219,24 +233,36 @@ function renderApplications() {
     document.getElementById('column-rejected').innerHTML = '';
     
     // Distribute cards to columns
-    allApplications.forEach(app => {
+    allApplications.forEach((app, index) => {
+        console.log(`🎴 Rendering card ${index + 1}/${allApplications.length}:`, app);
         const card = createCard(app);
         const status = app.status || 'pending';
         const column = document.getElementById(`column-${status}`);
         if (column) {
             column.innerHTML += card;
+            console.log(`✅ Card added to ${status} column`);
+        } else {
+            console.error(`❌ Column not found for status: ${status}`);
         }
     });
+    
+    console.log('✅ Rendering complete');
 }
 
 // Create Trello-style card
 function createCard(app) {
+    console.log('🎴 Creating card for:', app);
+    
     // Safe field access with fallbacks
     const title = app.project_title || app.title || 'بدون عنوان';
     const name = app.owner_name || app.name || 'نامشخص';
     const phone = app.owner_phone || app.phone || '-';
     const capital = app.capital_required || app.capital || 0;
     const date = app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('fa-IR') : 'نامشخص';
+    
+    if (!app.id) {
+        console.warn('⚠️ Application missing ID field:', app);
+    }
     
     return `
         <div class="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-200 p-4 cursor-pointer transition-all" 
@@ -438,8 +464,9 @@ function updateCounts() {
     const approved = allApplications.filter(a => a.status === 'approved').length;
     const rejected = allApplications.filter(a => a.status === 'rejected').length;
     
+    console.log('📊 Counts:', { total, pending, approved, rejected });
+    
     document.getElementById('totalCount').textContent = `(${total} درخواست)`;
-    document.getElementById('count-all').textContent = total;
     document.getElementById('count-pending').textContent = pending;
     document.getElementById('count-approved').textContent = approved;
     document.getElementById('count-rejected').textContent = rejected;
