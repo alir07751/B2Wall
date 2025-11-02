@@ -36,6 +36,38 @@
             transform: translateY(-4px);
             box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
         }
+        
+        /* Drag and Drop Styles */
+        .dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        .drag-over {
+            background-color: #E0E7FF;
+            border: 2px dashed #4F46E5;
+        }
+        .draggable-card {
+            cursor: grab;
+        }
+        .draggable-card:active {
+            cursor: grabbing;
+        }
+        
+        /* Tag Styles */
+        .tag {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin: 0.125rem;
+        }
+        .tag-blue { background-color: #DBEAFE; color: #1E40AF; }
+        .tag-green { background-color: #D1FAE5; color: #065F46; }
+        .tag-yellow { background-color: #FEF3C7; color: #92400E; }
+        .tag-red { background-color: #FEE2E2; color: #991B1B; }
+        .tag-purple { background-color: #EDE9FE; color: #5B21B6; }
+        .tag-pink { background-color: #FCE7F3; color: #9F1239; }
     </style>
 </head>
 <body class="bg-gray-50">
@@ -153,10 +185,21 @@
 <script>
 // Configuration
 const API_URL = 'https://n8nb2wall.darkube.app/webhook-test/read-applications';
-const UPDATE_API_URL = 'https://n8nb2wall.darkube.app/webhook-test/crm-update'; // You need to create this workflow too
+const UPDATE_API_URL = 'https://n8nb2wall.darkube.app/webhook-test/crm-update';
+const DELETE_API_URL = 'https://n8nb2wall.darkube.app/webhook-test/crm-delete';
 
 let allApplications = [];
 let currentFilter = 'all';
+
+// Available tags
+const availableTags = [
+    { id: 'urgent', label: 'فوری', color: 'red' },
+    { id: 'high-value', label: 'ارزش بالا', color: 'purple' },
+    { id: 'verified', label: 'تایید شده', color: 'green' },
+    { id: 'needs-review', label: 'نیاز به بررسی', color: 'yellow' },
+    { id: 'vip', label: 'VIP', color: 'pink' },
+    { id: 'follow-up', label: 'پیگیری', color: 'blue' }
+];
 
 // Load applications on page load
 document.addEventListener('DOMContentLoaded', () => {
@@ -249,7 +292,7 @@ function renderApplications() {
     console.log('✅ Rendering complete');
 }
 
-// Create Trello-style card
+// Create Trello-style card with drag & drop and delete
 function createCard(app) {
     console.log('🎴 Creating card for:', app);
     
@@ -259,17 +302,41 @@ function createCard(app) {
     const phone = app.owner_phone || app.phone || '-';
     const capital = app.capital_required || app.capital || 0;
     const date = app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('fa-IR') : 'نامشخص';
+    const tags = app.tags || [];
     
     if (!app.id) {
         console.warn('⚠️ Application missing ID field:', app);
     }
     
+    // Generate tags HTML
+    const tagsHtml = tags.length > 0 ? `
+        <div class="flex flex-wrap gap-1 mb-2">
+            ${tags.map(tagId => {
+                const tag = availableTags.find(t => t.id === tagId);
+                return tag ? `<span class="tag tag-${tag.color}">${tag.label}</span>` : '';
+            }).join('')}
+        </div>
+    ` : '';
+    
     return `
-        <div class="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-200 p-4 cursor-pointer transition-all" 
-             onclick="showDetail(${app.id})">
-            <h4 class="font-bold text-gray-900 mb-3 text-sm line-clamp-2">${title}</h4>
+        <div class="bg-white rounded-lg shadow-sm hover:shadow-md border border-gray-200 p-4 transition-all draggable-card" 
+             draggable="true"
+             data-id="${app.id}"
+             ondragstart="handleDragStart(event)"
+             ondragend="handleDragEnd(event)">
             
-            <div class="space-y-2 text-xs text-gray-600">
+            <div class="flex justify-between items-start mb-2">
+                <h4 class="font-bold text-gray-900 text-sm line-clamp-2 flex-1 cursor-pointer" onclick="showDetail(${app.id})">${title}</h4>
+                <button onclick="deleteCard(${app.id}, event)" class="text-gray-400 hover:text-red-600 transition-colors ml-2" title="حذف کارت">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            ${tagsHtml}
+            
+            <div class="space-y-2 text-xs text-gray-600 cursor-pointer" onclick="showDetail(${app.id})">
                 <div class="flex items-center gap-2">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
@@ -286,7 +353,7 @@ function createCard(app) {
             
             <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
                 <span class="text-xs text-gray-400">${date}</span>
-                <span class="text-xs text-blue-600 font-medium">جزئیات ←</span>
+                <span class="text-xs text-blue-600 font-medium cursor-pointer" onclick="showDetail(${app.id})">جزئیات ←</span>
             </div>
         </div>
     `;
@@ -375,6 +442,24 @@ function showDetail(id) {
                         <span class="text-gray-600">ضمانت‌ها:</span>
                         <span class="font-medium">${guarantees}</span>
                     </div>
+                </div>
+            </div>
+            
+            <!-- Tags -->
+            <div>
+                <label class="block font-bold text-gray-900 mb-2">برچسب‌ها:</label>
+                <div class="flex flex-wrap gap-2 mb-3">
+                    ${availableTags.map(tag => {
+                        const isActive = (app.tags || []).includes(tag.id);
+                        return `
+                            <button 
+                                onclick="toggleTag(${app.id}, '${tag.id}')"
+                                class="tag tag-${tag.color} ${isActive ? 'ring-2 ring-offset-2 ring-' + tag.color + '-500' : 'opacity-50 hover:opacity-100'}"
+                            >
+                                ${isActive ? '✓ ' : ''}${tag.label}
+                            </button>
+                        `;
+                    }).join('')}
                 </div>
             </div>
             
@@ -513,6 +598,168 @@ document.getElementById('detailModal').addEventListener('click', (e) => {
         closeModal();
     }
 });
+
+// ========================================
+// Drag and Drop Functions
+// ========================================
+
+let draggedElement = null;
+let draggedId = null;
+
+function handleDragStart(event) {
+    draggedElement = event.target;
+    draggedId = parseInt(event.target.dataset.id);
+    event.target.classList.add('dragging');
+    console.log('👋 Drag started:', draggedId);
+}
+
+function handleDragEnd(event) {
+    event.target.classList.remove('dragging');
+    draggedElement = null;
+    console.log('👋 Drag ended');
+}
+
+function handleDragOver(event) {
+    event.preventDefault();
+    const column = event.currentTarget;
+    column.classList.add('drag-over');
+}
+
+function handleDragLeave(event) {
+    event.currentTarget.classList.remove('drag-over');
+}
+
+function handleDrop(event) {
+    event.preventDefault();
+    const column = event.currentTarget;
+    column.classList.remove('drag-over');
+    
+    const newStatus = column.id.replace('column-', '');
+    console.log(`🎯 Dropped card ${draggedId} into ${newStatus}`);
+    
+    if (draggedId && newStatus) {
+        updateCardStatus(draggedId, newStatus);
+    }
+}
+
+// Setup drag and drop for columns
+function setupDragAndDrop() {
+    const columns = ['column-pending', 'column-approved', 'column-rejected'];
+    columns.forEach(columnId => {
+        const column = document.getElementById(columnId);
+        if (column) {
+            column.addEventListener('dragover', handleDragOver);
+            column.addEventListener('dragleave', handleDragLeave);
+            column.addEventListener('drop', handleDrop);
+        }
+    });
+}
+
+// Update card status via drag & drop
+async function updateCardStatus(id, newStatus) {
+    try {
+        const response = await fetch(UPDATE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: id,
+                status: newStatus,
+                approved_at: new Date().toISOString(),
+                approved_by: 'Admin'
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('خطا در بروزرسانی');
+        }
+        
+        console.log('✅ Status updated successfully');
+        refreshData();
+        
+    } catch (error) {
+        console.error('❌ Error updating status:', error);
+        alert('خطا در بروزرسانی: ' + error.message);
+        refreshData(); // Refresh to revert UI
+    }
+}
+
+// ========================================
+// Delete Card Function
+// ========================================
+
+async function deleteCard(id, event) {
+    event.stopPropagation(); // Prevent card click
+    
+    if (!confirm('آیا مطمئن هستید که می‌خواهید این درخواست را حذف کنید؟')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(DELETE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: id })
+        });
+        
+        if (!response.ok) {
+            throw new Error('خطا در حذف');
+        }
+        
+        console.log('✅ Card deleted successfully');
+        alert('درخواست با موفقیت حذف شد');
+        refreshData();
+        
+    } catch (error) {
+        console.error('❌ Error deleting card:', error);
+        alert('خطا در حذف: ' + error.message);
+    }
+}
+
+// ========================================
+// Tag Management Functions
+// ========================================
+
+async function toggleTag(id, tagId) {
+    const app = allApplications.find(a => a.id === id);
+    if (!app) return;
+    
+    let tags = app.tags || [];
+    
+    if (tags.includes(tagId)) {
+        tags = tags.filter(t => t !== tagId);
+    } else {
+        tags.push(tagId);
+    }
+    
+    try {
+        const response = await fetch(UPDATE_API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                id: id,
+                tags: tags
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error('خطا در بروزرسانی');
+        }
+        
+        console.log('✅ Tags updated successfully');
+        
+        // Update local data and re-render
+        app.tags = tags;
+        showDetail(id); // Refresh modal
+        renderApplications(); // Refresh cards
+        
+    } catch (error) {
+        console.error('❌ Error updating tags:', error);
+        alert('خطا در بروزرسانی: ' + error.message);
+    }
+}
+
+// Initialize drag & drop on page load
+setupDragAndDrop();
 </script>
 
 </body>
