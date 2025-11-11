@@ -341,12 +341,15 @@ async function calculate() {
 
     const result = await response.json();
 
-    if (!result.success) {
+    // N8N returns array, get first item
+    const data = Array.isArray(result) ? result[0] : result;
+
+    if (!data.success) {
       throw new Error('خطا در محاسبات');
     }
 
     // Update UI with results from N8N
-    updateUI(result.data);
+    updateUI(data.data);
 
   } catch (error) {
     console.error('Error:', error);
