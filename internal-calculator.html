@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width,initial-scale=1" name="viewport"/>
+<title>محاسبه‌گر داخلی تأمین مالی | B2Wall Internal Tool</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+body{ font-family:'Vazirmatn',system-ui; background:#0f172a }
+.card{ background:#1e293b; border:1px solid #334155; border-radius:1rem; box-shadow:0 4px 24px rgba(0,0,0,.3) }
+.input-field{ width:100%; padding:.875rem 1rem; background:#0f172a; border:2px solid #334155; border-radius:.75rem; color:#e2e8f0; font-size:1rem; font-weight:600; transition:all .2s; direction:ltr; text-align:right }
+.input-field:focus{ outline:none; border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.1) }
+.btn{ padding:.75rem 1.25rem; border-radius:.75rem; font-weight:700; transition:all .2s; cursor:pointer }
+.btn-primary{ background:#3b82f6; color:#fff }
+.btn-primary:hover{ background:#2563eb; transform:translateY(-1px) }
+.result-box{ background:#0f172a; border:2px solid #334155; border-radius:.75rem; padding:1rem }
+.badge{ display:inline-flex; align-items:center; gap:.25rem; padding:.25rem .625rem; border-radius:9999px; font-size:.75rem; font-weight:600 }
+.badge-success{ background:#10b981; color:#fff }
+.badge-warning{ background:#f59e0b; color:#fff }
+.badge-info{ background:#06b6d4; color:#fff }
+label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; display:block }
+.divider{ height:1px; background:#334155; margin:1.5rem 0 }
+</style>
+</head>
+<body>
+
+<div class="min-h-screen py-8 px-4">
+<div class="max-w-6xl mx-auto">
+  
+  <!-- Header -->
+  <div class="card p-6 mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-white mb-1">🧮 محاسبه‌گر داخلی تأمین مالی</h1>
+        <p class="text-slate-400 text-sm">ابزار محاسبه پرداختی سرمایه‌گذار و دریافتی سرمایه‌پذیر</p>
+      </div>
+      <span class="badge badge-warning">Internal Tool</span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    
+    <!-- Input Section -->
+    <div class="card p-6">
+      <h2 class="text-xl font-bold text-white mb-4">📊 ورودی‌ها</h2>
+      
+      <div class="space-y-4">
+        <div>
+          <label>مبلغ فاکتور</label>
+          <input type="text" id="invoiceAmount" class="input-field" placeholder="مثال: ۵۰۰،۰۰۰،۰۰۰" value=""/>
+        </div>
+
+        <div>
+          <label>آیا کالا جزو موارد معاف از مالیات است؟</label>
+          <select id="isTaxExempt" class="input-field">
+            <option value="no">خیر، مشمول مالیات است</option>
+            <option value="yes">بله، معاف از مالیات است</option>
+          </select>
+          <div class="mt-2 p-3 bg-slate-900 rounded-lg border border-slate-700">
+            <p class="text-xs text-slate-400 leading-relaxed">
+              💡 <strong class="text-slate-300">راهنما:</strong> کالاهای معاف از ارزش افزوده شامل محصولات کشاورزی فرآوری نشده، دام و طیور زنده، آبزیان، انواع دارو و واکسن، لوازم مصرفی درمانی، فرش دستباف، محصولات لبنی (شیر، پنیر، ماست)، آرد، نان و تجهیزات دفاعی است.
+            </p>
+          </div>
+        </div>
+
+        <div id="vatQuestionSection">
+          <label>آیا فاکتور شامل ۱۰٪ ارزش افزوده است؟</label>
+          <select id="hasVAT" class="input-field">
+            <option value="yes">بله، شامل ارزش افزوده است</option>
+            <option value="no">خیر، بدون ارزش افزوده</option>
+          </select>
+        </div>
+
+        <div>
+          <label>مدت زمان (ماه)</label>
+          <input type="number" id="duration" class="input-field" placeholder="مثال: 12" value="12" min="1" max="60"/>
+        </div>
+
+        <div>
+          <label>نوع پلن تامین مالی</label>
+          <select id="plan" class="input-field">
+            <option value="PLAN1" selected>پلن ۱: اصل + سود ماهیانه (۴.۵٪ ماهانه)</option>
+            <option value="PLAN2">پلن ۲: سود ماهیانه + اصل در انتها (۵.۵٪ ماهانه)</option>
+            <option value="PLAN3">پلن ۳: اصل + سود در انتها (۷٪ ماهانه)</option>
+          </select>
+        </div>
+
+        <div>
+          <label>کارمزد پلتفرم (۰ تا ۵٪ از مبلغ فاکتور با ارزش افزوده)</label>
+          <input type="number" id="platformFee" class="input-field" placeholder="مثال: 2" value="2" step="0.5" min="0" max="5"/>
+        </div>
+
+        <div>
+          <label>درصد روکش ضمانت (۰ تا ۵٪ از مبلغ فاکتور با ارزش افزوده)</label>
+          <input type="number" id="collateralCover" class="input-field" placeholder="مثال: 3" value="3" step="0.5" min="0" max="5"/>
+        </div>
+
+        <div class="divider"></div>
+
+        <button id="calculateBtn" class="btn btn-primary w-full">
+          محاسبه کن 🚀
+        </button>
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="card p-6">
+      <h2 class="text-xl font-bold text-white mb-4">📈 نتایج محاسبات</h2>
+      
+      <div id="results" class="space-y-6">
+        
+        <!-- Investor (سرمایه‌گذار) -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="badge badge-success">سرمایه‌گذار</span>
+            <h3 class="text-lg font-bold text-slate-300">کسی که سرمایه می‌ده</h3>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">سرمایه اولیه</p>
+              <p class="text-2xl font-bold text-white" id="investorInitial">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">دریافتی ماهانه</p>
+              <p class="text-xl font-bold text-green-400" id="investorMonthly">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">مجموع دریافتی</p>
+              <p class="text-xl font-bold text-emerald-400" id="investorTotal">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">سود خالص</p>
+              <p class="text-lg font-bold text-green-500" id="investorProfit">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Recipient (سرمایه‌پذیر) -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="badge badge-warning">سرمایه‌پذیر</span>
+            <h3 class="text-lg font-bold text-slate-300">کسی که تامین مالی می‌گیره</h3>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">دریافتی نقدی</p>
+              <p class="text-2xl font-bold text-white" id="recipientCash">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">قسط ماهانه</p>
+              <p class="text-xl font-bold text-orange-400" id="recipientMonthly">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">مجموع پرداختی</p>
+              <p class="text-xl font-bold text-red-400" id="recipientTotal">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">هزینه کل تامین مالی</p>
+              <p class="text-lg font-bold text-rose-500" id="recipientCost">-</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- B2Wall Platform -->
+        <div>
+          <div class="flex items-center gap-2 mb-3">
+            <span class="badge badge-info">B2Wall</span>
+            <h3 class="text-lg font-bold text-slate-300">درآمد پلتفرم</h3>
+          </div>
+          
+          <div class="space-y-3">
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">کارمزد پلتفرم</p>
+              <p class="text-xl font-bold text-cyan-400" id="platformFeeAmount">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">روکش ضمانت</p>
+              <p class="text-xl font-bold text-purple-400" id="collateralAmount">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">مجموع درآمد</p>
+              <p class="text-xl font-bold text-blue-400" id="platformTotal">-</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Summary Card -->
+  <div class="card p-6 mt-6" id="summaryCard" style="display:none;">
+    <h2 class="text-xl font-bold text-white mb-4">📋 خلاصه قرارداد</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="result-box text-center">
+        <p class="text-slate-400 text-sm mb-1">پلن</p>
+        <p class="text-2xl font-bold text-white" id="summaryPlan">-</p>
+      </div>
+      <div class="result-box text-center">
+        <p class="text-slate-400 text-sm mb-1">تعداد اقساط</p>
+        <p class="text-2xl font-bold text-white" id="summaryMonths">-</p>
+      </div>
+      <div class="result-box text-center">
+        <p class="text-slate-400 text-sm mb-1">نرخ سود (ماهانه)</p>
+        <p class="text-2xl font-bold text-orange-400" id="summaryRate">-</p>
+      </div>
+      <div class="result-box text-center">
+        <p class="text-slate-400 text-sm mb-1">مبلغ تامین شده</p>
+        <p class="text-2xl font-bold text-green-400" id="summaryFinanced">-</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script>
+// Utilities
+const formatNumber = (n) => {
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  const numStr = Math.round(n).toString();
+  let result = '';
+  
+  // Add thousand separators
+  for (let i = 0; i < numStr.length; i++) {
+    if (i > 0 && (numStr.length - i) % 3 === 0) {
+      result += '٬'; // Persian comma
+    }
+    const digit = parseInt(numStr[i]);
+    result += persianDigits[digit];
+  }
+  
+  return result + ' تومان';
+};
+
+const parseFormattedNumber = (str) => {
+  // Remove persian/english commas and spaces
+  return str.replace(/[٬,\sتومان]/g, '')
+            .replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))
+            .replace(/[^0-9]/g, '');
+};
+
+// Plan configuration - Monthly interest rates and payment structures
+const PLANS = {
+  'PLAN1': {
+    name: 'پلن ۱: اصل + سود ماهیانه',
+    monthlyRate: 4.5,
+    description: 'اصل و سود به صورت ماهیانه پرداخت می‌شود',
+    paymentType: 'monthly_principal_interest' // اقساط ماهیانه شامل اصل و سود
+  },
+  'PLAN2': {
+    name: 'پلن ۲: سود ماهیانه + اصل در انتها',
+    monthlyRate: 5.5,
+    description: 'سود به صورت ماهیانه و اصل در انتها پرداخت می‌شود',
+    paymentType: 'monthly_interest_only' // سود ماهیانه + اصل در انتها
+  },
+  'PLAN3': {
+    name: 'پلن ۳: اصل + سود در انتها',
+    monthlyRate: 7,
+    description: 'اصل و سود در انتهای قرارداد پرداخت می‌شود',
+    paymentType: 'lump_sum' // پرداخت یکجا در انتها
+  }
+};
+
+const VAT_RATE = 10; // ارزش افزوده 10%
+
+// API Configuration
+const API_URL = 'https://n8nb2wall.darkube.app/webhook/internal-calculator';
+
+// Calculate function
+async function calculate() {
+  // Get inputs
+  const invoiceAmountStr = document.getElementById('invoiceAmount').value;
+  const invoiceAmount = Number(parseFormattedNumber(invoiceAmountStr));
+  const isTaxExempt = document.getElementById('isTaxExempt').value;
+  const hasVAT = document.getElementById('hasVAT').value;
+  const duration = Number(document.getElementById('duration').value);
+  const planCode = document.getElementById('plan').value;
+  const platformFeeRate = Number(document.getElementById('platformFee').value);
+  const collateralCoverRate = Number(document.getElementById('collateralCover').value);
+
+  // Validate (only when calculate button is clicked, not on every input)
+  if (!invoiceAmount || invoiceAmount <= 0) {
+    alert('لطفاً مبلغ فاکتور را وارد کنید');
+    return;
+  }
+  
+  if (!duration || duration <= 0) {
+    alert('لطفاً مدت زمان را وارد کنید');
+    return;
+  }
+  
+  if (!planCode) {
+    alert('لطفاً نوع پلن را انتخاب کنید');
+    return;
+  }
+
+  // Show loading state
+  const btn = document.getElementById('calculateBtn');
+  const originalText = btn.innerHTML;
+  btn.innerHTML = '⏳ در حال محاسبه...';
+  btn.disabled = true;
+
+  try {
+    // Send data to N8N
+    const response = await fetch(API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        invoiceAmount,
+        isTaxExempt,
+        hasVAT,
+        duration,
+        planCode,
+        platformFeeRate,
+        collateralCoverRate
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('خطا در برقراری ارتباط با سرور');
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error('خطا در محاسبات');
+    }
+
+    // Update UI with results from N8N
+    updateUI(result.data);
+
+  } catch (error) {
+    console.error('Error:', error);
+    alert('خطا در محاسبات. لطفاً دوباره تلاش کنید.');
+  } finally {
+    // Restore button state
+    btn.innerHTML = originalText;
+    btn.disabled = false;
+  }
+}
+
+// Update UI with calculation results
+function updateUI(data) {
+  const plan = PLANS[document.getElementById('plan').value];
+  const duration = Number(document.getElementById('duration').value);
+  
+  // Investor
+  document.getElementById('investorInitial').textContent = formatNumber(data.investor.initial);
+  
+  if (data.summary.paymentType === 'lump_sum') {
+    document.getElementById('investorMonthly').textContent = '۰ تومان (دریافت در انتها)';
+  } else {
+    document.getElementById('investorMonthly').textContent = formatNumber(data.investor.monthlyReturn);
+  }
+  
+  document.getElementById('investorTotal').textContent = formatNumber(data.investor.totalReturn);
+  document.getElementById('investorProfit').textContent = formatNumber(data.investor.profit);
+  
+  // Recipient
+  document.getElementById('recipientCash').textContent = formatNumber(data.recipient.cash);
+  
+  if (data.summary.paymentType === 'lump_sum') {
+    document.getElementById('recipientMonthly').textContent = '۰ تومان (پرداخت در انتها)';
+  } else {
+    document.getElementById('recipientMonthly').textContent = formatNumber(data.recipient.monthlyInstallment);
+  }
+  
+  document.getElementById('recipientTotal').textContent = formatNumber(data.recipient.totalPayment);
+  document.getElementById('recipientCost').textContent = formatNumber(data.recipient.financingCost);
+
+  // B2Wall Platform
+  document.getElementById('platformFeeAmount').textContent = formatNumber(data.platform.platformFee);
+  document.getElementById('collateralAmount').textContent = formatNumber(data.platform.collateral);
+  document.getElementById('platformTotal').textContent = formatNumber(data.platform.total);
+
+  // Summary
+  document.getElementById('summaryPlan').textContent = data.summary.planName;
+  document.getElementById('summaryMonths').textContent = '۰۱۲۳۴۵۶۷۸۹'[Math.floor(duration / 10)] + '۰۱۲۳۴۵۶۷۸۹'[duration % 10] + ' ماه';
+  document.getElementById('summaryRate').textContent = data.summary.monthlyRate.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
+  document.getElementById('summaryFinanced').textContent = formatNumber(data.invoice.withVAT);
+  
+  // Show summary
+  document.getElementById('summaryCard').style.display = 'block';
+}
+
+// Event listeners
+document.getElementById('calculateBtn').addEventListener('click', calculate);
+
+// Handle tax exempt status change
+document.getElementById('isTaxExempt').addEventListener('change', function() {
+  const vatQuestionSection = document.getElementById('vatQuestionSection');
+  if (this.value === 'yes') {
+    // اگر کالا معاف است، سوال ارزش افزوده را مخفی کن
+    vatQuestionSection.style.display = 'none';
+  } else {
+    // اگر مشمول مالیات است، سوال را نشان بده
+    vatQuestionSection.style.display = 'block';
+  }
+  
+  // Recalculate if summary is visible
+  if (document.getElementById('summaryCard').style.display !== 'none') {
+    calculate();
+  }
+});
+
+// Auto-calculate on input/change - REMOVED, only calculate on button click
+// Event listeners for formatting invoice amount
+document.getElementById('invoiceAmount').addEventListener('blur', function(e) {
+  const val = parseFormattedNumber(e.target.value);
+  if (val) {
+    e.target.value = formatNumber(val).replace(' تومان', '');
+  }
+});
+
+document.getElementById('invoiceAmount').addEventListener('focus', function(e) {
+  // Remove formatting on focus for easier editing
+  const val = parseFormattedNumber(e.target.value);
+  if (val) {
+    e.target.value = val;
+  }
+});
+
+// Don't auto-calculate anymore
+</script>
+
+</body>
+</html>
