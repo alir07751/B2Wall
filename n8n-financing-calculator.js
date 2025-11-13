@@ -178,16 +178,19 @@ if (plan.paymentType === 'monthly_principal_interest') {
   // توجه: این فقط میانگین است. قسط واقعی سرمایه‌گذار هر ماه تغییر می‌کند.
   investorMonthlyReturn = monthlyInstallment - platformMonthlyRevenue;
   
-  // 6. محاسبه سود دریافتی ماهانه سرمایه‌گذار (میانگین)
+  // 6. محاسبه سود دریافتی ماهانه سرمایه‌گذار (میانگین) - به درصد
   // در پلن 1: میانگین سود ماهانه = (کل سود + VAT سود) / تعداد ماه‌ها
-  const averageMonthlyInterest = (totalProjectInterest + vatOnProjectInterest) / duration;
-  investorMonthlyProfit = averageMonthlyInterest;
+  const averageMonthlyInterestAmount = (totalProjectInterest + vatOnProjectInterest) / duration;
+  // تبدیل به درصد: (سود ماهانه / سرمایه اولیه) * 100
+  investorMonthlyProfit = (averageMonthlyInterestAmount / principalLoan) * 100;
   
-  // 7. محاسبه سود پرداختی ماهانه سرمایه‌پذیر (میانگین)
+  // 7. محاسبه سود پرداختی ماهانه سرمایه‌پذیر (میانگین) - به درصد
   // سود پرداختی = قسط ماهانه - سهم اصل پول - هزینه‌های ثابت پلتفرم
   // میانگین سهم اصل پول = اصل پول / تعداد ماه‌ها
   const averagePrincipalPayment = principalLoan / duration;
-  recipientMonthlyProfit = monthlyInstallment - averagePrincipalPayment - platformMonthlyRevenue;
+  const recipientMonthlyProfitAmount = monthlyInstallment - averagePrincipalPayment - platformMonthlyRevenue;
+  // تبدیل به درصد: (سود پرداختی ماهانه / مبلغ دریافتی نقدی) * 100
+  recipientMonthlyProfit = (recipientMonthlyProfitAmount / principalLoan) * 100;
   
 } else if (plan.paymentType === 'monthly_interest_only') {
   // ----------------------------------------------------------------
@@ -203,11 +206,16 @@ if (plan.paymentType === 'monthly_principal_interest') {
   // دریافتی ماهانه سرمایه‌گذار (فقط سود + VAT سود)
   investorMonthlyReturn = monthlyInterestPayment;
   
-  // سود دریافتی ماهانه سرمایه‌گذار = سود ماهانه (بدون اصل)
-  investorMonthlyProfit = monthlyInterestPayment;
+  // سود دریافتی ماهانه سرمایه‌گذار (به درصد)
+  // سود دریافتی = سود ماهانه + VAT سود
+  // تبدیل به درصد: (سود دریافتی / سرمایه اولیه) * 100
+  investorMonthlyProfit = (monthlyInterestPayment / principalLoan) * 100;
   
-  // سود پرداختی ماهانه سرمایه‌پذیر = سود ماهانه (بدون اصل و بدون هزینه‌های پلتفرم)
-  recipientMonthlyProfit = monthlyInterestPayment;
+  // سود پرداختی ماهانه سرمایه‌پذیر (به درصد)
+  // سرمایه‌پذیر علاوه بر سود + VAT سود، هزینه‌های پلتفرم هم پرداخت می‌کند
+  // اما سود پرداختی فقط شامل سود + VAT سود است (بدون هزینه‌های پلتفرم)
+  // تبدیل به درصد: (سود پرداختی / مبلغ دریافتی نقدی) * 100
+  recipientMonthlyProfit = (monthlyInterestPayment / principalLoan) * 100;
   
   // مجموع پرداختی سرمایه‌پذیر ثابت است
   recipientTotalPayment = totalAdditionalCosts + invoiceWithVAT;
@@ -261,8 +269,8 @@ return {
       initial: Math.round(investorInvestment),
       // بازگشت ماهانه سرمایه‌گذار (میانگین در پلن ۱)
       monthlyReturn: Math.round(investorMonthlyReturn), 
-      // سود دریافتی ماهانه سرمایه‌گذار
-      monthlyProfit: Math.round(investorMonthlyProfit),
+      // سود دریافتی ماهانه سرمایه‌گذار (به درصد)
+      monthlyProfit: Math.round(investorMonthlyProfit * 100) / 100, // رند به 2 رقم اعشار
       totalReturn: Math.round(investorTotalReturn),
       profit: Math.round(investorProfit)
     },
@@ -270,8 +278,8 @@ return {
       cash: Math.round(recipientCash),
       // قسط ماهانه (میانگین در پلن ۱)
       monthlyInstallment: Math.round(monthlyInstallment),
-      // سود پرداختی ماهانه سرمایه‌پذیر
-      monthlyProfit: Math.round(recipientMonthlyProfit),
+      // سود پرداختی ماهانه سرمایه‌پذیر (به درصد)
+      monthlyProfit: Math.round(recipientMonthlyProfit * 100) / 100, // رند به 2 رقم اعشار
       totalPayment: Math.round(recipientTotalPayment),
       financingCost: Math.round(recipientFinancingCost)
     },

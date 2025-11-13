@@ -397,10 +397,11 @@ function updateUI(data) {
   
   if (data.summary.paymentType === 'lump_sum') {
     document.getElementById('investorMonthly').textContent = '۰ تومان (دریافت در انتها)';
-    document.getElementById('investorMonthlyProfit').textContent = '۰ تومان (دریافت در انتها)';
+    document.getElementById('investorMonthlyProfit').textContent = '۰% (دریافت در انتها)';
   } else {
     document.getElementById('investorMonthly').textContent = formatNumber(data.investor.monthlyReturn);
-    document.getElementById('investorMonthlyProfit').textContent = formatNumber(data.investor.monthlyProfit || 0);
+    const monthlyProfitPercent = (data.investor.monthlyProfit || 0).toFixed(2);
+    document.getElementById('investorMonthlyProfit').textContent = monthlyProfitPercent.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
   }
   
   document.getElementById('investorTotal').textContent = formatNumber(data.investor.totalReturn);
@@ -411,10 +412,11 @@ function updateUI(data) {
   
   if (data.summary.paymentType === 'lump_sum') {
     document.getElementById('recipientMonthly').textContent = '۰ تومان (پرداخت در انتها)';
-    document.getElementById('recipientMonthlyProfit').textContent = '۰ تومان (پرداخت در انتها)';
+    document.getElementById('recipientMonthlyProfit').textContent = '۰% (پرداخت در انتها)';
   } else {
     document.getElementById('recipientMonthly').textContent = formatNumber(data.recipient.monthlyInstallment);
-    document.getElementById('recipientMonthlyProfit').textContent = formatNumber(data.recipient.monthlyProfit || 0);
+    const monthlyProfitPercent = (data.recipient.monthlyProfit || 0).toFixed(2);
+    document.getElementById('recipientMonthlyProfit').textContent = monthlyProfitPercent.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
   }
   
   document.getElementById('recipientTotal').textContent = formatNumber(data.recipient.totalPayment);
