@@ -1,225 +1,67 @@
 /**
  * N8N Webhook Function for B2Wall Financing Calculator
  * 
- * Based on the flowchart with these key principles:
- * 1. All interest rates are MONTHLY percentages
- * 2. VAT (ارزش افزوده) is always 10%
- * 3. Platform fee: 0-5% of invoice WITH VAT
- * 4. Collateral cover: 0-5% of invoice WITH VAT
- * 5. Three payment plans:
- *    - PLAN1: Principal + Interest paid monthly (4.5% monthly)
- *    - PLAN2: Interest paid monthly, Principal at end (5.5% monthly)
- *    - PLAN3: Principal + Interest paid at end (7% monthly)
+ * Updated with new calculation logic:
+ * 1. Monthly interest rate is now dynamic (user input)
+ * 2. VAT calculation considers tax exemption
+ * 3. Plan 1 uses declining balance method
+ * 4. VAT is calculated on fixed fees and collateral
  * 
  * Input (from webhook):
  * {
- *   "invoiceAmount": 500,        // مبلغ فاکتور (میلیون تومان)
- *   "hasVAT": "yes",             // آیا شامل ارزش افزوده است؟ (yes/no)
- *   "duration": 12,              // مدت زمان (ماه)
- *   "plan": "PLAN1",             // پلن: PLAN1, PLAN2, PLAN3
- *   "platformFee": 2,            // کارمزد پلتفرم (0-5%)
- *   "collateralCover": 3         // روکش ضمانت (0-5%)
+ *   "invoiceAmount": 500000000,     // مبلغ فاکتور (تومان)
+ *   "isTaxExempt": "no",            // آیا معاف از مالیات است؟ (yes/no)
+ *   "hasVAT": "yes",                // آیا شامل ارزش افزوده است؟ (yes/no)
+ *   "duration": 12,                 // مدت زمان (ماه)
+ *   "planCode": "PLAN1",            // پلن: PLAN1, PLAN2, PLAN3
+ *   "monthlyRate": 4.5,             // درصد سود ماهیانه (داینامیک)
+ *   "platformFeeRate": 2,           // کارمزد پلتفرم (0-5%)
+ *   "collateralCoverRate": 3        // روکش ضمانت (0-5%)
  * }
  * 
  * Output:
  * {
  *   "success": true,
- *   "invoice": {...},
- *   "recipient": {...},
- *   "investor": {...},
- *   "costs": {...}
+ *   "data": {
+ *     "invoice": {...},
+ *     "investor": {...},
+ *     "recipient": {...},
+ *     "platform": {...},
+ *     "summary": {...}
+ *   }
  * }
  */
 
-// Plan configuration - Monthly interest rates and payment structures
+// Get input data from webhook BODY
+const input = $input.item.json.body || $input.item.json;
+
+const invoiceAmount = Number(input.invoiceAmount) || 0;
+const isTaxExempt = input.isTaxExempt || 'no';
+const hasVAT = input.hasVAT || 'no';
+const duration = Number(input.duration) || 0;
+const planCode = input.planCode || input.plan || 'PLAN1';
+const platformFeeRate = Number(input.platformFeeRate || input.platformFee) || 0;
+const collateralCoverRate = Number(input.collateralCoverRate || input.collateralCover) || 0;
+const monthlyRatePercent = Number(input.monthlyRate) || 0;
+
+// Plan configurations (monthlyRate is now dynamic from input)
 const PLANS = {
   'PLAN1': {
     name: 'پلن ۱: اصل + سود ماهیانه',
-    monthlyRate: 4.5,
-    description: 'اصل و سود به صورت ماهیانه پرداخت می‌شود',
-    paymentType: 'monthly_principal_interest' // اقساط ماهیانه شامل اصل و سود
+    paymentType: 'monthly_principal_interest'
   },
   'PLAN2': {
     name: 'پلن ۲: سود ماهیانه + اصل در انتها',
-    monthlyRate: 5.5,
-    description: 'سود به صورت ماهیانه و اصل در انتها پرداخت می‌شود',
-    paymentType: 'monthly_interest_only' // سود ماهیانه + اصل در انتها
+    paymentType: 'monthly_interest_only'
   },
   'PLAN3': {
     name: 'پلن ۳: اصل + سود در انتها',
-    monthlyRate: 7.0,
-    description: 'اصل و سود در انتهای قرارداد پرداخت می‌شود',
-    paymentType: 'lump_sum' // پرداخت یکجا در انتها
+    paymentType: 'lump_sum'
   }
 };
 
-const VAT_RATE = 10; // ارزش افزوده 10%
-
-// Helper function to format numbers
-function formatNumber(num) {
-  return Math.round(num * 100) / 100;
-}
-
-/**
- * Main calculation function based on B2Wall flowchart
- */
-function calculateFinancing(invoiceAmount, hasVAT, duration, planCode, platformFeeRate, collateralCoverRate) {
-  
-  // Get plan details
-  const plan = PLANS[planCode];
-  if (!plan) {
-    throw new Error('Invalid plan code: ' + planCode);
-  }
-  
-  const monthlyRate = plan.monthlyRate / 100; // Convert to decimal
-  
-  // === STEP 1: Calculate invoice breakdown ===
-  let invoiceWithVAT, invoiceBase, vatAmount;
-  
-  if (hasVAT === 'yes') {
-    // فاکتور شامل ارزش افزوده است
-    invoiceWithVAT = invoiceAmount;
-    invoiceBase = invoiceAmount / 1.1; // مبلغ اصلی = مبلغ کل / 1.1
-    vatAmount = invoiceWithVAT - invoiceBase;
-  } else {
-    // فاکتور بدون ارزش افزوده
-    invoiceBase = invoiceAmount;
-    vatAmount = invoiceAmount * 0.1;
-    invoiceWithVAT = invoiceBase + vatAmount;
-  }
-  
-  // === STEP 2: Calculate fees (based on invoice WITH VAT) ===
-  const platformFeeAmount = invoiceWithVAT * (platformFeeRate / 100);
-  const collateralAmount = invoiceWithVAT * (collateralCoverRate / 100);
-  const totalDeductions = platformFeeAmount + collateralAmount + vatAmount;
-  
-  // === STEP 3: Calculate based on plan type ===
-  let monthlyInstallment, recipientTotalPayment, investorMonthlyReturn, finalPayment;
-  
-  if (plan.paymentType === 'monthly_principal_interest') {
-    // پلن ۱: اصل + سود ماهیانه (PMT formula)
-    // PMT = P * [r(1+r)^n] / [(1+r)^n - 1]
-    monthlyInstallment = (invoiceWithVAT * monthlyRate * Math.pow(1 + monthlyRate, duration)) / 
-                         (Math.pow(1 + monthlyRate, duration) - 1);
-    recipientTotalPayment = monthlyInstallment * duration;
-    investorMonthlyReturn = monthlyInstallment;
-    finalPayment = 0;
-    
-  } else if (plan.paymentType === 'monthly_interest_only') {
-    // پلن ۲: سود ماهیانه + اصل در انتها
-    const monthlyInterest = invoiceWithVAT * monthlyRate;
-    monthlyInstallment = monthlyInterest;
-    recipientTotalPayment = (monthlyInterest * duration) + invoiceWithVAT;
-    investorMonthlyReturn = monthlyInterest;
-    finalPayment = invoiceWithVAT; // پرداخت نهایی = اصل پول
-    
-  } else if (plan.paymentType === 'lump_sum') {
-    // پلن ۳: اصل + سود در انتها
-    monthlyInstallment = 0; // هیچ پرداخت ماهیانه‌ای نیست
-    const totalInterest = invoiceWithVAT * monthlyRate * duration;
-    recipientTotalPayment = invoiceWithVAT + totalInterest;
-    investorMonthlyReturn = 0;
-    finalPayment = recipientTotalPayment; // پرداخت نهایی = اصل + سود
-  }
-  
-  // === STEP 4: RECIPIENT (سرمایه‌پذیر) CALCULATIONS ===
-  const recipientCash = invoiceWithVAT - totalDeductions;
-  const recipientFinancingCost = recipientTotalPayment - invoiceWithVAT;
-  
-  // === STEP 5: INVESTOR (سرمایه‌گذار) CALCULATIONS ===
-  const investorInvestment = invoiceWithVAT;
-  const investorTotalReturn = recipientTotalPayment;
-  const investorProfit = investorTotalReturn - investorInvestment;
-  
-  // === STEP 6: Build result object ===
-  return {
-    // Invoice breakdown
-    invoice: {
-      with_vat: formatNumber(invoiceWithVAT),
-      base_amount: formatNumber(invoiceBase),
-      vat_amount: formatNumber(vatAmount),
-      has_vat: hasVAT === 'yes'
-    },
-    
-    // Recipient (سرمایه‌پذیر) - who receives financing
-    recipient: {
-      cash_received: formatNumber(recipientCash),
-      monthly_installment: formatNumber(monthlyInstallment),
-      final_payment: formatNumber(finalPayment),
-      total_payment: formatNumber(recipientTotalPayment),
-      financing_cost: formatNumber(recipientFinancingCost)
-    },
-    
-    // Investor (سرمایه‌گذار) - who provides capital
-    investor: {
-      initial_investment: formatNumber(investorInvestment),
-      monthly_return: formatNumber(investorMonthlyReturn),
-      final_return: formatNumber(finalPayment),
-      total_return: formatNumber(investorTotalReturn),
-      profit: formatNumber(investorProfit)
-    },
-    
-    // Costs breakdown
-    costs: {
-      platform_fee: formatNumber(platformFeeAmount),
-      collateral_cover: formatNumber(collateralAmount),
-      vat: formatNumber(vatAmount),
-      total_deductions: formatNumber(totalDeductions)
-    },
-    
-    // Summary
-    summary: {
-      plan_code: planCode,
-      plan_name: plan.name,
-      plan_description: plan.description,
-      payment_type: plan.paymentType,
-      duration_months: duration,
-      monthly_rate_percent: plan.monthlyRate,
-      financed_amount: formatNumber(invoiceWithVAT)
-    }
-  };
-}
-
-/**
- * N8N Webhook Handler
- * Use this code in a "Function" node in N8N
- * 
- * Workflow setup:
- * 1. Webhook node (POST) -> receives data
- * 2. Function node -> this code
- * 3. Respond to Webhook node -> returns JSON result
- */
-
-// Get input from webhook
-const inputData = $input.all();
-const { invoiceAmount, hasVAT, duration, plan, platformFee, collateralCover } = inputData[0].json;
-
-// Validate required inputs
-if (!invoiceAmount || !hasVAT || !duration || !plan) {
-  return {
-    success: false,
-    error: 'Missing required parameters: invoiceAmount, hasVAT, duration, plan',
-    message: 'لطفاً فیلدهای الزامی را پر کنید: مبلغ فاکتور، وضعیت ارزش افزوده، مدت زمان، پلن'
-  };
-}
-
-// Convert to appropriate types
-const invoiceAmountNum = Number(invoiceAmount);
-const durationNum = Number(duration);
-const platformFeeNum = platformFee ? Number(platformFee) : 2; // Default 2%
-const collateralCoverNum = collateralCover ? Number(collateralCover) : 3; // Default 3%
-
-// Validate numeric values
-if (isNaN(invoiceAmountNum) || isNaN(durationNum)) {
-  return {
-    success: false,
-    error: 'Invalid numeric values',
-    message: 'مقادیر عددی نامعتبر است'
-  };
-}
-
-// Validate ranges
-if (invoiceAmountNum <= 0) {
+// Validate inputs
+if (!invoiceAmount || invoiceAmount <= 0) {
   return {
     success: false,
     error: 'Invoice amount must be positive',
@@ -227,7 +69,7 @@ if (invoiceAmountNum <= 0) {
   };
 }
 
-if (durationNum <= 0 || durationNum > 60) {
+if (!duration || duration <= 0 || duration > 60) {
   return {
     success: false,
     error: 'Duration must be between 1-60 months',
@@ -235,61 +77,189 @@ if (durationNum <= 0 || durationNum > 60) {
   };
 }
 
-if (platformFeeNum < 0 || platformFeeNum > 5) {
+if (!monthlyRatePercent || monthlyRatePercent <= 0 || monthlyRatePercent > 100) {
   return {
     success: false,
-    error: 'Platform fee must be between 0-5%',
-    message: 'کارمزد پلتفرم باید بین 0 تا 5 درصد باشد'
+    error: 'Monthly rate must be between 0-100%',
+    message: 'درصد سود ماهیانه باید بین 0 تا 100 باشد'
   };
 }
 
-if (collateralCoverNum < 0 || collateralCoverNum > 5) {
-  return {
-    success: false,
-    error: 'Collateral cover must be between 0-5%',
-    message: 'روکش ضمانت باید بین 0 تا 5 درصد باشد'
-  };
-}
-
-// Validate hasVAT
-if (hasVAT !== 'yes' && hasVAT !== 'no') {
-  return {
-    success: false,
-    error: 'hasVAT must be "yes" or "no"',
-    message: 'وضعیت ارزش افزوده باید "yes" یا "no" باشد'
-  };
-}
-
-// Validate plan
-if (!PLANS[plan]) {
+if (!PLANS[planCode]) {
   return {
     success: false,
     error: 'Invalid plan code. Must be one of: PLAN1, PLAN2, PLAN3',
-    message: 'پلن نامعتبر. پلن‌لای معتبر: PLAN1, PLAN2, PLAN3'
+    message: 'پلن نامعتبر. پلن‌های معتبر: PLAN1, PLAN2, PLAN3'
   };
 }
 
-// Calculate financing details
-try {
-  const result = calculateFinancing(
-    invoiceAmountNum,
-    hasVAT,
-    durationNum,
-    plan,
-    platformFeeNum,
-    collateralCoverNum
-  );
-  
-  // Return successful result
-  return {
-    success: true,
-    message: 'محاسبات با موفقیت انجام شد',
-    ...result
-  };
-} catch (error) {
-  return {
-    success: false,
-    error: error.message,
-    message: 'خطا در محاسبات: ' + error.message
-  };
+const plan = PLANS[planCode];
+const monthlyRate = monthlyRatePercent / 100;
+
+// --- STEP 1: Calculate VAT on Invoice ---
+// این بخش مبلغ اصلی (invoiceBase) و مبلغی که سرمایه‌گذار پرداخت می‌کند (invoiceWithVAT) را تعیین می‌کند.
+let invoiceWithVAT, invoiceBase, vatAmount;
+
+if (isTaxExempt === 'yes') {
+  invoiceWithVAT = invoiceAmount;
+  invoiceBase = invoiceAmount;
+  vatAmount = 0;
+} else {
+  // اگر مبلغ ورودی شامل VAT باشد
+  if (hasVAT === 'yes') {
+    invoiceWithVAT = invoiceAmount;
+    invoiceBase = invoiceAmount / 1.1;
+    vatAmount = invoiceWithVAT - invoiceBase;
+  } 
+  // اگر مبلغ ورودی شامل VAT نباشد، VAT محاسبه و اضافه می‌شود
+  else {
+    invoiceBase = invoiceAmount;
+    vatAmount = invoiceAmount * 0.1;
+    invoiceWithVAT = invoiceBase + vatAmount;
+  }
 }
+
+// === STEP 2: Calculate total costs and fees (Base Amounts) ===
+const platformFeeRate_decimal = platformFeeRate / 100;
+const collateralRate_decimal = collateralCoverRate / 100;
+const vatRate = 0.1; // نرخ ثابت مالیات بر ارزش افزوده
+const principalLoan = invoiceWithVAT; // سرمایه‌ی نقدی که توسط سرمایه‌گذار تأمین می‌شود
+
+// Base Fixed Fees (هزینه‌های ثابت)
+const platformFeeAmount = principalLoan * platformFeeRate_decimal;
+const collateralAmount = principalLoan * collateralRate_decimal;
+
+// VAT on Fixed Fees and Collateral (10% of the base amounts)
+const vatOnPlatformFee = platformFeeAmount * vatRate;
+const vatOnCollateral = collateralAmount * vatRate;
+
+// کل هزینه‌های ثابت (کارمزد و ضمانت) برای بازپرداخت (شامل VAT)
+const totalFixedCostsToRepay = platformFeeAmount + collateralAmount + vatOnPlatformFee + vatOnCollateral;
+
+// سهم ماهانه درآمد پلتفرم (قسط ثابت)
+const platformMonthlyRevenue = totalFixedCostsToRepay / duration;
+
+// Total additional costs (برای پلن‌های ۲ و ۳)
+// برای پلن ۱ از سود کاهشی استفاده خواهد شد و این متغیر فقط برای پلن ۲ و ۳ کاربرد دارد
+const baseInterestSimple = principalLoan * monthlyRate * duration;
+const vatOnInterestSimple = baseInterestSimple * vatRate; // VAT سود ساده
+const totalAdditionalCosts = baseInterestSimple + vatOnInterestSimple + totalFixedCostsToRepay; // جمع کل هزینه‌ها برای پلن‌های ۲ و ۳
+
+// === STEP 3: Calculate installments based on plan type ===
+let monthlyInstallment, recipientTotalPayment, investorMonthlyReturn, platformTotalRevenue;
+
+if (plan.paymentType === 'monthly_principal_interest') {
+  // ----------------------------------------------------------------
+  // ✅ پلن ۱: اصل + سود ماهیانه (روش اقساط کاهشی - منطبق با اکسل)
+  // ----------------------------------------------------------------
+  
+  const n = duration;
+  const i = monthlyRate;
+  
+  // 1. محاسبه کل سود پروژه (روش کاهشی) - مطابق با اکسل
+  // فرمول: P * i * (n+1)/2
+  const totalProjectInterest = principalLoan * i * ((n + 1) / 2);
+  const vatOnProjectInterest = totalProjectInterest * vatRate;
+  
+  // 2. محاسبه کل مبلغ قابل بازپرداخت (Total Repayment)
+  // اصل + کل سود کاهشی + VAT بر سود + کل هزینه‌های ثابت (با VAT)
+  recipientTotalPayment = principalLoan + totalProjectInterest + vatOnProjectInterest + totalFixedCostsToRepay;
+  
+  // 3. محاسبه میانگین قسط ماهانه سرمایه‌پذیر (برای نمایش در خروجی)
+  monthlyInstallment = recipientTotalPayment / duration;
+  
+  // 4. مجموع درآمد پلتفرم (هزینه‌های ثابت + VAT آن‌ها)
+  platformTotalRevenue = totalFixedCostsToRepay;
+  
+  // 5. تفکیک سهم سرمایه‌گذار
+  // دریافتی ماهانه سرمایه‌گذار: میانگین قسط کل - سهم ماهانه درآمد پلتفرم
+  // توجه: این فقط میانگین است. قسط واقعی سرمایه‌گذار هر ماه تغییر می‌کند.
+  investorMonthlyReturn = monthlyInstallment - platformMonthlyRevenue; 
+  
+} else if (plan.paymentType === 'monthly_interest_only') {
+  // ----------------------------------------------------------------
+  // ✅ پلن ۲: سود ماهیانه + اصل در انتها (سود ساده)
+  // ----------------------------------------------------------------
+  
+  // سود + VAT سود ماهانه (سهم سرمایه‌گذار)
+  const monthlyInterestPayment = (baseInterestSimple / duration) * (1 + vatRate); 
+  
+  // مجموع قسط ماهانه سرمایه‌پذیر (سود + VAT سود + هزینه‌های ثابت ماهانه)
+  monthlyInstallment = monthlyInterestPayment + platformMonthlyRevenue;
+  
+  // دریافتی ماهانه سرمایه‌گذار (فقط سود + VAT سود)
+  investorMonthlyReturn = monthlyInterestPayment; 
+  
+  // مجموع پرداختی سرمایه‌پذیر ثابت است
+  recipientTotalPayment = totalAdditionalCosts + invoiceWithVAT;
+  
+  // مجموع درآمد پلتفرم
+  platformTotalRevenue = totalFixedCostsToRepay;
+  
+} else if (plan.paymentType === 'lump_sum') {
+  // ----------------------------------------------------------------
+  // ✅ پلن ۳: اصل + سود در انتها
+  // ----------------------------------------------------------------
+  
+  monthlyInstallment = 0; // قسط ماهانه (پرداختی در ماه اول تا n-1)
+  
+  // مجموع پرداختی سرمایه‌پذیر ثابت است
+  recipientTotalPayment = totalAdditionalCosts + invoiceWithVAT;
+  
+  // مجموع درآمد پلتفرم
+  platformTotalRevenue = totalFixedCostsToRepay;
+  
+  // دریافتی ماهانه سرمایه‌گذار (صفر در ماه‌های میانی و کل مبلغ در انتها)
+  investorMonthlyReturn = 0; 
+}
+
+// === STEP 4: RECIPIENT (سرمایه‌پذیر) CALCULATIONS ===
+const recipientCash = invoiceWithVAT;
+const recipientFinancingCost = recipientTotalPayment - invoiceWithVAT;
+
+// === STEP 5: INVESTOR (سرمایه‌گذار) CALCULATIONS ===
+const investorInvestment = invoiceWithVAT;
+// مجموع دریافتی سرمایه‌گذار: کل پرداختی منهای کل درآمد پلتفرم
+const investorTotalReturn = recipientTotalPayment - platformTotalRevenue;
+const investorProfit = investorTotalReturn - investorInvestment;
+
+// === OUTPUT ===
+return {
+  success: true,
+  data: {
+    invoice: {
+      withVAT: Math.round(invoiceWithVAT),
+      base: Math.round(invoiceBase),
+      vat: Math.round(vatAmount)
+    },
+    investor: {
+      initial: Math.round(investorInvestment),
+      // بازگشت ماهانه سرمایه‌گذار (میانگین در پلن ۱)
+      monthlyReturn: Math.round(investorMonthlyReturn), 
+      totalReturn: Math.round(investorTotalReturn),
+      profit: Math.round(investorProfit)
+    },
+    recipient: {
+      cash: Math.round(recipientCash),
+      // قسط ماهانه (میانگین در پلن ۱)
+      monthlyInstallment: Math.round(monthlyInstallment), 
+      totalPayment: Math.round(recipientTotalPayment),
+      financingCost: Math.round(recipientFinancingCost)
+    },
+    platform: {
+      platformFee: Math.round(platformFeeAmount),
+      collateral: Math.round(collateralAmount),
+      totalBase: Math.round(platformFeeAmount + collateralAmount),
+      // این خروجی جدید، مجموع درآمد پلتفرم (با VAT) را نشان می‌دهد
+      totalRevenue: Math.round(platformTotalRevenue),
+      // سهم ماهانه درآمد پلتفرم (برای تفکیک در هر ماه)
+      monthlyRevenue: Math.round(platformMonthlyRevenue) 
+    },
+    summary: {
+      planName: plan.name,
+      duration: duration,
+      monthlyRate: monthlyRatePercent,
+      paymentType: plan.paymentType
+    }
+  }
+};

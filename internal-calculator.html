@@ -79,12 +79,19 @@ label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; d
         </div>
 
         <div>
+          <label>درصد سود ماهیانه (%)</label>
+          <input type="number" id="monthlyRate" class="input-field" placeholder="مثال: 4.5" value="4.5" step="0.1" min="0" max="100"/>
+          <p class="text-xs text-slate-500 mt-1">درصد سود ماهیانه را وارد کنید (مثال: 4.5 به معنای 4.5% ماهانه)</p>
+        </div>
+
+        <div>
           <label>نوع پلن تامین مالی</label>
           <select id="plan" class="input-field">
-            <option value="PLAN1" selected>پلن ۱: اصل + سود ماهیانه (۴.۵٪ ماهانه)</option>
-            <option value="PLAN2">پلن ۲: سود ماهیانه + اصل در انتها (۵.۵٪ ماهانه)</option>
-            <option value="PLAN3">پلن ۳: اصل + سود در انتها (۷٪ ماهانه)</option>
+            <option value="PLAN1" selected>پلن ۱: اصل + سود ماهیانه</option>
+            <option value="PLAN2">پلن ۲: سود ماهیانه + اصل در انتها</option>
+            <option value="PLAN3">پلن ۳: اصل + سود در انتها</option>
           </select>
+          <p class="text-xs text-slate-500 mt-1">نوع پلن نحوه پرداخت اقساط را مشخص می‌کند</p>
         </div>
 
         <div>
@@ -257,23 +264,20 @@ const parseFormattedNumber = (str) => {
             .replace(/[^0-9]/g, '');
 };
 
-// Plan configuration - Monthly interest rates and payment structures
+// Plan configuration - Payment structures (monthlyRate is now dynamic from user input)
 const PLANS = {
   'PLAN1': {
     name: 'پلن ۱: اصل + سود ماهیانه',
-    monthlyRate: 4.5,
     description: 'اصل و سود به صورت ماهیانه پرداخت می‌شود',
     paymentType: 'monthly_principal_interest' // اقساط ماهیانه شامل اصل و سود
   },
   'PLAN2': {
     name: 'پلن ۲: سود ماهیانه + اصل در انتها',
-    monthlyRate: 5.5,
     description: 'سود به صورت ماهیانه و اصل در انتها پرداخت می‌شود',
     paymentType: 'monthly_interest_only' // سود ماهیانه + اصل در انتها
   },
   'PLAN3': {
     name: 'پلن ۳: اصل + سود در انتها',
-    monthlyRate: 7,
     description: 'اصل و سود در انتهای قرارداد پرداخت می‌شود',
     paymentType: 'lump_sum' // پرداخت یکجا در انتها
   }
@@ -293,6 +297,7 @@ async function calculate() {
   const hasVAT = document.getElementById('hasVAT').value;
   const duration = Number(document.getElementById('duration').value);
   const planCode = document.getElementById('plan').value;
+  const monthlyRate = Number(document.getElementById('monthlyRate').value);
   const platformFeeRate = Number(document.getElementById('platformFee').value);
   const collateralCoverRate = Number(document.getElementById('collateralCover').value);
 
@@ -309,6 +314,11 @@ async function calculate() {
   
   if (!planCode) {
     alert('لطفاً نوع پلن را انتخاب کنید');
+    return;
+  }
+
+  if (!monthlyRate || monthlyRate <= 0 || monthlyRate > 100) {
+    alert('لطفاً درصد سود ماهیانه را به درستی وارد کنید (بین 0 تا 100)');
     return;
   }
 
@@ -331,6 +341,7 @@ async function calculate() {
         hasVAT,
         duration,
         planCode,
+        monthlyRate,
         platformFeeRate,
         collateralCoverRate
       })
@@ -343,14 +354,16 @@ async function calculate() {
     const result = await response.json();
 
     // N8N returns array, get first item
-    const data = Array.isArray(result) ? result[0] : result;
+    const responseData = Array.isArray(result) ? result[0] : result;
 
-    if (!data.success) {
-      throw new Error('خطا در محاسبات');
+    if (!responseData.success) {
+      throw new Error(responseData.message || 'خطا در محاسبات');
     }
 
     // Update UI with results from N8N
-    updateUI(data.data);
+    // API returns data in responseData.data
+    const data = responseData.data || responseData;
+    updateUI(data);
 
   } catch (error) {
     console.error('Error:', error);
@@ -366,6 +379,7 @@ async function calculate() {
 function updateUI(data) {
   const plan = PLANS[document.getElementById('plan').value];
   const duration = Number(document.getElementById('duration').value);
+  const monthlyRate = Number(document.getElementById('monthlyRate').value);
   
   // Investor
   document.getElementById('investorInitial').textContent = formatNumber(data.investor.initial);
@@ -394,12 +408,12 @@ function updateUI(data) {
   // B2Wall Platform
   document.getElementById('platformFeeAmount').textContent = formatNumber(data.platform.platformFee);
   document.getElementById('collateralAmount').textContent = formatNumber(data.platform.collateral);
-  document.getElementById('platformTotal').textContent = formatNumber(data.platform.total);
+  document.getElementById('platformTotal').textContent = formatNumber(data.platform.totalRevenue);
 
   // Summary
   document.getElementById('summaryPlan').textContent = data.summary.planName;
   document.getElementById('summaryMonths').textContent = '۰۱۲۳۴۵۶۷۸۹'[Math.floor(duration / 10)] + '۰۱۲۳۴۵۶۷۸۹'[duration % 10] + ' ماه';
-  document.getElementById('summaryRate').textContent = data.summary.monthlyRate.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
+  document.getElementById('summaryRate').textContent = monthlyRate.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
   document.getElementById('summaryFinanced').textContent = formatNumber(data.invoice.withVAT);
   
   // Show summary
