@@ -149,6 +149,8 @@ const totalAdditionalCosts = baseInterestSimple + vatOnInterestSimple + totalFix
 let monthlyInstallment, recipientTotalPayment, investorMonthlyReturn, platformTotalRevenue;
 let investorMonthlyProfit = 0; // سود دریافتی ماهانه سرمایه‌گذار
 let recipientMonthlyProfit = 0; // سود پرداختی ماهانه سرمایه‌پذیر
+let planMonthlyInstallments = []; // اقساط ماهانه برای پلن 1
+let vatOnProjectInterest = 0; // VAT سود پروژه (برای پلن 1)
 
 if (plan.paymentType === 'monthly_principal_interest') {
   // ----------------------------------------------------------------
@@ -161,7 +163,7 @@ if (plan.paymentType === 'monthly_principal_interest') {
   // 1. محاسبه کل سود پروژه (روش کاهشی) - مطابق با اکسل
   // فرمول: P * i * (n+1)/2
   const totalProjectInterest = principalLoan * i * ((n + 1) / 2);
-  const vatOnProjectInterest = totalProjectInterest * vatRate;
+  vatOnProjectInterest = totalProjectInterest * vatRate;
   
   // 2. محاسبه کل مبلغ قابل بازپرداخت (Total Repayment)
   // اصل + کل سود کاهشی + VAT بر سود + کل هزینه‌های ثابت (با VAT)
@@ -191,6 +193,46 @@ if (plan.paymentType === 'monthly_principal_interest') {
   const recipientMonthlyProfitAmount = monthlyInstallment - averagePrincipalPayment - platformMonthlyRevenue;
   // تبدیل به درصد: (سود پرداختی ماهانه / مبلغ دریافتی نقدی) * 100
   recipientMonthlyProfit = (recipientMonthlyProfitAmount / principalLoan) * 100;
+  
+  // 8. محاسبه اقساط ماهانه (برای نمایش جدول کاهشی)
+  const monthlyInstallments = [];
+  let remainingDebt = principalLoan;
+  const principalPerMonth = principalLoan / duration;
+  const platformRevenuePerMonth = platformMonthlyRevenue;
+  
+  for (let month = 1; month <= duration; month++) {
+    // سود پروژه برای این ماه (کاهشی)
+    const projectInterest = remainingDebt * i;
+    // مالیات سود پروژه
+    const projectInterestVat = projectInterest * vatRate;
+    // اصل پول بازپرداخت (ثابت)
+    const principalPayment = principalPerMonth;
+    // سود شرکت (ثابت)
+    const companyProfit = platformFeeAmount / duration;
+    // مالیات سودها (سود شرکت + سود پروژه)
+    const totalProfitVat = (companyProfit * vatRate) + projectInterestVat;
+    // کل بازپرداخت این ماه
+    const totalPayment = principalPayment + projectInterest + companyProfit + totalProfitVat;
+    // دریافتی سرمایه‌گذار (کل بازپرداخت - سهم پلتفرم)
+    const investorReceipt = totalPayment - platformRevenuePerMonth;
+    
+    monthlyInstallments.push({
+      month: month,
+      remainingDebt: Math.round(remainingDebt),
+      projectInterest: Math.round(projectInterest),
+      principalPayment: Math.round(principalPayment),
+      companyProfit: Math.round(companyProfit),
+      profitVat: Math.round(totalProfitVat),
+      totalPayment: Math.round(totalPayment),
+      investorReceipt: Math.round(investorReceipt)
+    });
+    
+    // به‌روزرسانی مانده بدهی
+    remainingDebt -= principalPayment;
+  }
+  
+  // اضافه کردن اقساط ماهانه به خروجی
+  planMonthlyInstallments = monthlyInstallments;
   
 } else if (plan.paymentType === 'monthly_interest_only') {
   // ----------------------------------------------------------------
@@ -343,6 +385,8 @@ return {
       duration: duration,
       monthlyRate: monthlyRatePercent,
       paymentType: plan.paymentType
-    }
+    },
+    // اقساط ماهانه (فقط برای پلن 1)
+    monthlyInstallments: planMonthlyInstallments
   }
 };
