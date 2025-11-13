@@ -50,6 +50,7 @@ label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; d
         <div>
           <label>مبلغ فاکتور</label>
           <input type="text" id="invoiceAmount" class="input-field" placeholder="مثال: ۵۰۰،۰۰۰،۰۰۰" value=""/>
+          <p id="invoiceAmountDisplay" class="text-xs text-slate-500 mt-1" style="display: none;"></p>
         </div>
 
         <div>
@@ -137,6 +138,11 @@ label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; d
             </div>
             
             <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">سود دریافتی ماهانه</p>
+              <p class="text-lg font-bold text-green-300" id="investorMonthlyProfit">-</p>
+            </div>
+            
+            <div class="result-box">
               <p class="text-slate-400 text-sm mb-1">مجموع دریافتی</p>
               <p class="text-xl font-bold text-emerald-400" id="investorTotal">-</p>
             </div>
@@ -166,6 +172,11 @@ label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; d
             <div class="result-box">
               <p class="text-slate-400 text-sm mb-1">قسط ماهانه</p>
               <p class="text-xl font-bold text-orange-400" id="recipientMonthly">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">سود پرداختی ماهانه</p>
+              <p class="text-lg font-bold text-orange-300" id="recipientMonthlyProfit">-</p>
             </div>
             
             <div class="result-box">
@@ -386,8 +397,10 @@ function updateUI(data) {
   
   if (data.summary.paymentType === 'lump_sum') {
     document.getElementById('investorMonthly').textContent = '۰ تومان (دریافت در انتها)';
+    document.getElementById('investorMonthlyProfit').textContent = '۰ تومان (دریافت در انتها)';
   } else {
     document.getElementById('investorMonthly').textContent = formatNumber(data.investor.monthlyReturn);
+    document.getElementById('investorMonthlyProfit').textContent = formatNumber(data.investor.monthlyProfit || 0);
   }
   
   document.getElementById('investorTotal').textContent = formatNumber(data.investor.totalReturn);
@@ -398,8 +411,10 @@ function updateUI(data) {
   
   if (data.summary.paymentType === 'lump_sum') {
     document.getElementById('recipientMonthly').textContent = '۰ تومان (پرداخت در انتها)';
+    document.getElementById('recipientMonthlyProfit').textContent = '۰ تومان (پرداخت در انتها)';
   } else {
     document.getElementById('recipientMonthly').textContent = formatNumber(data.recipient.monthlyInstallment);
+    document.getElementById('recipientMonthlyProfit').textContent = formatNumber(data.recipient.monthlyProfit || 0);
   }
   
   document.getElementById('recipientTotal').textContent = formatNumber(data.recipient.totalPayment);
@@ -441,7 +456,34 @@ document.getElementById('isTaxExempt').addEventListener('change', function() {
 });
 
 // Auto-calculate on input/change - REMOVED, only calculate on button click
+// Helper function to format number to millions/ billions
+function formatToReadable(num) {
+  if (!num || num === 0) return '';
+  const millions = num / 1000000;
+  const billions = num / 1000000000;
+  
+  if (billions >= 1) {
+    return billions.toFixed(billions % 1 === 0 ? 0 : 1) + ' میلیارد تومان';
+  } else if (millions >= 1) {
+    return millions.toFixed(millions % 1 === 0 ? 0 : 1) + ' میلیون تومان';
+  } else {
+    return formatNumber(num);
+  }
+}
+
 // Event listeners for formatting invoice amount
+document.getElementById('invoiceAmount').addEventListener('input', function(e) {
+  const val = parseFormattedNumber(e.target.value);
+  const displayEl = document.getElementById('invoiceAmountDisplay');
+  
+  if (val && val > 0) {
+    displayEl.textContent = formatToReadable(val);
+    displayEl.style.display = 'block';
+  } else {
+    displayEl.style.display = 'none';
+  }
+});
+
 document.getElementById('invoiceAmount').addEventListener('blur', function(e) {
   const val = parseFormattedNumber(e.target.value);
   if (val) {
