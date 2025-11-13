@@ -256,6 +256,45 @@ const investorInvestment = invoiceWithVAT;
 const investorTotalReturn = recipientTotalPayment - platformTotalRevenue;
 const investorProfit = investorTotalReturn - investorInvestment;
 
+// === STEP 6: Calculate averages and profit percentages (مطابق با اکسل) ===
+// محاسبه مالیات کل سودها (برای استفاده در فرمول اکسل)
+let totalVatOnProfits = 0;
+if (plan.paymentType === 'monthly_principal_interest') {
+  totalVatOnProfits = vatOnProjectInterest;
+} else if (plan.paymentType === 'monthly_interest_only') {
+  totalVatOnProfits = vatOnInterestSimple;
+} else {
+  totalVatOnProfits = vatOnInterestSimple;
+}
+
+// 1. میانگین پرداختی ماهیانه سرمایه‌پذیر (F14/12)
+// این در حال حاضر در monthlyInstallment محاسبه شده است
+const averageMonthlyPaymentRecipient = recipientTotalPayment / duration;
+
+// 2. میانگین دریافتی ماهیانه سرمایه‌گذار ((F14-E14-D14)/12)
+// F14 = recipientTotalPayment, E14 = totalVatOnProfits, D14 = platformTotalRevenue
+const averageMonthlyReturnInvestor = (recipientTotalPayment - totalVatOnProfits - platformTotalRevenue) / duration;
+
+// 3. درصد سود دریافتی سالانه سرمایه‌گذار (A2*100/(F17*12))
+// A2 = principalLoan, F17 = averageMonthlyReturnInvestor
+const annualProfitPercentInvestor = (principalLoan * 100) / (averageMonthlyReturnInvestor * duration);
+
+// 4. درصد سود دریافتی ماهیانه سرمایه‌گذار (F18/12)
+const monthlyProfitPercentInvestor = annualProfitPercentInvestor / 12;
+
+// 5. درصد سود پرداختی سالانه سرمایه‌پذیر (A2*100/(F16*12))
+// A2 = principalLoan, F16 = averageMonthlyPaymentRecipient
+const annualProfitPercentRecipient = (principalLoan * 100) / (averageMonthlyPaymentRecipient * duration);
+
+// 6. درصد سود پرداختی ماهیانه سرمایه‌پذیر (F20/12)
+const monthlyProfitPercentRecipient = annualProfitPercentRecipient / 12;
+
+// به‌روزرسانی مقادیر برای استفاده در خروجی
+investorMonthlyReturn = averageMonthlyReturnInvestor;
+monthlyInstallment = averageMonthlyPaymentRecipient;
+investorMonthlyProfit = monthlyProfitPercentInvestor;
+recipientMonthlyProfit = monthlyProfitPercentRecipient;
+
 // === OUTPUT ===
 return {
   success: true,
@@ -267,26 +306,33 @@ return {
     },
     investor: {
       initial: Math.round(investorInvestment),
-      // بازگشت ماهانه سرمایه‌گذار (میانگین در پلن ۱)
+      // بازگشت ماهانه سرمایه‌گذار (میانگین در پلن ۱) - مطابق با اکسل
       monthlyReturn: Math.round(investorMonthlyReturn), 
-      // سود دریافتی ماهانه سرمایه‌گذار (به درصد)
-      monthlyProfit: Math.round(investorMonthlyProfit * 100) / 100, // رند به 2 رقم اعشار
+      // سود دریافتی ماهانه سرمایه‌گذار (به درصد) - مطابق با اکسل
+      monthlyProfit: Math.round(monthlyProfitPercentInvestor * 100) / 100, // رند به 2 رقم اعشار
+      // سود دریافتی سالانه سرمایه‌گذار (به درصد) - مطابق با اکسل
+      annualProfit: Math.round(annualProfitPercentInvestor * 100) / 100, // رند به 2 رقم اعشار
       totalReturn: Math.round(investorTotalReturn),
       profit: Math.round(investorProfit)
     },
     recipient: {
       cash: Math.round(recipientCash),
-      // قسط ماهانه (میانگین در پلن ۱)
+      // قسط ماهانه (میانگین در پلن ۱) - مطابق با اکسل
       monthlyInstallment: Math.round(monthlyInstallment),
-      // سود پرداختی ماهانه سرمایه‌پذیر (به درصد)
-      monthlyProfit: Math.round(recipientMonthlyProfit * 100) / 100, // رند به 2 رقم اعشار
+      // سود پرداختی ماهانه سرمایه‌پذیر (به درصد) - مطابق با اکسل
+      monthlyProfit: Math.round(monthlyProfitPercentRecipient * 100) / 100, // رند به 2 رقم اعشار
+      // سود پرداختی سالانه سرمایه‌پذیر (به درصد) - مطابق با اکسل
+      annualProfit: Math.round(annualProfitPercentRecipient * 100) / 100, // رند به 2 رقم اعشار
       totalPayment: Math.round(recipientTotalPayment),
       financingCost: Math.round(recipientFinancingCost)
     },
     platform: {
       platformFee: Math.round(platformFeeAmount),
+      platformFeeVat: Math.round(vatOnPlatformFee),
       collateral: Math.round(collateralAmount),
+      collateralVat: Math.round(vatOnCollateral),
       totalBase: Math.round(platformFeeAmount + collateralAmount),
+      totalVat: Math.round(vatOnPlatformFee + vatOnCollateral),
       // این خروجی جدید، مجموع درآمد پلتفرم (با VAT) را نشان می‌دهد
       totalRevenue: Math.round(platformTotalRevenue),
       // سهم ماهانه درآمد پلتفرم (برای تفکیک در هر ماه)

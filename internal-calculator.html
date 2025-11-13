@@ -143,6 +143,11 @@ label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; d
             </div>
             
             <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">سود دریافتی سالانه</p>
+              <p class="text-lg font-bold text-green-200" id="investorAnnualProfit">-</p>
+            </div>
+            
+            <div class="result-box">
               <p class="text-slate-400 text-sm mb-1">مجموع دریافتی</p>
               <p class="text-xl font-bold text-emerald-400" id="investorTotal">-</p>
             </div>
@@ -180,6 +185,11 @@ label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; d
             </div>
             
             <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">سود پرداختی سالانه</p>
+              <p class="text-lg font-bold text-orange-200" id="recipientAnnualProfit">-</p>
+            </div>
+            
+            <div class="result-box">
               <p class="text-slate-400 text-sm mb-1">مجموع پرداختی</p>
               <p class="text-xl font-bold text-red-400" id="recipientTotal">-</p>
             </div>
@@ -207,8 +217,18 @@ label{ color:#94a3b8; font-size:.875rem; font-weight:600; margin-bottom:.5rem; d
             </div>
             
             <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">مالیات کارمزد پلتفرم (۱۰٪)</p>
+              <p class="text-lg font-bold text-cyan-300" id="platformFeeVat">-</p>
+            </div>
+            
+            <div class="result-box">
               <p class="text-slate-400 text-sm mb-1">روکش ضمانت</p>
               <p class="text-xl font-bold text-purple-400" id="collateralAmount">-</p>
+            </div>
+            
+            <div class="result-box">
+              <p class="text-slate-400 text-sm mb-1">مالیات روکش ضمانت (۱۰٪)</p>
+              <p class="text-lg font-bold text-purple-300" id="collateralVat">-</p>
             </div>
             
             <div class="result-box">
@@ -398,10 +418,13 @@ function updateUI(data) {
   if (data.summary.paymentType === 'lump_sum') {
     document.getElementById('investorMonthly').textContent = '۰ تومان (دریافت در انتها)';
     document.getElementById('investorMonthlyProfit').textContent = '۰% (دریافت در انتها)';
+    document.getElementById('investorAnnualProfit').textContent = '۰% (دریافت در انتها)';
   } else {
     document.getElementById('investorMonthly').textContent = formatNumber(data.investor.monthlyReturn);
     const monthlyProfitPercent = (data.investor.monthlyProfit || 0).toFixed(2);
     document.getElementById('investorMonthlyProfit').textContent = monthlyProfitPercent.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
+    const annualProfitPercent = (data.investor.annualProfit || 0).toFixed(1);
+    document.getElementById('investorAnnualProfit').textContent = annualProfitPercent.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
   }
   
   document.getElementById('investorTotal').textContent = formatNumber(data.investor.totalReturn);
@@ -413,10 +436,13 @@ function updateUI(data) {
   if (data.summary.paymentType === 'lump_sum') {
     document.getElementById('recipientMonthly').textContent = '۰ تومان (پرداخت در انتها)';
     document.getElementById('recipientMonthlyProfit').textContent = '۰% (پرداخت در انتها)';
+    document.getElementById('recipientAnnualProfit').textContent = '۰% (پرداخت در انتها)';
   } else {
     document.getElementById('recipientMonthly').textContent = formatNumber(data.recipient.monthlyInstallment);
     const monthlyProfitPercent = (data.recipient.monthlyProfit || 0).toFixed(2);
     document.getElementById('recipientMonthlyProfit').textContent = monthlyProfitPercent.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
+    const annualProfitPercent = (data.recipient.annualProfit || 0).toFixed(1);
+    document.getElementById('recipientAnnualProfit').textContent = annualProfitPercent.toString().replace(/[0-9]/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) + '%';
   }
   
   document.getElementById('recipientTotal').textContent = formatNumber(data.recipient.totalPayment);
@@ -424,7 +450,9 @@ function updateUI(data) {
 
   // B2Wall Platform
   document.getElementById('platformFeeAmount').textContent = formatNumber(data.platform.platformFee);
+  document.getElementById('platformFeeVat').textContent = formatNumber(data.platform.platformFeeVat || 0);
   document.getElementById('collateralAmount').textContent = formatNumber(data.platform.collateral);
+  document.getElementById('collateralVat').textContent = formatNumber(data.platform.collateralVat || 0);
   document.getElementById('platformTotal').textContent = formatNumber(data.platform.totalRevenue);
 
   // Summary
