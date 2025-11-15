@@ -1,13 +1,19 @@
 FROM nginx:alpine
 
-# Copy all files to nginx html directory
-COPY . /usr/share/nginx/html/
+# Set working directory
+WORKDIR /usr/share/nginx/html
 
-# Remove files that shouldn't be served
-RUN rm -f /usr/share/nginx/html/Dockerfile \
-          /usr/share/nginx/html/nginx.conf \
-          /usr/share/nginx/html/.gitignore \
-          /usr/share/nginx/html/dockerignore
+# Copy HTML files
+COPY *.html ./
+
+# Copy JavaScript files
+COPY *.js ./
+
+# Copy JSON files
+COPY *.json ./
+
+# Copy projects folder
+COPY projects/ ./projects/
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
@@ -17,4 +23,3 @@ EXPOSE 80
 
 # Start nginx
 CMD ["nginx", "-g", "daemon off;"]
-
