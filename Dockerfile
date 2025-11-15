@@ -1,10 +1,13 @@
 FROM nginx:alpine
 
-# Copy HTML files and static assets
-COPY *.html /usr/share/nginx/html/
-COPY *.js /usr/share/nginx/html/
-COPY *.json /usr/share/nginx/html/
-COPY projects/ /usr/share/nginx/html/projects/
+# Copy all files to nginx html directory
+COPY . /usr/share/nginx/html/
+
+# Remove files that shouldn't be served
+RUN rm -f /usr/share/nginx/html/Dockerfile \
+          /usr/share/nginx/html/nginx.conf \
+          /usr/share/nginx/html/.gitignore \
+          /usr/share/nginx/html/dockerignore
 
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/conf.d/default.conf
