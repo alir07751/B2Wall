@@ -49,14 +49,46 @@
         <p class="text-xs text-slate-500 mt-2">💡 نرخ سود به صورت درصد ماهیانه</p>
       </div>
 
+      <!-- پیش‌نمایش سود -->
+      <div id="estimatedInterest" class="hidden card p-4 bg-amber-50 border border-amber-200">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold text-amber-900">💰 پیش‌نمایش سود تقریبی:</span>
+          <span id="estimatedInterestAmount" class="text-lg font-bold text-amber-700" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';"></span>
+        </div>
+        <p class="text-xs text-amber-700 mt-1">این مبلغ تقریبی است و پس از محاسبه دقیق ممکن است تغییر کند</p>
+      </div>
+
       <!-- پرداخت‌های اصل پول -->
       <div class="card p-6">
         <div class="flex items-center justify-between mb-4">
           <label class="block text-sm font-semibold text-slate-700">
             پرداخت‌های اصل پول <span class="text-red-500">*</span>
           </label>
-          <button type="button" onclick="addPrincipalRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
+          <button type="button" id="addPrincipalBtn" onclick="addPrincipalRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
         </div>
+        
+        <!-- تقسیم خودکار اصل پول -->
+        <div class="mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" id="autoPrincipalMode" onchange="toggleAutoPrincipal()" class="ml-3 w-4 h-4 text-blue-600 rounded" />
+            <span class="text-sm font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
+          </label>
+          <p class="text-xs text-slate-600 mt-1 mr-7">با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند</p>
+          
+          <div id="autoPrincipalOptions" class="hidden mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
+              <input type="text" id="numberOfPayments" placeholder="مثال: 4" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatInput(this.value); updateAutoPrincipal();" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
+              <input type="text" id="paymentInterval" value="30" placeholder="مثال: 30" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatInput(this.value); updateAutoPrincipal();" />
+            </div>
+          </div>
+        </div>
+        
         <div id="principalRows" class="space-y-4">
           <div class="flex gap-4">
             <div class="flex-1">
@@ -65,7 +97,8 @@
             </div>
             <div class="flex-1">
               <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-              <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" />
+              <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatInput(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
             </div>
           </div>
         </div>
@@ -78,12 +111,36 @@
           <label class="block text-sm font-semibold text-slate-700">
             تاریخ‌های پرداخت سود <span class="text-red-500">*</span>
           </label>
-          <button type="button" onclick="addInterestDateRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
+          <button type="button" id="addInterestBtn" onclick="addInterestDateRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
         </div>
+        
+        <!-- تقسیم خودکار تاریخ‌های پرداخت سود -->
+        <div class="mb-4 bg-purple-50 p-3 rounded-lg border border-purple-200">
+          <label class="flex items-center cursor-pointer">
+            <input type="checkbox" id="autoInterestMode" onchange="toggleAutoInterest()" class="ml-3 w-4 h-4 text-purple-600 rounded" />
+            <span class="text-sm font-semibold text-slate-900">تقسیم خودکار تاریخ‌های پرداخت سود</span>
+          </label>
+          <p class="text-xs text-slate-600 mt-1 mr-7">با فعال کردن این گزینه، سیستم به صورت خودکار تاریخ‌های پرداخت سود را تقسیم می‌کند</p>
+          
+          <div id="autoInterestOptions" class="hidden mt-4 grid grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
+              <input type="text" id="numberOfInterestPayments" placeholder="مثال: 2" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatInput(this.value); updateAutoInterest();" />
+            </div>
+            <div>
+              <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
+              <input type="text" id="interestPaymentInterval" value="30" placeholder="مثال: 90" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatInput(this.value); updateAutoInterest();" />
+            </div>
+          </div>
+        </div>
+        
         <div id="interestDateRows" class="space-y-4">
           <div>
             <label class="block text-xs text-slate-600 mb-1">روز</label>
-            <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" />
+            <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" 
+                   oninput="updateEstimatedInterest();" />
           </div>
         </div>
       </div>
@@ -168,7 +225,164 @@
         document.getElementById('loanAmountDisplay').textContent = '';
       }
       updateTotalPrincipal();
+      if (document.getElementById('autoPrincipalMode').checked) {
+        updateAutoPrincipal();
+      }
+      updateEstimatedInterest();
     });
+
+    // به‌روزرسانی نرخ سود
+    document.getElementById('monthlyRate').addEventListener('input', function(e) {
+      updateEstimatedInterest();
+    });
+
+    // محاسبه پیش‌نمایش سود
+    function updateEstimatedInterest() {
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
+      
+      if (loanAmount > 0 && monthlyRate > 0) {
+        const dailyRate = monthlyRate / 100 / 30;
+        const interestDates = Array.from(document.querySelectorAll('[name="interestDate"]'))
+          .map(input => parseInt(toEnglish(input.value)) || 0)
+          .filter(d => d > 0);
+        
+        const finalDay = interestDates.length > 0 ? Math.max(...interestDates) : 180;
+        
+        if (finalDay > 0) {
+          let remainingPrincipal = loanAmount;
+          let totalAccrued = 0;
+          
+          const principalRepayments = Array.from(document.querySelectorAll('[name="principalDay"]'))
+            .map((dayInput, index) => {
+              const day = parseInt(toEnglish(dayInput.value)) || 0;
+              const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
+              return { day, amount };
+            })
+            .filter(pr => pr.day > 0 && pr.amount > 0)
+            .sort((a, b) => a.day - b.day);
+          
+          for (let day = 1; day <= finalDay; day++) {
+            const dailyInterest = remainingPrincipal * dailyRate;
+            totalAccrued += dailyInterest;
+            
+            const repayment = principalRepayments.find(pr => pr.day === day);
+            if (repayment) {
+              remainingPrincipal -= repayment.amount;
+            }
+          }
+          
+          document.getElementById('estimatedInterest').classList.remove('hidden');
+          document.getElementById('estimatedInterestAmount').textContent = formatToman(totalAccrued);
+        }
+      } else {
+        document.getElementById('estimatedInterest').classList.add('hidden');
+      }
+    }
+
+    // تقسیم خودکار اصل پول
+    function toggleAutoPrincipal() {
+      const isChecked = document.getElementById('autoPrincipalMode').checked;
+      const options = document.getElementById('autoPrincipalOptions');
+      const addBtn = document.getElementById('addPrincipalBtn');
+      const rows = document.getElementById('principalRows');
+      
+      if (isChecked) {
+        options.classList.remove('hidden');
+        addBtn.style.display = 'none';
+        rows.querySelectorAll('input').forEach(input => input.disabled = true);
+        updateAutoPrincipal();
+      } else {
+        options.classList.add('hidden');
+        addBtn.style.display = 'inline-flex';
+        rows.querySelectorAll('input').forEach(input => input.disabled = false);
+      }
+    }
+
+    function updateAutoPrincipal() {
+      if (!document.getElementById('autoPrincipalMode').checked) return;
+      
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const numPayments = parseInt(toEnglish(document.getElementById('numberOfPayments').value)) || 0;
+      const interval = parseInt(toEnglish(document.getElementById('paymentInterval').value)) || 30;
+      
+      if (loanAmount > 0 && numPayments > 0 && interval > 0) {
+        const amountPerPayment = Math.floor(loanAmount / numPayments);
+        const remainder = loanAmount - (amountPerPayment * numPayments);
+        
+        const rows = document.getElementById('principalRows');
+        rows.innerHTML = '';
+        
+        for (let i = 0; i < numPayments; i++) {
+          const days = (i + 1) * interval;
+          const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
+          
+          const div = document.createElement('div');
+          div.className = 'flex gap-4';
+          div.innerHTML = `
+            <div class="flex-1">
+              <label class="block text-xs text-slate-600 mb-1">روز</label>
+              <input type="text" name="principalDay" value="${days}" class="input-clean" dir="ltr" disabled />
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
+              <input type="text" name="principalAmount" value="${formatInput(amount.toString())}" class="input-clean" dir="ltr" disabled />
+            </div>
+          `;
+          rows.appendChild(div);
+        }
+        
+        updateTotalPrincipal();
+        updateEstimatedInterest();
+      }
+    }
+
+    // تقسیم خودکار تاریخ‌های پرداخت سود
+    function toggleAutoInterest() {
+      const isChecked = document.getElementById('autoInterestMode').checked;
+      const options = document.getElementById('autoInterestOptions');
+      const addBtn = document.getElementById('addInterestBtn');
+      const rows = document.getElementById('interestDateRows');
+      
+      if (isChecked) {
+        options.classList.remove('hidden');
+        addBtn.style.display = 'none';
+        rows.querySelectorAll('input').forEach(input => input.disabled = true);
+        updateAutoInterest();
+      } else {
+        options.classList.add('hidden');
+        addBtn.style.display = 'inline-flex';
+        rows.querySelectorAll('input').forEach(input => input.disabled = false);
+      }
+    }
+
+    function updateAutoInterest() {
+      if (!document.getElementById('autoInterestMode').checked) return;
+      
+      const numPayments = parseInt(toEnglish(document.getElementById('numberOfInterestPayments').value)) || 0;
+      const interval = parseInt(toEnglish(document.getElementById('interestPaymentInterval').value)) || 30;
+      
+      if (numPayments > 0 && interval > 0) {
+        const rows = document.getElementById('interestDateRows');
+        rows.innerHTML = '';
+        
+        for (let i = 0; i < numPayments; i++) {
+          const days = (i + 1) * interval;
+          
+          const div = document.createElement('div');
+          div.className = 'flex gap-4 items-start';
+          div.innerHTML = `
+            <div class="flex-1">
+              <label class="block text-xs text-slate-600 mb-1">روز</label>
+              <input type="text" name="interestDate" value="${days}" class="input-clean" dir="ltr" disabled />
+            </div>
+          `;
+          rows.appendChild(div);
+        }
+        
+        updateEstimatedInterest();
+      }
+    }
 
     // به‌روزرسانی مجموع اصل پول
     function updateTotalPrincipal() {
@@ -199,6 +413,7 @@
 
     // اضافه کردن سطر پرداخت اصل پول
     function addPrincipalRow() {
+      if (document.getElementById('autoPrincipalMode').checked) return;
       const container = document.getElementById('principalRows');
       const div = document.createElement('div');
       div.className = 'flex gap-4';
@@ -210,9 +425,9 @@
         <div class="flex-1">
           <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
           <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" 
-                 oninput="this.value = formatInput(this.value); updateTotalPrincipal();" />
+                 oninput="this.value = formatInput(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
         </div>
-        <button type="button" onclick="this.parentElement.remove(); updateTotalPrincipal();" 
+        <button type="button" onclick="this.parentElement.remove(); updateTotalPrincipal(); updateEstimatedInterest();" 
                 class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
       `;
       container.appendChild(div);
@@ -220,15 +435,17 @@
 
     // اضافه کردن سطر تاریخ پرداخت سود
     function addInterestDateRow() {
+      if (document.getElementById('autoInterestMode').checked) return;
       const container = document.getElementById('interestDateRows');
       const div = document.createElement('div');
       div.className = 'flex gap-4 items-start';
       div.innerHTML = `
         <div class="flex-1">
           <label class="block text-xs text-slate-600 mb-1">روز</label>
-          <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" />
+          <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" 
+                 oninput="updateEstimatedInterest();" />
         </div>
-        <button type="button" onclick="this.parentElement.remove();" 
+        <button type="button" onclick="this.parentElement.remove(); updateEstimatedInterest();" 
                 class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
       `;
       container.appendChild(div);
