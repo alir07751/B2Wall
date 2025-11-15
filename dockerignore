@@ -1,7 +1,0 @@
-.git
-.gitignore
-.idea
-node_modules
-**/*.md
-**/*.iml
-**/.DS_Store

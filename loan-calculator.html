@@ -3,48 +3,563 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#2563eb" />
-  <meta name="description" content="محاسبه‌گر هوشمند بازپرداخت وام - برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی" />
   <title>محاسبه‌گر بازپرداخت وام | B2Wall</title>
-  
-  <!-- Tailwind CSS -->
+  <script src="clarity-tracker.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
-  
-  <!-- Vazirmatn Font (Persian) -->
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  
   <style>
-    body {
-      font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
-      background: #f8fafc;
-    }
-    
-    /* Custom scrollbar for RTL */
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    
-    ::-webkit-scrollbar-track {
-      background: #f1f5f9;
-    }
-    
-    ::-webkit-scrollbar-thumb {
-      background: #cbd5e1;
-      border-radius: 4px;
-    }
-    
-    ::-webkit-scrollbar-thumb:hover {
-      background: #94a3b8;
-    }
+    body { font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif; background: #f8fafc }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(0,0,0,.04) }
+    .input-clean { width: 100%; padding: 0.875rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.875rem; font-size: 1.125rem; font-weight: 600; transition: all 0.2s; background: #fff; font-family: 'Vazirmatn', system-ui; font-feature-settings: "tnum"; direction: ltr; text-align: right }
+    .input-clean:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.1) }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.875rem 1.5rem; border-radius: 0.875rem; font-weight: 700; transition: all 0.2s; cursor: pointer; border: none; font-size: 1rem }
+    .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,.3) }
+    .btn-primary:hover:not(:disabled) { background: #1d4ed8; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(37,99,235,.4) }
+    .btn-secondary { background: #f1f5f9; color: #334155; border: 2px solid #e2e8f0 }
+    .btn-secondary:hover:not(:disabled) { background: #e2e8f0 }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed }
   </style>
-  
-  <!-- React App Scripts -->
-  <script defer="defer" src="loan-calculator/static/js/main.0e3099b6.js"></script>
-  <link href="loan-calculator/static/css/main.2cc0c448.css" rel="stylesheet">
 </head>
-<body>
-  <noscript>برای استفاده از این برنامه، باید JavaScript را فعال کنید.</noscript>
-  <div id="root"></div>
+<body class="bg-slate-50">
+  <div class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-white border-b border-slate-200 shadow-sm">
+      <div class="max-w-6xl mx-auto px-4 py-6">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold text-slate-900">محاسبه‌گر بازپرداخت وام</h1>
+            <p class="text-sm text-slate-600 mt-1">برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی روز به روز</p>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-6xl mx-auto px-4 py-8" id="mainContent">
+      <!-- Input Form -->
+      <form id="loanForm" class="space-y-6">
+        <!-- Loan Amount -->
+        <div class="card p-6">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">مبلغ وام <span class="text-red-500">*</span></label>
+          <input type="text" id="loanAmount" class="input-clean w-full" placeholder="مبلغ وام را وارد کنید" />
+          <div id="loanAmountDisplay" class="mt-2 text-sm font-semibold text-blue-600" style="display: none;"></div>
+          <p class="text-xs text-slate-500 mt-2">💡 نکته: مبلغ کل وام را وارد کنید (می‌توانید اعداد فارسی یا انگلیسی تایپ کنید)</p>
+        </div>
+
+        <!-- Monthly Interest Rate -->
+        <div class="card p-6">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">نرخ سود ماهیانه <span class="text-red-500">*</span></label>
+          <input type="text" id="monthlyInterestRate" class="input-clean w-full" placeholder="نرخ سود را وارد کنید" />
+          <p class="text-xs text-slate-500 mt-2">💡 نکته: نرخ سود به صورت درصد ماهیانه (مثال: 4.5 برای 4.5%)</p>
+        </div>
+
+        <!-- Principal Repayments -->
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <label class="block text-sm font-semibold text-slate-700">پرداخت‌های اصل پول <span class="text-red-500">*</span></label>
+            <button type="button" id="addPrincipalBtn" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
+          </div>
+
+          <!-- Auto Mode -->
+          <div class="mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" id="autoMode" class="ml-3 w-4 h-4 text-blue-600 rounded" />
+              <span class="text-sm font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
+            </label>
+            <p class="text-xs text-slate-600 mt-1 mr-7">با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند</p>
+            <div id="autoModeSettings" class="mt-4 grid grid-cols-2 gap-4" style="display: none;">
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
+                <input type="text" id="numberOfPayments" class="input-clean" placeholder="مثال: 4" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
+                <input type="text" id="paymentInterval" class="input-clean" placeholder="مثال: 30" value="30" />
+              </div>
+            </div>
+          </div>
+
+          <div id="principalRepayments" class="space-y-4"></div>
+
+          <div id="totalPrincipalValidation" class="mt-4 p-4 bg-slate-50 rounded-lg" style="display: none;">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-semibold text-slate-700">مجموع پرداخت‌های اصل پول:</span>
+              <span id="totalPrincipalDisplay" class="text-lg font-bold"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interest Payment Dates -->
+        <div class="card p-6">
+          <div class="flex items-center justify-between mb-4">
+            <label class="block text-sm font-semibold text-slate-700">تاریخ‌های پرداخت سود <span class="text-red-500">*</span></label>
+            <button type="button" id="addInterestDateBtn" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
+          </div>
+
+          <!-- Auto Interest Mode -->
+          <div class="mb-4 bg-purple-50 p-3 rounded-lg border border-purple-200">
+            <label class="flex items-center cursor-pointer">
+              <input type="checkbox" id="autoInterestMode" class="ml-3 w-4 h-4 text-purple-600 rounded" />
+              <span class="text-sm font-semibold text-slate-900">تقسیم خودکار تاریخ‌های پرداخت سود</span>
+            </label>
+            <p class="text-xs text-slate-600 mt-1 mr-7">با فعال کردن این گزینه، سیستم به صورت خودکار تاریخ‌های پرداخت سود را تقسیم می‌کند</p>
+            <div id="autoInterestSettings" class="mt-4 grid grid-cols-2 gap-4" style="display: none;">
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
+                <input type="text" id="numberOfInterestPayments" class="input-clean" placeholder="مثال: 2" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
+                <input type="text" id="interestPaymentInterval" class="input-clean" placeholder="مثال: 90" value="30" />
+              </div>
+            </div>
+          </div>
+
+          <div id="interestPaymentDates" class="space-y-4"></div>
+          <p class="text-xs text-slate-500 mt-4">💡 نکته: در این روزها، تمام سود انباشته شده تا آن روز پرداخت می‌شود</p>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-center">
+          <button type="submit" id="calculateBtn" class="btn btn-primary text-lg py-4 px-8">
+            <span class="mr-2">📊</span> محاسبه جدول بازپرداخت
+          </button>
+        </div>
+      </form>
+
+      <!-- Results Section (hidden initially) -->
+      <div id="resultsSection" class="space-y-6" style="display: none;">
+        <!-- Summary -->
+        <div class="card p-6 bg-gradient-to-l from-blue-50 to-indigo-50 border-2 border-blue-200">
+          <h2 class="text-2xl font-bold text-slate-900 mb-6">📊 خلاصه اطلاعات بازپرداخت</h2>
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="summaryCards"></div>
+        </div>
+
+        <!-- Detailed Table -->
+        <div class="card p-6">
+          <h2 class="text-2xl font-bold text-slate-900 mb-6">📋 جدول تفصیلی برنامه بازپرداخت</h2>
+          <div class="overflow-x-auto">
+            <table class="w-full border-collapse" id="scheduleTable">
+              <thead>
+                <tr class="bg-slate-100">
+                  <th class="px-4 py-3 text-right text-sm font-semibold text-slate-700 border-b-2 border-slate-200">روز</th>
+                  <th class="px-4 py-3 text-right text-sm font-semibold text-slate-700 border-b-2 border-slate-200">اصل پول باقی‌مانده (قبل از پرداخت)</th>
+                  <th class="px-4 py-3 text-right text-sm font-semibold text-slate-700 border-b-2 border-slate-200">مبلغ پرداخت اصل پول</th>
+                  <th class="px-4 py-3 text-right text-sm font-semibold text-slate-700 border-b-2 border-slate-200">سود انباشته پرداخت شده</th>
+                  <th class="px-4 py-3 text-right text-sm font-semibold text-slate-700 border-b-2 border-slate-200">مبلغ کل پرداختی در این روز</th>
+                  <th class="px-4 py-3 text-right text-sm font-semibold text-slate-700 border-b-2 border-slate-200">توضیحات</th>
+                </tr>
+              </thead>
+              <tbody id="scheduleTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center gap-4">
+          <button onclick="resetForm()" class="btn btn-secondary">محاسبه جدید</button>
+          <button onclick="window.print()" class="btn btn-primary">چاپ گزارش</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const N8N_WEBHOOK_URL = 'https://n8nb2wall.darkube.app/webhook/internal-calculator';
+    let principalRepaymentCount = 0;
+    let interestDateCount = 0;
+
+    // Persian to English digit conversion
+    function convertPersianToEnglish(str) {
+      if (!str) return str;
+      const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+      let result = str.toString();
+      persian.forEach((p, i) => result = result.replace(new RegExp(p, 'g'), i));
+      arabic.forEach((a, i) => result = result.replace(new RegExp(a, 'g'), i));
+      return result;
+    }
+
+    function formatNumberPersian(num) {
+      if (typeof num !== 'number' || isNaN(num)) return '۰';
+      const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      return Math.round(num).toLocaleString('en-US').replace(/\d/g, d => persian[parseInt(d)]);
+    }
+
+    function formatToman(amount) {
+      if (typeof amount !== 'number' || isNaN(amount)) return '0 تومان';
+      return formatNumberPersian(amount) + ' تومان';
+    }
+
+    function parseNumber(value) {
+      if (!value) return 0;
+      const english = convertPersianToEnglish(value);
+      const cleaned = english.replace(/[^\d.]/g, '');
+      const parsed = parseFloat(cleaned);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+
+    function formatInputValue(value) {
+      if (!value) return '';
+      const english = convertPersianToEnglish(value);
+      const numeric = english.replace(/[^\d]/g, '');
+      if (!numeric) return '';
+      return numeric.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    // Initialize form
+    document.addEventListener('DOMContentLoaded', function() {
+      addPrincipalRepayment();
+      addInterestDate();
+      
+      // Auto mode toggle
+      document.getElementById('autoMode').addEventListener('change', function(e) {
+        document.getElementById('autoModeSettings').style.display = e.target.checked ? 'grid' : 'none';
+        if (e.target.checked) {
+          updateAutoPrincipalRepayments();
+        }
+      });
+
+      document.getElementById('autoInterestMode').addEventListener('change', function(e) {
+        document.getElementById('autoInterestSettings').style.display = e.target.checked ? 'grid' : 'none';
+        if (e.target.checked) {
+          updateAutoInterestDates();
+        }
+      });
+
+      // Auto mode inputs
+      document.getElementById('numberOfPayments').addEventListener('input', updateAutoPrincipalRepayments);
+      document.getElementById('paymentInterval').addEventListener('input', updateAutoPrincipalRepayments);
+      document.getElementById('numberOfInterestPayments').addEventListener('input', updateAutoInterestDates);
+      document.getElementById('interestPaymentInterval').addEventListener('input', updateAutoInterestDates);
+      document.getElementById('loanAmount').addEventListener('input', function() {
+        if (document.getElementById('autoMode').checked) {
+          updateAutoPrincipalRepayments();
+        }
+        updateLoanAmountDisplay();
+      });
+
+      // Format inputs
+      document.getElementById('loanAmount').addEventListener('input', function(e) {
+        e.target.value = formatInputValue(e.target.value);
+      });
+
+      document.getElementById('monthlyInterestRate').addEventListener('input', function(e) {
+        let value = convertPersianToEnglish(e.target.value);
+        if (value === '' || /^\d*\.?\d*$/.test(value)) {
+          e.target.value = value;
+        } else {
+          e.target.value = e.target.value.slice(0, -1);
+        }
+      });
+
+      // Add buttons
+      document.getElementById('addPrincipalBtn').addEventListener('click', addPrincipalRepayment);
+      document.getElementById('addInterestDateBtn').addEventListener('click', addInterestDate);
+
+      // Form submit
+      document.getElementById('loanForm').addEventListener('submit', handleSubmit);
+    });
+
+    function updateLoanAmountDisplay() {
+      const amount = parseNumber(document.getElementById('loanAmount').value);
+      const display = document.getElementById('loanAmountDisplay');
+      if (amount > 0) {
+        display.textContent = formatToman(amount);
+        display.style.display = 'block';
+      } else {
+        display.style.display = 'none';
+      }
+    }
+
+    function addPrincipalRepayment() {
+      const container = document.getElementById('principalRepayments');
+      const index = principalRepaymentCount++;
+      const div = document.createElement('div');
+      div.className = 'flex gap-4 items-start';
+      div.innerHTML = `
+        <div class="flex-1">
+          <label class="block text-xs text-slate-600 mb-1">روز</label>
+          <input type="text" class="input-clean principal-days" placeholder="مثال: 60" data-index="${index}" />
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
+          <input type="text" class="input-clean principal-amount" placeholder="مبلغ را وارد کنید" data-index="${index}" />
+          <div class="principal-amount-display mt-1 text-xs font-semibold text-blue-600" style="display: none;"></div>
+        </div>
+        ${principalRepaymentCount > 1 ? `<button type="button" onclick="removePrincipalRepayment(${index})" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>` : ''}
+      `;
+      container.appendChild(div);
+
+      // Format amount input
+      div.querySelector('.principal-amount').addEventListener('input', function(e) {
+        e.target.value = formatInputValue(e.target.value);
+        const amount = parseNumber(e.target.value);
+        const display = div.querySelector('.principal-amount-display');
+        if (amount > 0) {
+          display.textContent = formatToman(amount);
+          display.style.display = 'block';
+        } else {
+          display.style.display = 'none';
+        }
+        updateTotalPrincipal();
+      });
+
+      div.querySelector('.principal-days').addEventListener('input', function(e) {
+        e.target.value = convertPersianToEnglish(e.target.value).replace(/[^\d]/g, '');
+      });
+    }
+
+    function removePrincipalRepayment(index) {
+      const items = document.querySelectorAll('#principalRepayments > div');
+      items.forEach(item => {
+        if (item.querySelector(`[data-index="${index}"]`)) {
+          item.remove();
+        }
+      });
+      updateTotalPrincipal();
+    }
+
+    function addInterestDate() {
+      const container = document.getElementById('interestPaymentDates');
+      const index = interestDateCount++;
+      const div = document.createElement('div');
+      div.className = 'flex gap-4 items-start';
+      div.innerHTML = `
+        <div class="flex-1">
+          <label class="block text-xs text-slate-600 mb-1">روز</label>
+          <input type="text" class="input-clean interest-date" placeholder="مثال: 180" data-index="${index}" />
+        </div>
+        ${interestDateCount > 1 ? `<button type="button" onclick="removeInterestDate(${index})" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>` : ''}
+      `;
+      container.appendChild(div);
+
+      div.querySelector('.interest-date').addEventListener('input', function(e) {
+        e.target.value = convertPersianToEnglish(e.target.value).replace(/[^\d]/g, '');
+      });
+    }
+
+    function removeInterestDate(index) {
+      const items = document.querySelectorAll('#interestPaymentDates > div');
+      items.forEach(item => {
+        if (item.querySelector(`[data-index="${index}"]`)) {
+          item.remove();
+        }
+      });
+    }
+
+    function updateAutoPrincipalRepayments() {
+      if (!document.getElementById('autoMode').checked) return;
+      
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const numPayments = parseInt(convertPersianToEnglish(document.getElementById('numberOfPayments').value)) || 0;
+      const interval = parseInt(convertPersianToEnglish(document.getElementById('paymentInterval').value)) || 30;
+
+      if (loanAmount > 0 && numPayments > 0 && interval > 0) {
+        const container = document.getElementById('principalRepayments');
+        container.innerHTML = '';
+        principalRepaymentCount = 0;
+
+        const amountPerPayment = Math.floor(loanAmount / numPayments);
+        const remainder = loanAmount - (amountPerPayment * numPayments);
+
+        for (let i = 0; i < numPayments; i++) {
+          const days = (i + 1) * interval;
+          const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
+          addPrincipalRepayment();
+          const items = container.querySelectorAll('.principal-days, .principal-amount');
+          items[items.length - 2].value = days.toString();
+          items[items.length - 1].value = formatInputValue(amount.toString());
+          const display = container.lastElementChild.querySelector('.principal-amount-display');
+          display.textContent = formatToman(amount);
+          display.style.display = 'block';
+        }
+        updateTotalPrincipal();
+      }
+    }
+
+    function updateAutoInterestDates() {
+      if (!document.getElementById('autoInterestMode').checked) return;
+      
+      const numPayments = parseInt(convertPersianToEnglish(document.getElementById('numberOfInterestPayments').value)) || 0;
+      const interval = parseInt(convertPersianToEnglish(document.getElementById('interestPaymentInterval').value)) || 30;
+
+      if (numPayments > 0 && interval > 0) {
+        const container = document.getElementById('interestPaymentDates');
+        container.innerHTML = '';
+        interestDateCount = 0;
+
+        for (let i = 0; i < numPayments; i++) {
+          const days = (i + 1) * interval;
+          addInterestDate();
+          const input = container.lastElementChild.querySelector('.interest-date');
+          input.value = days.toString();
+        }
+      }
+    }
+
+    function updateTotalPrincipal() {
+      const amounts = Array.from(document.querySelectorAll('.principal-amount')).map(inp => parseNumber(inp.value));
+      const total = amounts.reduce((sum, amt) => sum + amt, 0);
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      
+      const validation = document.getElementById('totalPrincipalValidation');
+      const display = document.getElementById('totalPrincipalDisplay');
+      
+      if (total > 0 || loanAmount > 0) {
+        validation.style.display = 'block';
+        display.textContent = formatToman(total);
+        display.className = 'text-lg font-bold ' + (Math.abs(total - loanAmount) <= 1 ? 'text-green-600' : 'text-red-600');
+      } else {
+        validation.style.display = 'none';
+      }
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const monthlyRate = parseFloat(convertPersianToEnglish(document.getElementById('monthlyInterestRate').value));
+      
+      const principalRepayments = Array.from(document.querySelectorAll('#principalRepayments > div')).map(div => ({
+        days: parseInt(convertPersianToEnglish(div.querySelector('.principal-days').value)) || 0,
+        amount: parseNumber(div.querySelector('.principal-amount').value)
+      })).filter(pr => pr.days > 0 && pr.amount > 0);
+
+      const interestDates = Array.from(document.querySelectorAll('.interest-date')).map(inp => 
+        parseInt(convertPersianToEnglish(inp.value)) || 0
+      ).filter(d => d > 0);
+
+      if (!loanAmount || loanAmount <= 0) {
+        alert('مبلغ وام باید مثبت باشد');
+        return;
+      }
+
+      if (!monthlyRate || monthlyRate <= 0 || monthlyRate > 100) {
+        alert('نرخ سود باید بین 0 تا 100 درصد باشد');
+        return;
+      }
+
+      if (principalRepayments.length === 0) {
+        alert('حداقل یک پرداخت اصل پول باید تعیین شود');
+        return;
+      }
+
+      if (interestDates.length === 0) {
+        alert('حداقل یک تاریخ پرداخت سود باید تعیین شود');
+        return;
+      }
+
+      const inputData = {
+        LoanAmount: loanAmount,
+        MonthlyInterestRate: monthlyRate,
+        PrincipalRepayments: principalRepayments,
+        InterestPaymentDates: interestDates
+      };
+
+      document.getElementById('calculateBtn').disabled = true;
+      document.getElementById('calculateBtn').innerHTML = '<span class="animate-spin mr-2">⏳</span> در حال محاسبه...';
+
+      try {
+        const response = await fetch(N8N_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(inputData)
+        });
+
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || data.error || 'خطا در محاسبه');
+        }
+
+        displayResults(data);
+      } catch (error) {
+        alert('خطا در محاسبه: ' + error.message);
+        console.error('Error:', error);
+      } finally {
+        document.getElementById('calculateBtn').disabled = false;
+        document.getElementById('calculateBtn').innerHTML = '<span class="mr-2">📊</span> محاسبه جدول بازپرداخت';
+      }
+    }
+
+    function displayResults(data) {
+      document.getElementById('loanForm').style.display = 'none';
+      document.getElementById('resultsSection').style.display = 'block';
+
+      const summary = data.summary._raw || {};
+      const summaryCards = document.getElementById('summaryCards');
+      summaryCards.innerHTML = `
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">کل سود قابل پرداخت</div>
+          <div class="text-2xl font-bold text-blue-600">${formatToman(summary.totalInterestPaid || 0)}</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">کل مبلغ بازپرداخت</div>
+          <div class="text-2xl font-bold text-indigo-600">${formatToman(summary.totalPayments || 0)}</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">مدت زمان بازپرداخت</div>
+          <div class="text-2xl font-bold text-purple-600">${formatNumberPersian(summary.finalDay || 0)} روز</div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">اصل پول پرداخت شده</div>
+          <div class="text-2xl font-bold text-green-600">${formatToman(summary.totalPrincipalPaid || 0)}</div>
+        </div>
+      `;
+
+      const schedule = data.schedule || [];
+      const paymentDays = schedule.filter(day => {
+        const raw = day._raw || {};
+        return raw.principalPayment > 0 || raw.interestPayment > 0;
+      });
+
+      const firstDay = schedule[0];
+      const lastDay = schedule[schedule.length - 1];
+      const daysToShow = [firstDay, ...paymentDays, lastDay].filter((day, index, self) => 
+        index === self.findIndex(d => d.روز === day.روز)
+      ).sort((a, b) => a.روز - b.روز);
+
+      const tbody = document.getElementById('scheduleTableBody');
+      tbody.innerHTML = daysToShow.map(day => {
+        const raw = day._raw || {};
+        const isPaymentDay = raw.principalPayment > 0 || raw.interestPayment > 0;
+        const rowClass = isPaymentDay ? 'bg-blue-50 hover:bg-blue-100' : '';
+        return `
+          <tr class="${rowClass}">
+            <td class="px-4 py-3 text-sm font-semibold text-slate-900 border-b border-slate-200">${day.روز}</td>
+            <td class="px-4 py-3 text-sm text-slate-700 border-b border-slate-200" dir="ltr">${formatToman(raw.remainingPrincipalBefore || 0)}</td>
+            <td class="px-4 py-3 text-sm text-slate-700 border-b border-slate-200" dir="ltr">
+              ${raw.principalPayment > 0 ? `<span class="font-semibold text-green-600">${formatToman(raw.principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-700 border-b border-slate-200" dir="ltr">
+              ${raw.interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(raw.interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td class="px-4 py-3 text-sm font-semibold text-slate-900 border-b border-slate-200" dir="ltr">
+              ${raw.totalPayment > 0 ? `<span class="text-blue-600">${formatToman(raw.totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600 border-b border-slate-200">${day.توضیحات}</td>
+          </tr>
+        `;
+      }).join('');
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function resetForm() {
+      document.getElementById('loanForm').style.display = 'block';
+      document.getElementById('resultsSection').style.display = 'none';
+      document.getElementById('loanForm').reset();
+      document.getElementById('principalRepayments').innerHTML = '';
+      document.getElementById('interestPaymentDates').innerHTML = '';
+      principalRepaymentCount = 0;
+      interestDateCount = 0;
+      addPrincipalRepayment();
+      addInterestDate();
+    }
+  </script>
 </body>
 </html>
 
