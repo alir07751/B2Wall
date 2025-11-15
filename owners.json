@@ -1,0 +1,172 @@
+{
+  "owners": [
+    {
+      "id": "ali-rezaei",
+      "name": "علی رضایی",
+      "avatar": "https://i.pravatar.cc/160?img=1",
+      "verified": true,
+      "city": "تهران",
+      "website": "example.com",
+      "national_id": "1400123456",
+      "active_projects": 2,
+      "badges": ["KYC تکمیل", "گزارش مالی به‌روز"],
+      "kpis": {
+        "experience_years": 5,
+        "successful_projects": 7,
+        "total_investment": 320000000000,
+        "commitment_rate": 94
+      },
+      "about": "تیم مدیریتی با ۱۲ سال سابقه در صنعت غذایی. استانداردهای ISO 22000 و HACCP رعایت می‌شود. قراردادهای خرید تضمینی با ۳ توزیع‌کننده عمده.",
+      "company": {
+        "name": "شرکت نمونه",
+        "ceo": "—",
+        "phone": "—",
+        "address": "—",
+        "national_id": "1400123456"
+      },
+      "docs": [
+        { "title": "قرارداد", "type": "pdf", "url": "#" },
+        { "title": "ارزیابی طرح", "type": "pdf", "url": "#" },
+        { "title": "ضمانت‌نامه بانکی", "type": "image", "url": "#" }
+      ],
+      "timeline": [
+        { "title": "انتشار عمومی طرح", "date": "1404/05/17", "status": "done" },
+        { "title": "تکمیل جذب سرمایه", "date": "1404/06/29", "status": "done" },
+        { "title": "واریز قسط سود اول", "date": "1404/09/19", "status": "pending" },
+        { "title": "واریز قسط سود دوم", "date": "1404/12/19", "status": "pending" },
+        { "title": "واریز قسط سوم", "date": "1405/03/19", "status": "pending" },
+        { "title": "بازگشت اصل سرمایه", "date": "1405/06/19", "status": "pending" }
+      ],
+      "payments_summary": {
+        "installments_count": 4,
+        "annual_profit_pct_estimate": 24,
+        "principal_return": "پایان دوره",
+        "historical_delay_avg_days": 2.3
+      },
+      "overall_progress_pct": 68,
+      "projects_recent": [
+        {
+          "id": 1,
+          "title": "توسعه خط تولید آبمیوه طبیعی",
+          "image": "https://picsum.photos/id/1018/640/360",
+          "status": "در حال جذب",
+          "capital_required": 5000000000,
+          "capital_raised": 2500000000,
+          "guarantees": ["سفته", "چک بانکی"],
+          "mean_profit_pct": 24
+        },
+        {
+          "id": 2,
+          "title": "سرمایه در گردش کارخانه لوازم خانگی",
+          "image": "https://picsum.photos/id/1025/640/360",
+          "status": "تکمیل شد",
+          "capital_required": 7500000000,
+          "capital_raised": 6000000000,
+          "guarantees": ["ضمانت‌نامه بانکی"],
+          "mean_profit_pct": 24
+        }
+      ]
+    },
+    {
+      "id": "behram-sohrabi-nia",
+      "name": "بهرام سهرابی نیا",
+      "avatar": "https://i.pravatar.cc/160?img=2",
+      "verified": true,
+      "city": "کرج",
+      "website": "behram-example.com",
+      "national_id": "1400789123",
+      "active_projects": 1,
+      "badges": ["KYC تکمیل"],
+      "kpis": {
+        "experience_years": 3,
+        "successful_projects": 4,
+        "total_investment": 110000000000,
+        "commitment_rate": 88
+      },
+      "about": "متخصص کشاورزی و صنایع آبیاری. دارای سابقه همکاری با ۲ شرکت معتبر داخلی.",
+      "company": {
+        "name": "تجهیزات آبیاری سهرابی",
+        "ceo": "بهرام سهرابی نیا",
+        "phone": "—",
+        "address": "البرز، کرج",
+        "national_id": "1400789123"
+      },
+      "docs": [
+        { "title": "قرارداد", "type": "pdf", "url": "#" },
+        { "title": "ارزیابی طرح", "type": "pdf", "url": "#" }
+      ],
+      "timeline": [
+        { "title": "انتشار عمومی طرح", "date": "1404/03/12", "status": "done" },
+        { "title": "تکمیل جذب سرمایه", "date": "1404/04/09", "status": "done" },
+        { "title": "واریز قسط سود اول", "date": "1404/07/09", "status": "pending" }
+      ],
+      "payments_summary": {
+        "installments_count": 3,
+        "annual_profit_pct_estimate": 22,
+        "principal_return": "پایان دوره",
+        "historical_delay_avg_days": 1.5
+      },
+      "overall_progress_pct": 82,
+      "projects_recent": [
+        {
+          "id": 2,
+          "title": "نوارتیپ و لوله اتصالات کشاورزی",
+          "image": "https://picsum.photos/id/1025/640/360",
+          "status": "تکمیل شد",
+          "capital_required": 435000000,
+          "capital_raised": 435000000,
+          "guarantees": ["چک بانکی صاحب طرح و دو ضامن دیگر"],
+          "mean_profit_pct": 24
+        }
+      ]
+    },
+    {
+      "id": "hossein-mohammadi",
+      "name": "حسین محمدی",
+      "avatar": "https://i.pravatar.cc/160?img=3",
+      "verified": false,
+      "city": "رشت",
+      "website": null,
+      "national_id": "1400456789",
+      "active_projects": 0,
+      "badges": [],
+      "kpis": {
+        "experience_years": 2,
+        "successful_projects": 1,
+        "total_investment": 25000000000,
+        "commitment_rate": 70
+      },
+      "about": "فعال در زمینه شیلات و پرورش ماهی. در حال توسعه اولین پروژه بزرگ خود.",
+      "company": {
+        "name": "مزرعه آبزی‌پروری شمال",
+        "ceo": "حسین محمدی",
+        "phone": "—",
+        "address": "گیلان، رشت",
+        "national_id": "1400456789"
+      },
+      "docs": [],
+      "timeline": [
+        { "title": "انتشار عمومی طرح", "date": "1404/08/01", "status": "pending" }
+      ],
+      "payments_summary": {
+        "installments_count": 4,
+        "annual_profit_pct_estimate": 26,
+        "principal_return": "پایان دوره",
+        "historical_delay_avg_days": 0
+      },
+      "overall_progress_pct": 46,
+      "projects_recent": [
+        {
+          "id": 3,
+          "title": "راه‌اندازی مزرعه پرورش ماهی",
+          "image": "https://picsum.photos/id/1043/640/360",
+          "status": "به‌زودی",
+          "capital_required": 3000000000,
+          "capital_raised": 1200000000,
+          "guarantees": ["وثیقه ملکی", "چک بانکی"],
+          "mean_profit_pct": 32
+        }
+      ]
+    }
+  ]
+}

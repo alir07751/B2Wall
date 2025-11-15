@@ -1,25 +1,17 @@
-FROM nginx:alpine
+FROM nginx:1.25-alpine
 
-# Copy HTML files
-COPY *.html /usr/share/nginx/html/
+# If your platform expects a different internal port, change both here and in nginx.conf
+ENV PORT=8080
 
-# Copy JavaScript files
-COPY *.js /usr/share/nginx/html/
+# Copy config and site
+COPY nginx.conf /etc/nginx/nginx.conf
+COPY . /usr/share/nginx/html
 
-# Copy JSON files
-COPY *.json /usr/share/nginx/html/
+# Reasonable permissions
+RUN chmod -R 755 /usr/share/nginx/html
 
-# Copy projects folder
-COPY projects/ /usr/share/nginx/html/projects/
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s   CMD wget -q -O- http://127.0.0.1:${PORT}/ || exit 1
 
-# Copy nginx configuration (replace default)
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Test nginx configuration
-RUN nginx -t
-
-# Expose port 80
-EXPOSE 80
-
-# Start nginx
+EXPOSE 8080
 CMD ["nginx", "-g", "daemon off;"]

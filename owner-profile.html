@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>پروفایل صاحب طرح</title>
+
+    <!-- Clarity Tracking -->
+    <script src="clarity-tracker.js"></script>
+    
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root{ --brand:#1f9fb1; --ink:#0f172a; }
+        html,body{font-family:'Vazirmatn',system-ui,-apple-system,"Segoe UI",Roboto,"Noto Naskh Arabic",sans-serif}
+        .card{background:#fff;border:1px solid #e5e7eb;border-radius:20px}
+        .pill{display:inline-flex;align-items:center;gap:.45rem;padding:.38rem .7rem;border-radius:9999px;background:#f1f5f9;color:#0f172a;font-size:.82rem}
+        .badge{display:inline-flex;align-items:center;gap:.35rem;padding:.28rem .55rem;border:1px solid #e5e7eb;border-radius:9999px;background:#fff;font-size:.75rem;white-space:nowrap}
+        .kpi{background:#fff;border:1px solid #e5e7eb;border-radius:14px;padding:.75rem .9rem;min-width:140px}
+        .kpi b{font-size:1.15rem;line-height:1;font-weight:800}
+        .tab{padding:.4rem .7rem;border-radius:12px;background:#eef2f5;color:#334155;font-size:.88rem}
+        .tab.active{background:var(--ink);color:#fff}
+        .progress{height:.55rem;background:#e2e8f0;border-radius:9999px;overflow:hidden}
+        .progress > i{display:block;height:100%;background:#059669;width:0}
+        /* اسکرول افقی بدون اسکرول‌بار */
+        .no-scrollbar::-webkit-scrollbar{display:none}
+        .no-scrollbar{ -ms-overflow-style:none; scrollbar-width:none}
+        /* موبایل */
+        @media (min-width:768px){ .kpi{padding:.9rem 1rem}.kpi b{font-size:1.3rem}.tab{font-size:.95rem;padding:.5rem 1rem} }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+<!-- Topbar -->
+<header class="max-w-6xl mx-auto px-4 py-5">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-lg sm:text-xl md:text-3xl font-bold">پروفایل صاحب طرح</h1>
+        <span class="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-100 text-green-700 text-sm">نسخه آزمایشی</span>
+    </div>
+</header>
+
+<!-- نوار پیام -->
+<div id="notFound" class="hidden max-w-6xl mx-auto px-4">
+    <div class="card p-3 sm:p-4 border-rose-200 bg-rose-50 text-rose-700">پروفایل موردنظر پیدا نشد.</div>
+</div>
+
+<!-- Hero -->
+<section id="hero" class="max-w-6xl mx-auto px-4 mt-2">
+    <div class="card p-4 md:p-6">
+        <!-- Row 1 (responsive, no buttons) -->
+        <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-3 sm:gap-4">
+            <div class="flex items-center md:items-start gap-3 sm:gap-4 min-w-0">
+                <img id="ownerAvatar" class="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-xl object-cover ring-2 ring-slate-100 flex-shrink-0" alt="">
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-1.5 sm:gap-2">
+                        <h2 id="ownerName" class="text-base sm:text-xl md:text-2xl font-extrabold truncate">—</h2>
+                        <span id="ownerBadges" class="inline-flex flex-wrap gap-1"></span>
+                    </div>
+                    <div id="ownerMeta" class="mt-1 text-slate-600 text-[13px] sm:text-sm md:text-base flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+            <!-- دکمه‌ها حذف شده‌اند -->
+        </div>
+
+        <!-- Row 2: KPI -->
+        <div class="mt-3 sm:mt-4">
+            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3">
+                <div class="kpi"><div class="text-slate-500 text-xs mb-1">سابقه همکاری</div><b id="kpiExp">—</b></div>
+                <div class="kpi"><div class="text-slate-500 text-xs mb-1">پروژه‌های موفق</div><b id="kpiSucc">—</b></div>
+                <div class="kpi"><div class="text-slate-500 text-xs mb-1">مجموع جذب سرمایه</div><b id="kpiInvest">—</b></div>
+                <div class="kpi"><div class="text-slate-500 text-xs mb-1">نرخ وفای به تعهد</div><b id="kpiCommit">—</b></div>
+            </div>
+        </div>
+
+        <!-- Row 3: chips -->
+        <div class="mt-3 flex flex-wrap gap-1.5 sm:gap-2">
+            <span id="chipActive" class="pill hidden"></span>
+            <a id="chipWebsite" class="pill hidden" target="_blank" rel="noopener"></a>
+            <span id="chipCity" class="pill hidden"></span>
+            <span id="chipNid" class="pill hidden"></span>
+        </div>
+    </div>
+</section>
+
+<!-- Tabs: فشرده + اسکرول‌پذیر افقی در موبایل -->
+<section class="max-w-6xl mx-auto mt-4">
+    <div class="tabs-wrap overflow-x-auto whitespace-nowrap no-scrollbar -mx-4 px-4">
+        <div id="tabs" class="inline-flex gap-1.5 sm:gap-2">
+            <button class="tab active" data-tab="overview">نمای کلی</button>
+            <button class="tab" data-tab="company">معرفی و ارزیابی شرکت</button>
+            <button class="tab" data-tab="docs">تضمینات و مستندات</button>
+            <button class="tab" data-tab="schedule">زمان‌بندی طرح و اقساط</button>
+            <button class="tab" data-tab="qa">پرسش و پاسخ</button>
+        </div>
+    </div>
+</section>
+
+<!-- Panel: Overview -->
+<section id="panel-overview" class="max-w-6xl mx-auto px-4 mt-3 panel">
+    <div class="grid gap-4 lg:grid-cols-3">
+        <div class="card p-4 md:p-6 lg:col-span-2">
+            <h3 class="text-base sm:text-lg font-bold">تصویر کلی عملکرد</h3>
+
+            <div class="mt-3 grid sm:grid-cols-2 gap-3">
+                <div class="p-3 sm:p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-[13px] sm:text-sm text-slate-600">
+                        <span>تعهدات پرداخت‌شده به‌موقع</span><b id="barCommitTxt">%۹۶</b>
+                    </div>
+                    <div class="progress mt-2"><i id="barCommit" style="width:96%"></i></div>
+                </div>
+                <div class="p-3 sm:p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-[13px] sm:text-sm text-slate-600">
+                        <span>نسبت تکمیل جذب سرمایه</span><b>%۸۹</b>
+                    </div>
+                    <div class="progress mt-2"><i style="width:89%"></i></div>
+                </div>
+                <div class="p-3 sm:p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-[13px] sm:text-sm text-slate-600">
+                        <span>میانگین زمان بازگشت اصل پول</span><b>۱۲٫۸ ماه</b>
+                    </div>
+                    <div class="progress mt-2"><i style="width:72%"></i></div>
+                </div>
+                <div class="p-3 sm:p-4 rounded-xl bg-slate-50">
+                    <div class="flex items-center justify-between text-[13px] sm:text-sm text-slate-600">
+                        <span>میانگین سود پرداختی</span><b>%۲۶</b>
+                    </div>
+                    <div class="progress mt-2"><i style="width:78%"></i></div>
+                </div>
+            </div>
+
+            <h4 class="mt-5 font-semibold text-sm sm:text-base">آخرین پروژه‌ها</h4>
+            <div id="recentProjects" class="mt-2 grid gap-3 md:grid-cols-2"></div>
+        </div>
+
+        <aside class="card p-4 md:p-6">
+            <h3 class="text-base sm:text-lg font-bold">درباره مالک</h3>
+            <p id="ownerAbout" class="mt-2 text-slate-600 text-[13px] sm:text-sm leading-7">—</p>
+            <div class="mt-3 space-y-2 text-sm">
+                <div class="doc flex items-center justify-between gap-2 p-3 sm:p-4"><span>صورت‌های مالی حسابرسی‌شده</span><b>۱۴۰۱، ۱۴۰۲</b></div>
+                <div class="doc flex items-center justify-between gap-2 p-3 sm:p-4"><span>ضمانت‌های معمول</span><b>سفته، چک، وثیقه ملکی</b></div>
+                <div class="doc flex items-center justify-between gap-2 p-3 sm:p-4"><span>سقف مجاز بدهی جاری</span><b>۵۰ میلیارد ریال</b></div>
+            </div>
+        </aside>
+    </div>
+</section>
+
+<!-- Panel: Company -->
+<section id="panel-company" class="max-w-6xl mx-auto px-4 mt-3 panel hidden">
+    <div class="card p-4 md:p-6">
+        <h3 class="text-base sm:text-lg font-bold">معرفی و ارزیابی شرکت</h3>
+        <div class="mt-3 grid gap-2.5 md:grid-cols-2">
+            <div class="pill w-full justify-between"><span>نام شرکت</span><b id="coName">—</b></div>
+            <div class="pill w-full justify-between"><span>مدیرعامل</span><b id="coCEO">—</b></div>
+            <div class="pill w-full justify-between"><span>شناسه ملی</span><b id="coNID">—</b></div>
+            <div class="pill w-full justify-between"><span>شماره تماس</span><b id="coPhone">—</b></div>
+            <div class="pill w-full justify-between md:col-span-2"><span>آدرس شرکت</span><b id="coAddr">—</b></div>
+        </div>
+    </div>
+</section>
+
+<!-- Panel: Docs -->
+<section id="panel-docs" class="max-w-6xl mx-auto px-4 mt-3 panel hidden">
+    <div class="grid gap-4 lg:grid-cols-3">
+        <div class="card p-4 md:p-6 lg:col-span-1">
+            <h3 class="text-base sm:text-lg font-bold">تضمینات و مستندات</h3>
+            <div id="docList" class="mt-3 space-y-2.5"></div>
+        </div>
+
+        <div class="card p-4 md:p-6 lg:col-span-2">
+            <h3 class="text-base sm:text-lg font-bold">پیش‌نمایش سند</h3>
+            <div class="mt-3">
+                <img id="docPreview" class="w-full max-h-[70vh] object-contain rounded-xl border border-slate-200"
+                     src="https://images.unsplash.com/photo-1589829545856-d10d557cf95f?q=80&w=1200&auto=format&fit=crop" alt="doc">
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Panel: Schedule (دمو) -->
+<section id="panel-schedule" class="max-w-6xl mx-auto px-4 mt-3 panel hidden">
+    <div class="card p-4 md:p-6">
+        <h3 class="text-base sm:text-lg font-bold">زمان‌بندی طرح و اقساط</h3>
+        <div class="mt-3 grid gap-4 md:grid-cols-2">
+            <div>
+                <div class="card p-3 sm:p-4 bg-green-50/50 border-green-100 mb-3"><b>انتشار عمومی طرح</b><div class="text-slate-600 text-sm mt-1">۱۴۰۴/۰۵/۱۷ — انجام شد</div></div>
+                <div class="card p-3 sm:p-4 bg-green-50/50 border-green-100 mb-3"><b>تکمیل جذب سرمایه</b><div class="text-slate-600 text-sm mt-1">۱۴۰۴/۰۶/۲۹ — انجام شد</div></div>
+                <div class="card p-3 sm:p-4 mb-3"><b>واریز قسط سود اول</b><div class="text-slate-600 text-sm mt-1">۱۴۰۴/۰۹/۱۹ — در انتظار</div></div>
+                <div class="card p-3 sm:p-4 mb-3"><b>واریز قسط سود دوم</b><div class="text-slate-600 text-sm mt-1">۱۴۰۴/۱۲/۱۹ — در انتظار</div></div>
+                <div class="card p-3 sm:p-4"><b>بازگشت اصل سرمایه</b><div class="text-slate-600 text-sm mt-1">۱۴۰۵/۰۶/۱۹ — در انتظار</div></div>
+            </div>
+            <div>
+                <div class="card p-4 md:p-6">
+                    <h4 class="font-semibold text-sm sm:text-base">خلاصه پرداختی‌ها</h4>
+                    <ul class="mt-3 space-y-2 text-sm">
+                        <li class="pill w-full justify-between"><span>تعداد اقساط سود</span><b id="sumInst">—</b></li>
+                        <li class="pill w-full justify-between"><span>پیش‌بینی نرخ سود سالیانه</span><b id="sumApr">—</b></li>
+                        <li class="pill w-full justify-between"><span>روش بازپرداخت اصل</span><b id="sumPrincipal">—</b></li>
+                        <li class="pill w-full justify-between"><span>میانگین تاخیر تاریخی</span><b id="sumDelay">—</b></li>
+                    </ul>
+                    <div class="mt-4">
+                        <div class="text-sm text-slate-600 mb-2">پیشرفت کل طرح</div>
+                        <div class="progress"><i id="overallProg" style="width:68%"></i></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Panel: Q&A -->
+<section id="panel-qa" class="max-w-6xl mx-auto px-4 mt-3 mb-10 panel hidden">
+    <div class="card p-4 md:p-6">
+        <h3 class="text-base sm:text-lg font-bold">پرسش و پاسخ</h3>
+        <div class="mt-2 text-slate-500 text-sm">هنوز نظری ثبت نشده است.</div>
+    </div>
+</section>
+
+<!-- Script 1: tabs / progress animation -->
+<script>
+    const tabs = document.querySelectorAll('.tab');
+    const panels = {
+      overview: document.getElementById('panel-overview'),
+      company:  document.getElementById('panel-company'),
+      docs:     document.getElementById('panel-docs'),
+      schedule: document.getElementById('panel-schedule'),
+      qa:       document.getElementById('panel-qa'),
+    };
+    tabs.forEach(b=>{
+      b.addEventListener('click', ()=>{
+        tabs.forEach(x=>x.classList.remove('active'));
+        b.classList.add('active');
+        Object.values(panels).forEach(p=>p.classList.add('hidden'));
+        const id = b.dataset.tab;
+        panels[id].classList.remove('hidden');
+        panels[id].scrollIntoView({behavior:'smooth',block:'start'});
+      });
+    });
+
+    // Animate progress bars on load
+    window.addEventListener('load', ()=>{
+      document.querySelectorAll('.progress > i').forEach(i=>{
+        const w=i.style.width; i.style.width='0'; setTimeout(()=>{ i.style.width=w; i.style.transition='width .6s ease'; },50);
+      });
+    });
+
+    // Helpers
+    const faNum = n => (n===0 || n) ? Number(n).toLocaleString('fa-IR') : '—';
+    const billionLabel = n => (n===0 || n) ? `${faNum(Math.round(n/1_000_000_000))} میلیارد` : '—';
+</script>
+
+<!-- Script 2: load owner by ?id= from owners.json -->
+<script>
+    (async function () {
+      const params = new URLSearchParams(location.search);
+      const ownerId = params.get('id');
+      const notFound = document.querySelector('#notFound');
+
+      if(!ownerId){
+        notFound.classList.remove('hidden');
+        notFound.textContent = 'برای مشاهده پروفایل، از ویترین پروژه‌ها وارد شوید.';
+        return;
+      }
+
+      try {
+        const ownersRes = await fetch('owners.json', { cache: 'no-store' });
+        const { owners=[] } = await ownersRes.json();
+        const o = owners.find(x => x.id === ownerId);
+        if (!o) {
+          notFound.classList.remove('hidden');
+          notFound.textContent = 'پروفایل موردنظر پیدا نشد.';
+          return;
+        }
+
+        // --- Hero ---
+        document.querySelector('#ownerName').textContent = o.name || '—';
+        if (o.avatar) { const av = document.querySelector('#ownerAvatar'); av.src = o.avatar; av.alt = o.name || ''; }
+        document.querySelector('#ownerBadges').innerHTML =
+          Array.isArray(o.badges) ? o.badges.map(b=>`<span class="badge">${b}</span>`).join('') : '';
+        document.querySelector('#ownerMeta').innerHTML = `
+          ${o.verified ? `<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">✓ تأیید‌شده</span>` : ``}
+          ${o.city ? `<span class="text-xs text-slate-500">شهر: <b class="text-slate-700">${o.city}</b></span>` : ``}
+        `;
+
+        // --- KPIs ---
+        if (o.kpis){
+          document.querySelector('#kpiExp').textContent    = `${faNum(o.kpis.experience_years)} سال`;
+          document.querySelector('#kpiSucc').textContent   = `${faNum(o.kpis.successful_projects)} مورد`;
+          document.querySelector('#kpiInvest').textContent = billionLabel(o.kpis.total_investment);
+          document.querySelector('#kpiCommit').textContent = `%${faNum(o.kpis.commitment_rate)}`;
+          const cr = Math.max(0, Math.min(100, Number(o.kpis.commitment_rate||0)));
+          document.querySelector('#barCommit').style.width = cr + '%';
+          document.querySelector('#barCommitTxt').textContent = `%${faNum(cr)}`;
+        }
+
+        // --- Chips ---
+        if (o.active_projects != null){
+          const el = document.querySelector('#chipActive');
+          el.textContent = `👀 ${faNum(o.active_projects)} پروژه فعال`;
+          el.classList.remove('hidden');
+        }
+        if (o.website){
+          const w = document.querySelector('#chipWebsite');
+          const href = o.website.startsWith('http') ? o.website : 'https://' + o.website;
+          w.href = href; w.textContent = `🌐 ${o.website}`;
+          w.classList.remove('hidden');
+        }
+        if (o.city){ const c = document.querySelector('#chipCity'); c.textContent = `📍 ${o.city}`; c.classList.remove('hidden'); }
+        if (o.national_id){ const n = document.querySelector('#chipNid'); n.textContent = `🧾 شناسه ملی: ${faNum(o.national_id)}`; n.classList.remove('hidden'); }
+
+        // --- Overview aside: about ---
+        if (o.about) document.querySelector('#ownerAbout').textContent = o.about;
+
+        // --- Recent projects ---
+        const rp = Array.isArray(o.projects_recent) ? o.projects_recent : [];
+        const rpWrap = document.querySelector('#recentProjects');
+        rpWrap.innerHTML = rp.map(p => `
+          <article class="card overflow-hidden">
+            <img src="${p.image}" class="w-full aspect-[16/9] object-cover" alt="">
+            <div class="p-3">
+              <div class="flex items-center justify-between">
+                <b class="text-sm sm:text-base">${p.title || '—'}</b>
+                <span class="pill">${p.status || ''}</span>
+              </div>
+              <div class="mt-2 text-[12px] sm:text-xs text-slate-600 flex justify-between">
+                <span>تأمین‌شده: ${faNum(p.capital_raised)} ریال</span>
+                <span>موردنیاز: ${faNum(p.capital_required)} ریال</span>
+              </div>
+              <div class="progress mt-2"><i style="width:${Math.min(100, Math.round(((p.capital_raised||0)/(p.capital_required||1))*100))}%"></i></div>
+              ${p.guarantees ? `<div class="mt-2 text-[13px] sm:text-sm text-slate-600">ضمانت: ${p.guarantees.join('، ')}</div>`:``}
+            </div>
+          </article>
+        `).join('');
+
+        // --- Company panel ---
+        if (o.company){
+          document.querySelector('#coName').textContent  = o.company.name   || '—';
+          document.querySelector('#coCEO').textContent   = o.company.ceo    || '—';
+          document.querySelector('#coNID').textContent   = o.company.national_id || '—';
+          document.querySelector('#coPhone').textContent = o.company.phone  || '—';
+          document.querySelector('#coAddr').textContent  = o.company.address|| '—';
+        }
+
+        // --- Docs panel ---
+        const docs = Array.isArray(o.docs) ? o.docs : [];
+        const docList = document.querySelector('#docList');
+        if (docs.length){
+          docList.innerHTML = docs.map(d => `
+            <div class="doc p-3 sm:p-4">
+              <div class="flex items-center gap-2"><span>${d.title||'سند'}</span></div>
+              ${d.url ? `<a class="text-sky-700 hover:underline" href="${d.url}" target="_blank" rel="noopener">دانلود</a>` : `<span class="text-slate-400">—</span>`}
+            </div>
+          `).join('');
+          const img = docs.find(d=>d.type==='image' && d.url);
+          if (img) document.querySelector('#docPreview').src = img.url;
+        } else {
+          docList.innerHTML = `<div class="text-slate-500 text-sm">مدرکی ثبت نشده است.</div>`;
+        }
+
+        // --- Schedule summary ---
+        if (o.payments_summary){
+          document.querySelector('#sumInst').textContent     = `${faNum(o.payments_summary.installments_count)} قسط`;
+          document.querySelector('#sumApr').textContent      = `%${faNum(o.payments_summary.annual_profit_pct_estimate)} (بدون تضمین)`;
+          document.querySelector('#sumPrincipal').textContent= o.payments_summary.principal_return || '—';
+          document.querySelector('#sumDelay').textContent    = `${faNum(o.payments_summary.historical_delay_avg_days)} روز`;
+        }
+        if (o.overall_progress_pct != null){
+          document.querySelector('#overallProg').style.width = Math.min(100, Math.max(0, Number(o.overall_progress_pct))) + '%';
+        }
+
+      } catch (e) {
+        notFound.classList.remove('hidden');
+        notFound.textContent = 'نتوانستیم اطلاعات پروفایل را بارگذاری کنیم.';
+        console.error(e);
+      }
+    })();
+</script>
+
+</body>
+</html>
