@@ -258,55 +258,6 @@ function InputForm({ onSubmit, isLoading }) {
   
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Auto Mode Toggle */}
-      <div className="card p-6 bg-blue-50 border-2 border-blue-200">
-        <div className="flex items-center justify-between">
-          <div>
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={autoMode}
-                onChange={(e) => setAutoMode(e.target.checked)}
-                className="ml-3 w-5 h-5 text-blue-600 rounded"
-              />
-              <span className="font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
-            </label>
-            <p className="text-xs text-slate-600 mt-1 mr-8">
-              با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند
-            </p>
-          </div>
-        </div>
-        
-        {autoMode && (
-          <div className="mt-4 grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
-              <input
-                type="text"
-                value={numberOfPayments}
-                onChange={(e) => setNumberOfPayments(convertPersianToEnglish(e.target.value).replace(/[^\d]/g, ''))}
-                placeholder="مثال: 4"
-                className="input-clean"
-                dir="ltr"
-                style={{ fontFamily: 'Vazirmatn', fontFeatureSettings: '"tnum"' }}
-              />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
-              <input
-                type="text"
-                value={paymentInterval}
-                onChange={(e) => setPaymentInterval(convertPersianToEnglish(e.target.value).replace(/[^\d]/g, ''))}
-                placeholder="مثال: 30"
-                className="input-clean"
-                dir="ltr"
-                style={{ fontFamily: 'Vazirmatn', fontFeatureSettings: '"tnum"' }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-      
       {/* Loan Amount Input */}
       <div className="card p-6">
         <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -350,11 +301,6 @@ function InputForm({ onSubmit, isLoading }) {
           dir="ltr"
           style={{ fontFamily: 'Vazirmatn', fontFeatureSettings: '"tnum"' }}
         />
-        {monthlyInterestRate && (
-          <div className="mt-2 text-sm font-semibold text-blue-600" dir="rtl" style={{ fontFamily: 'Vazirmatn', fontFeatureSettings: '"tnum"' }}>
-            {formatNumberPersian(parseFloat(monthlyInterestRate) || 0)}%
-          </div>
-        )}
         {errors.monthlyInterestRate && (
           <p className="text-red-500 text-sm mt-1">{errors.monthlyInterestRate}</p>
         )}
@@ -395,6 +341,51 @@ function InputForm({ onSubmit, isLoading }) {
             >
               + اضافه کردن
             </button>
+          )}
+        </div>
+        
+        {/* Auto Mode Toggle for Principal */}
+        <div className="mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
+          <label className="flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={autoMode}
+              onChange={(e) => setAutoMode(e.target.checked)}
+              className="ml-3 w-4 h-4 text-blue-600 rounded"
+            />
+            <span className="text-sm font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
+          </label>
+          <p className="text-xs text-slate-600 mt-1 mr-7">
+            با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند
+          </p>
+          
+          {autoMode && (
+            <div className="mt-4 grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
+                <input
+                  type="text"
+                  value={numberOfPayments}
+                  onChange={(e) => setNumberOfPayments(convertPersianToEnglish(e.target.value).replace(/[^\d]/g, ''))}
+                  placeholder="مثال: 4"
+                  className="input-clean"
+                  dir="ltr"
+                  style={{ fontFamily: 'Vazirmatn', fontFeatureSettings: '"tnum"' }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
+                <input
+                  type="text"
+                  value={paymentInterval}
+                  onChange={(e) => setPaymentInterval(convertPersianToEnglish(e.target.value).replace(/[^\d]/g, ''))}
+                  placeholder="مثال: 30"
+                  className="input-clean"
+                  dir="ltr"
+                  style={{ fontFamily: 'Vazirmatn', fontFeatureSettings: '"tnum"' }}
+                />
+              </div>
+            </div>
           )}
         </div>
         
