@@ -1,392 +1,429 @@
 /**
- * N8N Webhook Function for B2Wall Financing Calculator
+ * N8N Flexible Loan Repayment Calculator for Persian-Speaking Clients
  * 
- * Updated with new calculation logic:
- * 1. Monthly interest rate is now dynamic (user input)
- * 2. VAT calculation considers tax exemption
- * 3. Plan 1 uses declining balance method
- * 4. VAT is calculated on fixed fees and collateral
+ * This calculator implements a day-by-day loan repayment schedule with:
+ * - Simple interest (non-compounding) calculated daily
+ * - Flexible principal repayment schedule (specific days and amounts)
+ * - Interest payment dates (specific days when accrued interest is paid)
+ * - Complete Persian/Farsi output formatting
  * 
- * Input (from webhook):
+ * Input Structure (from n8n workflow):
  * {
- *   "invoiceAmount": 500000000,     // مبلغ فاکتور (تومان)
- *   "isTaxExempt": "no",            // آیا معاف از مالیات است؟ (yes/no)
- *   "hasVAT": "yes",                // آیا شامل ارزش افزوده است؟ (yes/no)
- *   "duration": 12,                 // مدت زمان (ماه)
- *   "planCode": "PLAN1",            // پلن: PLAN1, PLAN2, PLAN3
- *   "monthlyRate": 4.5,             // درصد سود ماهیانه (داینامیک)
- *   "platformFeeRate": 2,           // کارمزد پلتفرم (0-5%)
- *   "collateralCoverRate": 3        // روکش ضمانت (0-5%)
+ *   "LoanAmount": 330000000,                    // Total principal (Toman)
+ *   "MonthlyInterestRate": 4.5,                 // Monthly interest rate (%)
+ *   "PrincipalRepayments": [                    // Array of principal payments
+ *     {"days": 60, "amount": 30000000},
+ *     {"days": 120, "amount": 50000000},
+ *     ...
+ *   ],
+ *   "InterestPaymentDates": [180, 240]          // Days when interest is paid
  * }
  * 
  * Output:
  * {
  *   "success": true,
- *   "data": {
- *     "invoice": {...},
- *     "investor": {...},
- *     "recipient": {...},
- *     "platform": {...},
- *     "summary": {...}
- *   }
+ *   "schedule": [...],                          // Day-by-day repayment schedule
+ *   "summary": {...},                           // Summary statistics in Persian
+ *   "formattedReport": "..."                    // Formatted Persian report
  * }
  */
 
-// Get input data from webhook BODY
-const input = $input.item.json.body || $input.item.json;
+// ============================================================================
+// SECTION 1: INPUT DATA HANDLING
+// ============================================================================
 
-const invoiceAmount = Number(input.invoiceAmount) || 0;
-const isTaxExempt = input.isTaxExempt || 'no';
-const hasVAT = input.hasVAT || 'no';
-const duration = Number(input.duration) || 0;
-const planCode = input.planCode || input.plan || 'PLAN1';
-const platformFeeRate = Number(input.platformFeeRate || input.platformFee) || 0;
-const collateralCoverRate = Number(input.collateralCoverRate || input.collateralCover) || 0;
-const monthlyRatePercent = Number(input.monthlyRate) || 0;
+// Get input data from n8n workflow (supports both direct input and webhook body)
+const input = $input?.item?.json?.body || $input?.item?.json || $input?.json || {};
 
-// Plan configurations (monthlyRate is now dynamic from input)
-const PLANS = {
-  'PLAN1': {
-    name: 'پلن ۱: اصل + سود ماهیانه',
-    paymentType: 'monthly_principal_interest'
-  },
-  'PLAN2': {
-    name: 'پلن ۲: سود ماهیانه + اصل در انتها',
-    paymentType: 'monthly_interest_only'
-  },
-  'PLAN3': {
-    name: 'پلن ۳: اصل + سود در انتها',
-    paymentType: 'lump_sum'
+// Extract and validate input parameters
+const LoanAmount = Number(input.LoanAmount) || 0;
+const MonthlyInterestRate = Number(input.MonthlyInterestRate) || 0;
+const PrincipalRepayments = Array.isArray(input.PrincipalRepayments) 
+  ? input.PrincipalRepayments.map(pr => ({
+      days: Number(pr.days) || 0,
+      amount: Number(pr.amount) || 0
+    }))
+  : [];
+const InterestPaymentDates = Array.isArray(input.InterestPaymentDates)
+  ? input.InterestPaymentDates.map(d => Number(d) || 0).filter(d => d > 0)
+  : [];
+
+// Input validation
+if (LoanAmount <= 0) {
+  return {
+    success: false,
+    error: 'LoanAmount must be positive',
+    message: 'مبلغ وام باید مثبت باشد'
+  };
+}
+
+if (MonthlyInterestRate <= 0 || MonthlyInterestRate > 100) {
+  return {
+    success: false,
+    error: 'MonthlyInterestRate must be between 0 and 100%',
+    message: 'نرخ سود ماهیانه باید بین 0 تا 100 درصد باشد'
+  };
+}
+
+if (PrincipalRepayments.length === 0 && InterestPaymentDates.length === 0) {
+  return {
+    success: false,
+    error: 'At least one principal repayment or interest payment date must be provided',
+    message: 'حداقل یک پرداخت اصل پول یا تاریخ پرداخت سود باید تعیین شود'
+  };
+}
+
+// ============================================================================
+// SECTION 2: CORE CALCULATION LOGIC
+// ============================================================================
+
+/**
+ * Calculate daily interest rate
+ * Formula: r_daily = MonthlyInterestRate / 30
+ * Assumes 30 days per month for financial calculations
+ */
+const dailyRate = MonthlyInterestRate / 100 / 30; // Convert percentage to decimal
+
+/**
+ * Sort principal repayments by day to ensure chronological processing
+ */
+PrincipalRepayments.sort((a, b) => a.days - b.days);
+
+/**
+ * Sort interest payment dates chronologically
+ */
+InterestPaymentDates.sort((a, b) => a - b);
+
+/**
+ * Determine the final day of the loan period
+ * This is the maximum of:
+ * - Last principal repayment day
+ * - Last interest payment day
+ */
+const finalDay = Math.max(
+  PrincipalRepayments.length > 0 ? Math.max(...PrincipalRepayments.map(pr => pr.days)) : 0,
+  InterestPaymentDates.length > 0 ? Math.max(...InterestPaymentDates) : 0
+);
+
+if (finalDay <= 0) {
+  return {
+    success: false,
+    error: 'Invalid payment schedule',
+    message: 'برنامه پرداخت نامعتبر است'
+  };
+}
+
+/**
+ * Core day-by-day calculation function
+ * This function iterates through each day and calculates:
+ * - Daily interest based on remaining principal
+ * - Principal repayments when scheduled
+ * - Interest payments when scheduled
+ * - Total accrued interest (reset after payment)
+ */
+function calculateRepaymentSchedule() {
+  // Initialize tracking variables
+  let remainingPrincipal = LoanAmount;
+  let totalAccruedInterest = 0;
+  let principalRepaymentIndex = 0;
+  let interestPaymentIndex = 0;
+  
+  // Schedule array to store day-by-day details
+  const schedule = [];
+  
+  // Track total payments for summary
+  let totalPrincipalPaid = 0;
+  let totalInterestPaid = 0;
+  let totalPayments = 0;
+  
+  // Iterate day-by-day from Day 1 to final day
+  for (let day = 1; day <= finalDay; day++) {
+    // Initialize day record
+    const dayRecord = {
+      day: day,
+      remainingPrincipalBefore: remainingPrincipal,
+      principalPayment: 0,
+      interestPayment: 0,
+      totalPayment: 0,
+      description: '',
+      remainingPrincipalAfter: remainingPrincipal
+    };
+    
+    // Calculate daily interest based on remaining principal at start of day
+    const dailyInterest = remainingPrincipal * dailyRate;
+    totalAccruedInterest += dailyInterest;
+    
+    // Check if this day has a principal repayment
+    if (principalRepaymentIndex < PrincipalRepayments.length && 
+        PrincipalRepayments[principalRepaymentIndex].days === day) {
+      const principalAmount = PrincipalRepayments[principalRepaymentIndex].amount;
+      
+      // Validate principal payment doesn't exceed remaining principal
+      if (principalAmount > remainingPrincipal) {
+        return {
+          success: false,
+          error: `Principal payment on day ${day} exceeds remaining principal`,
+          message: `پرداخت اصل پول در روز ${day} بیشتر از مانده بدهی است`
+        };
+      }
+      
+      dayRecord.principalPayment = principalAmount;
+      remainingPrincipal -= principalAmount;
+      totalPrincipalPaid += principalAmount;
+      dayRecord.remainingPrincipalAfter = remainingPrincipal;
+      
+      // Update description
+      if (dayRecord.description) {
+        dayRecord.description += ' + ';
+      }
+      dayRecord.description += 'پرداخت بخشی از اصل وام';
+      principalRepaymentIndex++;
+    }
+    
+    // Check if this day has an interest payment
+    if (interestPaymentIndex < InterestPaymentDates.length && 
+        InterestPaymentDates[interestPaymentIndex] === day) {
+      // Record the accrued interest as payment amount
+      dayRecord.interestPayment = totalAccruedInterest;
+      totalInterestPaid += totalAccruedInterest;
+      
+      // CRITICAL: Reset accrued interest to zero after payment
+      // This ensures simple interest (no compounding)
+      totalAccruedInterest = 0;
+      
+      // Update description
+      if (dayRecord.description) {
+        dayRecord.description += ' + ';
+      }
+      dayRecord.description += 'پرداخت سود انباشته';
+      interestPaymentIndex++;
+    }
+    
+    // Calculate total payment for this day
+    dayRecord.totalPayment = dayRecord.principalPayment + dayRecord.interestPayment;
+    totalPayments += dayRecord.totalPayment;
+    
+    // If no payment occurred, add description
+    if (!dayRecord.description) {
+      dayRecord.description = 'هیچ پرداختی انجام نشد';
+    }
+    
+    // Add to schedule
+    schedule.push(dayRecord);
+  }
+  
+  // Final validation: ensure all principal is repaid
+  if (remainingPrincipal > 0.01) { // Allow small rounding errors
+    return {
+      success: false,
+      error: 'Remaining principal not fully repaid',
+      message: `مانده بدهی پرداخت نشده: ${remainingPrincipal.toLocaleString('fa-IR')} تومان`,
+      warning: true,
+      remainingPrincipal: remainingPrincipal
+    };
+  }
+  
+  return {
+    success: true,
+    schedule: schedule,
+    summary: {
+      totalPrincipalPaid: totalPrincipalPaid,
+      totalInterestPaid: totalInterestPaid,
+      totalPayments: totalPayments,
+      finalDay: finalDay,
+      remainingPrincipal: remainingPrincipal
+    }
+  };
+}
+
+// Execute calculation
+const calculationResult = calculateRepaymentSchedule();
+
+if (!calculationResult.success) {
+  return calculationResult;
+}
+
+const { schedule, summary } = calculationResult;
+
+// ============================================================================
+// SECTION 3: PERSIAN/FARSI FORMATTING UTILITIES
+// ============================================================================
+
+/**
+ * Format number as Toman with Persian digit separators
+ * Example: 330000000 -> "330,000,000 تومان"
+ */
+function formatToman(amount) {
+  if (typeof amount !== 'number' || isNaN(amount)) {
+    return '0 تومان';
+  }
+  // Round to nearest integer for display
+  const rounded = Math.round(amount);
+  // Format with thousand separators
+  const formatted = rounded.toLocaleString('en-US');
+  return `${formatted} تومان`;
+}
+
+/**
+ * Convert Arabic/Western digits to Persian digits (optional enhancement)
+ * This function can be used if Persian digits are preferred
+ */
+function toPersianDigits(str) {
+  const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return str.toString().replace(/\d/g, (digit) => persianDigits[parseInt(digit)]);
+}
+
+// ============================================================================
+// SECTION 4: GENERATE PERSIAN REPORT TABLE
+// ============================================================================
+
+/**
+ * Generate comprehensive repayment schedule table in Persian
+ */
+function generatePersianReport() {
+  let report = '';
+  
+  // Report Header
+  report += '='.repeat(80) + '\n';
+  report += 'جدول برنامه بازپرداخت وام\n';
+  report += '='.repeat(80) + '\n\n';
+  
+  // Summary Section
+  report += 'خلاصه اطلاعات وام:\n';
+  report += `- مبلغ کل وام: ${formatToman(LoanAmount)}\n`;
+  report += `- نرخ سود ماهیانه: ${MonthlyInterestRate}%\n`;
+  report += `- نرخ سود روزانه: ${(dailyRate * 100).toFixed(4)}%\n`;
+  report += `- تعداد روزهای دوره: ${finalDay} روز\n`;
+  report += `- تعداد پرداخت‌های اصل پول: ${PrincipalRepayments.length}\n`;
+  report += `- تعداد پرداخت‌های سود: ${InterestPaymentDates.length}\n\n`;
+  
+  report += 'خلاصه پرداخت‌ها:\n';
+  report += `- مجموع اصل پول پرداخت شده: ${formatToman(summary.totalPrincipalPaid)}\n`;
+  report += `- مجموع سود پرداخت شده: ${formatToman(summary.totalInterestPaid)}\n`;
+  report += `- مجموع کل پرداخت‌ها: ${formatToman(summary.totalPayments)}\n`;
+  report += `- هزینه کل وام (سود): ${formatToman(summary.totalInterestPaid)}\n\n`;
+  
+  report += '='.repeat(80) + '\n';
+  report += 'جدول تفصیلی برنامه بازپرداخت (روز به روز)\n';
+  report += '='.repeat(80) + '\n\n';
+  
+  // Table Header
+  report += 'روز'.padEnd(8) + ' | ';
+  report += 'اصل پول باقی‌مانده (قبل از پرداخت)'.padEnd(35) + ' | ';
+  report += 'مبلغ پرداخت اصل پول'.padEnd(25) + ' | ';
+  report += 'سود انباشته پرداخت شده'.padEnd(30) + ' | ';
+  report += 'مبلغ کل پرداختی در این روز'.padEnd(35) + ' | ';
+  report += 'توضیحات\n';
+  report += '-'.repeat(180) + '\n';
+  
+  // Table Rows - Only show days with payments or significant events
+  const paymentDays = schedule.filter(day => 
+    day.principalPayment > 0 || day.interestPayment > 0
+  );
+  
+  // If there are many days, show payment days + first and last day
+  const daysToShow = paymentDays.length > 0 
+    ? [...new Set([
+        schedule[0], // First day
+        ...paymentDays,
+        schedule[schedule.length - 1] // Last day
+      ])].sort((a, b) => a.day - b.day)
+    : schedule;
+  
+  daysToShow.forEach(day => {
+    const dayNum = day.day.toString().padEnd(6);
+    const principalBefore = formatToman(day.remainingPrincipalBefore).padEnd(33);
+    const principalPayment = day.principalPayment > 0 
+      ? formatToman(day.principalPayment).padEnd(23)
+      : '-'.padEnd(23);
+    const interestPayment = day.interestPayment > 0
+      ? formatToman(day.interestPayment).padEnd(28)
+      : '-'.padEnd(28);
+    const totalPayment = day.totalPayment > 0
+      ? formatToman(day.totalPayment).padEnd(33)
+      : '-'.padEnd(33);
+    const description = day.description;
+    
+    report += `${dayNum} | ${principalBefore} | ${principalPayment} | ${interestPayment} | ${totalPayment} | ${description}\n`;
+  });
+  
+  report += '\n' + '='.repeat(80) + '\n';
+  report += 'پایان گزارش\n';
+  report += '='.repeat(80) + '\n';
+  
+  return report;
+}
+
+// Generate the formatted report
+const formattedReport = generatePersianReport();
+
+// ============================================================================
+// SECTION 5: OUTPUT FORMATTING FOR N8N
+// ============================================================================
+
+/**
+ * Format schedule for JSON output with Persian formatting
+ */
+const formattedSchedule = schedule.map(day => ({
+  روز: day.day,
+  'اصل پول باقی‌مانده (قبل از پرداخت)': formatToman(day.remainingPrincipalBefore),
+  'مبلغ پرداخت اصل پول': day.principalPayment > 0 ? formatToman(day.principalPayment) : '-',
+  'سود انباشته پرداخت شده': day.interestPayment > 0 ? formatToman(day.interestPayment) : '-',
+  'مبلغ کل پرداختی در این روز': day.totalPayment > 0 ? formatToman(day.totalPayment) : '-',
+  'توضیحات': day.description,
+  // Raw numeric values for calculations
+  _raw: {
+    day: day.day,
+    remainingPrincipalBefore: day.remainingPrincipalBefore,
+    principalPayment: day.principalPayment,
+    interestPayment: day.interestPayment,
+    totalPayment: day.totalPayment,
+    remainingPrincipalAfter: day.remainingPrincipalAfter
+  }
+}));
+
+// Summary in Persian
+const persianSummary = {
+  'مبلغ کل وام': formatToman(LoanAmount),
+  'نرخ سود ماهیانه': `${MonthlyInterestRate}%`,
+  'نرخ سود روزانه': `${(dailyRate * 100).toFixed(4)}%`,
+  'تعداد روزهای دوره': `${finalDay} روز`,
+  'مجموع اصل پول پرداخت شده': formatToman(summary.totalPrincipalPaid),
+  'مجموع سود پرداخت شده': formatToman(summary.totalInterestPaid),
+  'مجموع کل پرداخت‌ها': formatToman(summary.totalPayments),
+  'هزینه کل وام (سود)': formatToman(summary.totalInterestPaid),
+  // Raw numeric values
+  _raw: {
+    loanAmount: LoanAmount,
+    monthlyInterestRate: MonthlyInterestRate,
+    dailyRate: dailyRate,
+    finalDay: finalDay,
+    totalPrincipalPaid: summary.totalPrincipalPaid,
+    totalInterestPaid: summary.totalInterestPaid,
+    totalPayments: summary.totalPayments
   }
 };
 
-// Validate inputs
-if (!invoiceAmount || invoiceAmount <= 0) {
-  return {
-    success: false,
-    error: 'Invoice amount must be positive',
-    message: 'مبلغ فاکتور باید مثبت باشد'
-  };
-}
+// ============================================================================
+// SECTION 6: FINAL OUTPUT
+// ============================================================================
 
-if (!duration || duration <= 0 || duration > 60) {
-  return {
-    success: false,
-    error: 'Duration must be between 1-60 months',
-    message: 'مدت زمان باید بین 1 تا 60 ماه باشد'
-  };
-}
-
-if (!monthlyRatePercent || monthlyRatePercent <= 0 || monthlyRatePercent > 100) {
-  return {
-    success: false,
-    error: 'Monthly rate must be between 0-100%',
-    message: 'درصد سود ماهیانه باید بین 0 تا 100 باشد'
-  };
-}
-
-if (!PLANS[planCode]) {
-  return {
-    success: false,
-    error: 'Invalid plan code. Must be one of: PLAN1, PLAN2, PLAN3',
-    message: 'پلن نامعتبر. پلن‌های معتبر: PLAN1, PLAN2, PLAN3'
-  };
-}
-
-const plan = PLANS[planCode];
-const monthlyRate = monthlyRatePercent / 100;
-
-// --- STEP 1: Calculate VAT on Invoice ---
-// این بخش مبلغ اصلی (invoiceBase) و مبلغی که سرمایه‌گذار پرداخت می‌کند (invoiceWithVAT) را تعیین می‌کند.
-let invoiceWithVAT, invoiceBase, vatAmount;
-
-if (isTaxExempt === 'yes') {
-  invoiceWithVAT = invoiceAmount;
-  invoiceBase = invoiceAmount;
-  vatAmount = 0;
-} else {
-  // اگر مبلغ ورودی شامل VAT باشد
-  if (hasVAT === 'yes') {
-    invoiceWithVAT = invoiceAmount;
-    invoiceBase = invoiceAmount / 1.1;
-    vatAmount = invoiceWithVAT - invoiceBase;
-  } 
-  // اگر مبلغ ورودی شامل VAT نباشد، VAT محاسبه و اضافه می‌شود
-  else {
-    invoiceBase = invoiceAmount;
-    vatAmount = invoiceAmount * 0.1;
-    invoiceWithVAT = invoiceBase + vatAmount;
-  }
-}
-
-// === STEP 2: Calculate total costs and fees (Base Amounts) ===
-const platformFeeRate_decimal = platformFeeRate / 100;
-const collateralRate_decimal = collateralCoverRate / 100;
-const vatRate = 0.1; // نرخ ثابت مالیات بر ارزش افزوده
-const principalLoan = invoiceWithVAT; // سرمایه‌ی نقدی که توسط سرمایه‌گذار تأمین می‌شود
-
-// Base Fixed Fees (هزینه‌های ثابت)
-const platformFeeAmount = principalLoan * platformFeeRate_decimal;
-const collateralAmount = principalLoan * collateralRate_decimal;
-
-// VAT on Fixed Fees and Collateral (10% of the base amounts)
-const vatOnPlatformFee = platformFeeAmount * vatRate;
-const vatOnCollateral = collateralAmount * vatRate;
-
-// کل هزینه‌های ثابت (کارمزد و ضمانت) برای بازپرداخت (شامل VAT)
-const totalFixedCostsToRepay = platformFeeAmount + collateralAmount + vatOnPlatformFee + vatOnCollateral;
-
-// سهم ماهانه درآمد پلتفرم (قسط ثابت)
-const platformMonthlyRevenue = totalFixedCostsToRepay / duration;
-
-// Total additional costs (برای پلن‌های ۲ و ۳)
-// برای پلن ۱ از سود کاهشی استفاده خواهد شد و این متغیر فقط برای پلن ۲ و ۳ کاربرد دارد
-const baseInterestSimple = principalLoan * monthlyRate * duration;
-const vatOnInterestSimple = baseInterestSimple * vatRate; // VAT سود ساده
-const totalAdditionalCosts = baseInterestSimple + vatOnInterestSimple + totalFixedCostsToRepay; // جمع کل هزینه‌ها برای پلن‌های ۲ و ۳
-
-// === STEP 3: Calculate installments based on plan type ===
-let monthlyInstallment, recipientTotalPayment, investorMonthlyReturn, platformTotalRevenue;
-let investorMonthlyProfit = 0; // سود دریافتی ماهانه سرمایه‌گذار
-let recipientMonthlyProfit = 0; // سود پرداختی ماهانه سرمایه‌پذیر
-let planMonthlyInstallments = []; // اقساط ماهانه برای پلن 1
-let vatOnProjectInterest = 0; // VAT سود پروژه (برای پلن 1)
-
-if (plan.paymentType === 'monthly_principal_interest') {
-  // ----------------------------------------------------------------
-  // ✅ پلن ۱: اصل + سود ماهیانه (روش اقساط کاهشی - منطبق با اکسل)
-  // ----------------------------------------------------------------
-  
-  const n = duration;
-  const i = monthlyRate;
-  
-  // 1. محاسبه کل سود پروژه (روش کاهشی) - مطابق با اکسل
-  // فرمول: P * i * (n+1)/2
-  const totalProjectInterest = principalLoan * i * ((n + 1) / 2);
-  vatOnProjectInterest = totalProjectInterest * vatRate;
-  
-  // 2. محاسبه کل مبلغ قابل بازپرداخت (Total Repayment)
-  // اصل + کل سود کاهشی + VAT بر سود + کل هزینه‌های ثابت (با VAT)
-  recipientTotalPayment = principalLoan + totalProjectInterest + vatOnProjectInterest + totalFixedCostsToRepay;
-  
-  // 3. محاسبه میانگین قسط ماهانه سرمایه‌پذیر (برای نمایش در خروجی)
-  monthlyInstallment = recipientTotalPayment / duration;
-  
-  // 4. مجموع درآمد پلتفرم (هزینه‌های ثابت + VAT آن‌ها)
-  platformTotalRevenue = totalFixedCostsToRepay;
-  
-  // 5. تفکیک سهم سرمایه‌گذار
-  // دریافتی ماهانه سرمایه‌گذار: میانگین قسط کل - سهم ماهانه درآمد پلتفرم
-  // توجه: این فقط میانگین است. قسط واقعی سرمایه‌گذار هر ماه تغییر می‌کند.
-  investorMonthlyReturn = monthlyInstallment - platformMonthlyRevenue;
-  
-  // 6. محاسبه سود دریافتی ماهانه سرمایه‌گذار (میانگین) - به درصد
-  // در پلن 1: میانگین سود ماهانه = (کل سود + VAT سود) / تعداد ماه‌ها
-  const averageMonthlyInterestAmount = (totalProjectInterest + vatOnProjectInterest) / duration;
-  // تبدیل به درصد: (سود ماهانه / سرمایه اولیه) * 100
-  investorMonthlyProfit = (averageMonthlyInterestAmount / principalLoan) * 100;
-  
-  // 7. محاسبه سود پرداختی ماهانه سرمایه‌پذیر (میانگین) - به درصد
-  // سود پرداختی = قسط ماهانه - سهم اصل پول - هزینه‌های ثابت پلتفرم
-  // میانگین سهم اصل پول = اصل پول / تعداد ماه‌ها
-  const averagePrincipalPayment = principalLoan / duration;
-  const recipientMonthlyProfitAmount = monthlyInstallment - averagePrincipalPayment - platformMonthlyRevenue;
-  // تبدیل به درصد: (سود پرداختی ماهانه / مبلغ دریافتی نقدی) * 100
-  recipientMonthlyProfit = (recipientMonthlyProfitAmount / principalLoan) * 100;
-  
-  // 8. محاسبه اقساط ماهانه (برای نمایش جدول کاهشی)
-  const monthlyInstallments = [];
-  let remainingDebt = principalLoan;
-  const principalPerMonth = principalLoan / duration;
-  const platformRevenuePerMonth = platformMonthlyRevenue;
-  
-  for (let month = 1; month <= duration; month++) {
-    // سود پروژه برای این ماه (کاهشی)
-    const projectInterest = remainingDebt * i;
-    // مالیات سود پروژه
-    const projectInterestVat = projectInterest * vatRate;
-    // اصل پول بازپرداخت (ثابت)
-    const principalPayment = principalPerMonth;
-    // سود شرکت (ثابت)
-    const companyProfit = platformFeeAmount / duration;
-    // مالیات سودها (سود شرکت + سود پروژه)
-    const totalProfitVat = (companyProfit * vatRate) + projectInterestVat;
-    // کل بازپرداخت این ماه
-    const totalPayment = principalPayment + projectInterest + companyProfit + totalProfitVat;
-    // دریافتی سرمایه‌گذار (کل بازپرداخت - سهم پلتفرم)
-    const investorReceipt = totalPayment - platformRevenuePerMonth;
-    
-    monthlyInstallments.push({
-      month: month,
-      remainingDebt: Math.round(remainingDebt),
-      projectInterest: Math.round(projectInterest),
-      principalPayment: Math.round(principalPayment),
-      companyProfit: Math.round(companyProfit),
-      profitVat: Math.round(totalProfitVat),
-      totalPayment: Math.round(totalPayment),
-      investorReceipt: Math.round(investorReceipt)
-    });
-    
-    // به‌روزرسانی مانده بدهی
-    remainingDebt -= principalPayment;
-  }
-  
-  // اضافه کردن اقساط ماهانه به خروجی
-  planMonthlyInstallments = monthlyInstallments;
-  
-} else if (plan.paymentType === 'monthly_interest_only') {
-  // ----------------------------------------------------------------
-  // ✅ پلن ۲: سود ماهیانه + اصل در انتها (سود ساده)
-  // ----------------------------------------------------------------
-  
-  // سود + VAT سود ماهانه (سهم سرمایه‌گذار)
-  const monthlyInterestPayment = (baseInterestSimple / duration) * (1 + vatRate); 
-  
-  // مجموع قسط ماهانه سرمایه‌پذیر (سود + VAT سود + هزینه‌های ثابت ماهانه)
-  monthlyInstallment = monthlyInterestPayment + platformMonthlyRevenue;
-  
-  // دریافتی ماهانه سرمایه‌گذار (فقط سود + VAT سود)
-  investorMonthlyReturn = monthlyInterestPayment;
-  
-  // سود دریافتی ماهانه سرمایه‌گذار (به درصد)
-  // سود دریافتی = سود ماهانه + VAT سود
-  // تبدیل به درصد: (سود دریافتی / سرمایه اولیه) * 100
-  investorMonthlyProfit = (monthlyInterestPayment / principalLoan) * 100;
-  
-  // سود پرداختی ماهانه سرمایه‌پذیر (به درصد)
-  // سرمایه‌پذیر علاوه بر سود + VAT سود، هزینه‌های پلتفرم هم پرداخت می‌کند
-  // اما سود پرداختی فقط شامل سود + VAT سود است (بدون هزینه‌های پلتفرم)
-  // تبدیل به درصد: (سود پرداختی / مبلغ دریافتی نقدی) * 100
-  recipientMonthlyProfit = (monthlyInterestPayment / principalLoan) * 100;
-  
-  // مجموع پرداختی سرمایه‌پذیر ثابت است
-  recipientTotalPayment = totalAdditionalCosts + invoiceWithVAT;
-  
-  // مجموع درآمد پلتفرم
-  platformTotalRevenue = totalFixedCostsToRepay;
-  
-} else if (plan.paymentType === 'lump_sum') {
-  // ----------------------------------------------------------------
-  // ✅ پلن ۳: اصل + سود در انتها
-  // ----------------------------------------------------------------
-  
-  monthlyInstallment = 0; // قسط ماهانه (پرداختی در ماه اول تا n-1)
-  
-  // مجموع پرداختی سرمایه‌پذیر ثابت است
-  recipientTotalPayment = totalAdditionalCosts + invoiceWithVAT;
-  
-  // مجموع درآمد پلتفرم
-  platformTotalRevenue = totalFixedCostsToRepay;
-  
-  // دریافتی ماهانه سرمایه‌گذار (صفر در ماه‌های میانی و کل مبلغ در انتها)
-  investorMonthlyReturn = 0;
-  
-  // سود دریافتی ماهانه سرمایه‌گذار = 0 (در انتها پرداخت می‌شود)
-  investorMonthlyProfit = 0;
-  
-  // سود پرداختی ماهانه سرمایه‌پذیر = 0 (در انتها پرداخت می‌شود)
-  recipientMonthlyProfit = 0;
-}
-
-// === STEP 4: RECIPIENT (سرمایه‌پذیر) CALCULATIONS ===
-const recipientCash = invoiceWithVAT;
-const recipientFinancingCost = recipientTotalPayment - invoiceWithVAT;
-
-// === STEP 5: INVESTOR (سرمایه‌گذار) CALCULATIONS ===
-const investorInvestment = invoiceWithVAT;
-// مجموع دریافتی سرمایه‌گذار: کل پرداختی منهای کل درآمد پلتفرم
-const investorTotalReturn = recipientTotalPayment - platformTotalRevenue;
-const investorProfit = investorTotalReturn - investorInvestment;
-
-// === STEP 6: Calculate averages and profit percentages (مطابق با اکسل) ===
-// محاسبه مالیات کل سودها (برای استفاده در فرمول اکسل)
-let totalVatOnProfits = 0;
-if (plan.paymentType === 'monthly_principal_interest') {
-  totalVatOnProfits = vatOnProjectInterest;
-} else if (plan.paymentType === 'monthly_interest_only') {
-  totalVatOnProfits = vatOnInterestSimple;
-} else {
-  totalVatOnProfits = vatOnInterestSimple;
-}
-
-// 1. میانگین پرداختی ماهیانه سرمایه‌پذیر (F14/12)
-// این در حال حاضر در monthlyInstallment محاسبه شده است
-const averageMonthlyPaymentRecipient = recipientTotalPayment / duration;
-
-// 2. میانگین دریافتی ماهیانه سرمایه‌گذار ((F14-E14-D14)/12)
-// F14 = recipientTotalPayment, E14 = totalVatOnProfits, D14 = platformTotalRevenue
-const averageMonthlyReturnInvestor = (recipientTotalPayment - totalVatOnProfits - platformTotalRevenue) / duration;
-
-// 3. درصد سود دریافتی سالانه سرمایه‌گذار (A2*100/(F17*12))
-// A2 = principalLoan, F17 = averageMonthlyReturnInvestor
-const annualProfitPercentInvestor = (principalLoan * 100) / (averageMonthlyReturnInvestor * duration);
-
-// 4. درصد سود دریافتی ماهیانه سرمایه‌گذار (F18/12)
-const monthlyProfitPercentInvestor = annualProfitPercentInvestor / 12;
-
-// 5. درصد سود پرداختی سالانه سرمایه‌پذیر (A2*100/(F16*12))
-// A2 = principalLoan, F16 = averageMonthlyPaymentRecipient
-const annualProfitPercentRecipient = (principalLoan * 100) / (averageMonthlyPaymentRecipient * duration);
-
-// 6. درصد سود پرداختی ماهیانه سرمایه‌پذیر (F20/12)
-const monthlyProfitPercentRecipient = annualProfitPercentRecipient / 12;
-
-// به‌روزرسانی مقادیر برای استفاده در خروجی
-investorMonthlyReturn = averageMonthlyReturnInvestor;
-monthlyInstallment = averageMonthlyPaymentRecipient;
-investorMonthlyProfit = monthlyProfitPercentInvestor;
-recipientMonthlyProfit = monthlyProfitPercentRecipient;
-
-// === OUTPUT ===
 return {
   success: true,
-  data: {
-    invoice: {
-      withVAT: Math.round(invoiceWithVAT),
-      base: Math.round(invoiceBase),
-      vat: Math.round(vatAmount)
-    },
-    investor: {
-      initial: Math.round(investorInvestment),
-      // بازگشت ماهانه سرمایه‌گذار (میانگین در پلن ۱) - مطابق با اکسل
-      monthlyReturn: Math.round(investorMonthlyReturn), 
-      // سود دریافتی ماهانه سرمایه‌گذار (به درصد) - مطابق با اکسل
-      monthlyProfit: Math.round(monthlyProfitPercentInvestor * 100) / 100, // رند به 2 رقم اعشار
-      // سود دریافتی سالانه سرمایه‌گذار (به درصد) - مطابق با اکسل
-      annualProfit: Math.round(annualProfitPercentInvestor * 100) / 100, // رند به 2 رقم اعشار
-      totalReturn: Math.round(investorTotalReturn),
-      profit: Math.round(investorProfit)
-    },
-    recipient: {
-      cash: Math.round(recipientCash),
-      // قسط ماهانه (میانگین در پلن ۱) - مطابق با اکسل
-      monthlyInstallment: Math.round(monthlyInstallment),
-      // سود پرداختی ماهانه سرمایه‌پذیر (به درصد) - مطابق با اکسل
-      monthlyProfit: Math.round(monthlyProfitPercentRecipient * 100) / 100, // رند به 2 رقم اعشار
-      // سود پرداختی سالانه سرمایه‌پذیر (به درصد) - مطابق با اکسل
-      annualProfit: Math.round(annualProfitPercentRecipient * 100) / 100, // رند به 2 رقم اعشار
-      totalPayment: Math.round(recipientTotalPayment),
-      financingCost: Math.round(recipientFinancingCost)
-    },
-    platform: {
-      platformFee: Math.round(platformFeeAmount),
-      platformFeeVat: Math.round(vatOnPlatformFee),
-      collateral: Math.round(collateralAmount),
-      collateralVat: Math.round(vatOnCollateral),
-      totalBase: Math.round(platformFeeAmount + collateralAmount),
-      totalVat: Math.round(vatOnPlatformFee + vatOnCollateral),
-      // این خروجی جدید، مجموع درآمد پلتفرم (با VAT) را نشان می‌دهد
-      totalRevenue: Math.round(platformTotalRevenue),
-      // سهم ماهانه درآمد پلتفرم (برای تفکیک در هر ماه)
-      monthlyRevenue: Math.round(platformMonthlyRevenue) 
-    },
-    summary: {
-      planName: plan.name,
-      duration: duration,
-      monthlyRate: monthlyRatePercent,
-      paymentType: plan.paymentType
-    },
-    // اقساط ماهانه (فقط برای پلن 1)
-    monthlyInstallments: planMonthlyInstallments
+  schedule: formattedSchedule,
+  summary: persianSummary,
+  formattedReport: formattedReport,
+  // Include raw data for programmatic access
+  rawData: {
+    schedule: schedule,
+    summary: summary,
+    calculationParams: {
+      loanAmount: LoanAmount,
+      monthlyInterestRate: MonthlyInterestRate,
+      dailyRate: dailyRate,
+      principalRepayments: PrincipalRepayments,
+      interestPaymentDates: InterestPaymentDates,
+      finalDay: finalDay
+    }
   }
 };
