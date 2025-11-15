@@ -41,6 +41,14 @@ code {
   font-weight: 600;
   transition: all 0.2s;
   background: #fff;
+  font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Persian numbers in inputs */
+.input-clean[dir="ltr"] {
+  font-feature-settings: "tnum";
+  text-align: right;
 }
 
 .input-clean:focus {
