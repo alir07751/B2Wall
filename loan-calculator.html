@@ -761,6 +761,52 @@
       document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
     }
 
+    // تابع ریست فرم
+    function resetForm() {
+      // پاک کردن فرم
+      document.getElementById('calculatorForm').reset();
+      
+      // پاک کردن نمایش‌ها
+      document.getElementById('loanAmountDisplay').textContent = '';
+      document.getElementById('totalPrincipal').innerHTML = '';
+      document.getElementById('estimatedInterest').classList.add('hidden');
+      
+      // غیرفعال کردن حالت‌های خودکار
+      document.getElementById('autoPrincipalMode').checked = false;
+      document.getElementById('autoInterestMode').checked = false;
+      toggleAutoPrincipal();
+      toggleAutoInterest();
+      
+      // بازگرداندن به حالت اولیه
+      document.getElementById('principalRows').innerHTML = `
+        <div class="flex gap-4">
+          <div class="flex-1">
+            <label class="block text-xs text-slate-600 mb-1">روز</label>
+            <input type="text" name="principalDay" placeholder="60" class="input-clean" dir="ltr" />
+          </div>
+          <div class="flex-1">
+            <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
+            <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" 
+                   oninput="this.value = formatInput(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
+          </div>
+        </div>
+      `;
+      
+      document.getElementById('interestDateRows').innerHTML = `
+        <div>
+          <label class="block text-xs text-slate-600 mb-1">روز</label>
+          <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" 
+                 oninput="updateEstimatedInterest();" />
+        </div>
+      `;
+      
+      // پنهان کردن نتایج
+      document.getElementById('results').classList.add('hidden');
+      
+      // اسکرول به بالای صفحه
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
     // به‌روزرسانی مجموع هنگام تغییر
     document.querySelectorAll('[name="principalAmount"]').forEach(input => {
       input.addEventListener('input', function() {
