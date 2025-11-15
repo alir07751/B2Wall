@@ -1,1 +1,546 @@
-<!doctype html><html lang="fa" dir="rtl"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><meta name="theme-color" content="#2563eb"/><meta name="description" content="محاسبه‌گر هوشمند بازپرداخت وام - برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی"/><title>محاسبه‌گر بازپرداخت وام | B2Wall</title><script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet"/><style>body{font-family:Vazirmatn,system-ui,-apple-system,sans-serif;background:#f8fafc}::-webkit-scrollbar{width:8px}::-webkit-scrollbar-track{background:#f1f5f9}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:4px}::-webkit-scrollbar-thumb:hover{background:#94a3b8}</style><script defer="defer" src="/loan-calculator/static/js/main.0e3099b6.js"></script><link href="/loan-calculator/static/css/main.2cc0c448.css" rel="stylesheet"></head><body><noscript>برای استفاده از این برنامه، باید JavaScript را فعال کنید.</noscript><div id="root"></div></body></html>
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>محاسبه‌گر بازپرداخت وام | B2Wall</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif; background: #f8fafc; }
+    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+    .input-clean { width: 100%; padding: 0.875rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.875rem; font-size: 1.125rem; font-weight: 600; transition: all 0.2s; background: #fff; font-family: 'Vazirmatn', system-ui; font-feature-settings: "tnum"; }
+    .input-clean:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.875rem 1.5rem; border-radius: 0.875rem; font-weight: 700; transition: all 0.2s; cursor: pointer; border: none; font-size: 1rem; }
+    .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
+    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    th, td { padding: 0.75rem; text-align: right; border-bottom: 1px solid #e5e7eb; }
+    th { background: #f1f5f9; font-weight: 700; }
+    tr:hover { background: #f8fafc; }
+  </style>
+</head>
+<body class="min-h-screen bg-slate-50">
+  <header class="bg-white border-b border-slate-200 shadow-sm">
+    <div class="max-w-6xl mx-auto px-4 py-6">
+      <h1 class="text-2xl font-bold text-slate-900">محاسبه‌گر بازپرداخت وام</h1>
+      <p class="text-sm text-slate-600 mt-1">برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی</p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-8">
+    <form id="calculatorForm" class="space-y-6">
+      <!-- مبلغ وام -->
+      <div class="card p-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-2">
+          مبلغ وام <span class="text-red-500">*</span>
+        </label>
+        <input type="text" id="loanAmount" placeholder="مثال: 330000000" class="input-clean" dir="ltr" />
+        <div id="loanAmountDisplay" class="mt-2 text-sm font-semibold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';"></div>
+        <p class="text-xs text-slate-500 mt-2">💡 مبلغ کل وام را وارد کنید</p>
+      </div>
+
+      <!-- نرخ سود -->
+      <div class="card p-6">
+        <label class="block text-sm font-semibold text-slate-700 mb-2">
+          نرخ سود ماهیانه (%) <span class="text-red-500">*</span>
+        </label>
+        <input type="text" id="monthlyRate" placeholder="مثال: 4.5" class="input-clean" dir="ltr" />
+        <p class="text-xs text-slate-500 mt-2">💡 نرخ سود به صورت درصد ماهیانه</p>
+      </div>
+
+      <!-- پرداخت‌های اصل پول -->
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <label class="block text-sm font-semibold text-slate-700">
+            پرداخت‌های اصل پول <span class="text-red-500">*</span>
+          </label>
+          <button type="button" onclick="addPrincipalRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
+        </div>
+        <div id="principalRows" class="space-y-4">
+          <div class="flex gap-4">
+            <div class="flex-1">
+              <label class="block text-xs text-slate-600 mb-1">روز</label>
+              <input type="text" name="principalDay" placeholder="60" class="input-clean" dir="ltr" />
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
+              <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" />
+            </div>
+          </div>
+        </div>
+        <div id="totalPrincipal" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
+      </div>
+
+      <!-- تاریخ‌های پرداخت سود -->
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <label class="block text-sm font-semibold text-slate-700">
+            تاریخ‌های پرداخت سود <span class="text-red-500">*</span>
+          </label>
+          <button type="button" onclick="addInterestDateRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
+        </div>
+        <div id="interestDateRows" class="space-y-4">
+          <div>
+            <label class="block text-xs text-slate-600 mb-1">روز</label>
+            <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" />
+          </div>
+        </div>
+      </div>
+
+      <div class="flex justify-center">
+        <button type="submit" class="btn btn-primary text-lg py-4 px-8">📊 محاسبه جدول بازپرداخت</button>
+      </div>
+    </form>
+
+    <div id="results" class="hidden mt-8 space-y-6">
+      <!-- خلاصه -->
+      <div class="card p-6 bg-gradient-to-l from-blue-50 to-indigo-50">
+        <h2 class="text-2xl font-bold text-slate-900 mb-6">📊 خلاصه اطلاعات بازپرداخت</h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="summaryCards"></div>
+      </div>
+
+      <!-- جدول تفصیلی -->
+      <div class="card p-6">
+        <h2 class="text-2xl font-bold text-slate-900 mb-6">📋 جدول تفصیلی برنامه بازپرداخت</h2>
+        <div class="overflow-x-auto">
+          <table id="scheduleTable">
+            <thead>
+              <tr>
+                <th>روز</th>
+                <th>اصل پول باقی‌مانده (قبل از پرداخت)</th>
+                <th>مبلغ پرداخت اصل پول</th>
+                <th>سود انباشته پرداخت شده</th>
+                <th>مبلغ کل پرداختی در این روز</th>
+                <th>توضیحات</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // تبدیل اعداد فارسی به انگلیسی
+    function toEnglish(str) {
+      const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+      let result = str;
+      persian.forEach((p, i) => result = result.replace(new RegExp(p, 'g'), i));
+      arabic.forEach((a, i) => result = result.replace(new RegExp(a, 'g'), i));
+      return result;
+    }
+
+    // تبدیل اعداد انگلیسی به فارسی
+    function toPersian(num) {
+      const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+      return num.toString().replace(/\d/g, d => persian[parseInt(d)]);
+    }
+
+    // فرمت تومان
+    function formatToman(num) {
+      return toPersian(Math.round(num).toLocaleString('en-US')) + ' تومان';
+    }
+
+    // پارس کردن عدد
+    function parseNumber(str) {
+      if (!str) return 0;
+      const cleaned = toEnglish(str).replace(/[^\d.]/g, '');
+      return parseFloat(cleaned) || 0;
+    }
+
+    // فرمت ورودی
+    function formatInput(str) {
+      const cleaned = toEnglish(str).replace(/[^\d]/g, '');
+      return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    // نمایش مبلغ وام
+    document.getElementById('loanAmount').addEventListener('input', function(e) {
+      const value = formatInput(e.target.value);
+      e.target.value = value;
+      const num = parseNumber(value);
+      if (num > 0) {
+        document.getElementById('loanAmountDisplay').textContent = formatToman(num);
+      } else {
+        document.getElementById('loanAmountDisplay').textContent = '';
+      }
+      updateTotalPrincipal();
+    });
+
+    // به‌روزرسانی مجموع اصل پول
+    function updateTotalPrincipal() {
+      const rows = document.querySelectorAll('[name="principalAmount"]');
+      let total = 0;
+      rows.forEach(row => total += parseNumber(row.value));
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const display = document.getElementById('totalPrincipal');
+      display.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-semibold">مجموع پرداخت‌های اصل پول:</span>
+          <span class="text-lg font-bold ${Math.abs(total - loanAmount) <= 1 ? 'text-green-600' : 'text-red-600'}" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${formatToman(total)}
+          </span>
+        </div>
+        ${loanAmount > 0 ? `
+          <div class="mt-2 flex items-center justify-between">
+            <span class="text-sm text-slate-600">مبلغ وام:</span>
+            <span class="text-sm font-semibold" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${formatToman(loanAmount)}
+            </span>
+          </div>
+        ` : ''}
+        ${Math.abs(total - loanAmount) <= 1 && loanAmount > 0 ? 
+          '<p class="text-green-600 text-sm mt-2">✓ مجموع پرداخت‌ها با مبلغ وام مطابقت دارد</p>' : ''}
+      `;
+    }
+
+    // اضافه کردن سطر پرداخت اصل پول
+    function addPrincipalRow() {
+      const container = document.getElementById('principalRows');
+      const div = document.createElement('div');
+      div.className = 'flex gap-4';
+      div.innerHTML = `
+        <div class="flex-1">
+          <label class="block text-xs text-slate-600 mb-1">روز</label>
+          <input type="text" name="principalDay" placeholder="60" class="input-clean" dir="ltr" />
+        </div>
+        <div class="flex-1">
+          <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
+          <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" 
+                 oninput="this.value = formatInput(this.value); updateTotalPrincipal();" />
+        </div>
+        <button type="button" onclick="this.parentElement.remove(); updateTotalPrincipal();" 
+                class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
+      `;
+      container.appendChild(div);
+    }
+
+    // اضافه کردن سطر تاریخ پرداخت سود
+    function addInterestDateRow() {
+      const container = document.getElementById('interestDateRows');
+      const div = document.createElement('div');
+      div.className = 'flex gap-4 items-start';
+      div.innerHTML = `
+        <div class="flex-1">
+          <label class="block text-xs text-slate-600 mb-1">روز</label>
+          <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" />
+        </div>
+        <button type="button" onclick="this.parentElement.remove();" 
+                class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
+      `;
+      container.appendChild(div);
+    }
+
+    // محاسبه
+    document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
+      
+      if (!loanAmount || !monthlyRate) {
+        alert('لطفاً مبلغ وام و نرخ سود را وارد کنید');
+        return;
+      }
+
+      // جمع‌آوری پرداخت‌های اصل پول
+      const principalRepayments = [];
+      document.querySelectorAll('[name="principalDay"]').forEach((dayInput, index) => {
+        const day = parseInt(toEnglish(dayInput.value));
+        const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
+        if (day && amount) {
+          principalRepayments.push({ days: day, amount: amount });
+        }
+      });
+
+      // جمع‌آوری تاریخ‌های پرداخت سود
+      const interestPaymentDates = [];
+      document.querySelectorAll('[name="interestDate"]').forEach(input => {
+        const day = parseInt(toEnglish(input.value));
+        if (day) interestPaymentDates.push(day);
+      });
+
+      if (principalRepayments.length === 0 || interestPaymentDates.length === 0) {
+        alert('لطفاً حداقل یک پرداخت اصل پول و یک تاریخ پرداخت سود وارد کنید');
+        return;
+      }
+
+      // ارسال به n8n
+      calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates);
+    });
+
+    // تابع ارسال به n8n
+    async function calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates) {
+      const submitBtn = document.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ در حال محاسبه...';
+
+      try {
+        const response = await fetch('https://n8nb2wall.darkube.app/webhook/internal-calculator', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            LoanAmount: loanAmount,
+            MonthlyInterestRate: monthlyRate,
+            PrincipalRepayments: principalRepayments,
+            InterestPaymentDates: interestPaymentDates
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`خطای HTTP: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        if (!data.success) {
+          throw new Error(data.message || data.error || 'خطا در محاسبه');
+        }
+
+        // نمایش نتایج
+        displayResultsFromN8N(data);
+      } catch (error) {
+        alert('خطا در ارتباط با سرور: ' + error.message);
+        console.error('Error:', error);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+      }
+    }
+
+    // نمایش نتایج از n8n
+    function displayResultsFromN8N(data) {
+      const schedule = data.schedule || [];
+      const summary = data.summary?._raw || data.summary || {};
+
+      // خلاصه
+      document.getElementById('summaryCards').innerHTML = `
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">کل سود قابل پرداخت</div>
+          <div class="text-2xl font-bold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${formatToman(summary.totalInterestPaid || 0)}
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">کل مبلغ بازپرداخت</div>
+          <div class="text-2xl font-bold text-indigo-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${formatToman(summary.totalPayments || 0)}
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">مدت زمان بازپرداخت</div>
+          <div class="text-2xl font-bold text-purple-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${toPersian(summary.finalDay || 0)} روز
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">اصل پول پرداخت شده</div>
+          <div class="text-2xl font-bold text-green-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${formatToman(summary.totalPrincipalPaid || 0)}
+          </div>
+        </div>
+      `;
+
+      // جدول - فقط روزهای با پرداخت
+      const paymentDays = schedule.filter(d => {
+        const raw = d._raw || {};
+        return (raw.principalPayment > 0 || raw.interestPayment > 0);
+      });
+      const firstDay = schedule[0];
+      const lastDay = schedule[schedule.length - 1];
+      const daysToShow = [firstDay, ...paymentDays, lastDay]
+        .filter((d, i, arr) => arr.findIndex(x => (x._raw?.day || x.روز) === (d._raw?.day || d.روز)) === i)
+        .sort((a, b) => (a._raw?.day || a.روز || 0) - (b._raw?.day || b.روز || 0));
+
+      const tbody = document.getElementById('scheduleBody');
+      tbody.innerHTML = daysToShow.map(day => {
+        const raw = day._raw || {};
+        const dayNum = raw.day || day.روز || 0;
+        const principalBefore = raw.remainingPrincipalBefore || 0;
+        const principalPayment = raw.principalPayment || 0;
+        const interestPayment = raw.interestPayment || 0;
+        const totalPayment = raw.totalPayment || 0;
+        const description = day.توضیحات || 'هیچ پرداختی انجام نشد';
+        const isPayment = principalPayment > 0 || interestPayment > 0;
+
+        return `
+          <tr class="${isPayment ? 'bg-blue-50' : ''}">
+            <td class="font-semibold">${toPersian(dayNum)}</td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${formatToman(principalBefore)}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${principalPayment > 0 ? `<span class="font-semibold text-green-600">${formatToman(principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td class="text-sm text-slate-600">${description}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('results').classList.remove('hidden');
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // تابع محاسبه محلی (fallback - اگر n8n در دسترس نبود)
+    function calculateSchedule(loanAmount, monthlyRate, principalRepayments, interestPaymentDates) {
+      const dailyRate = monthlyRate / 100 / 30;
+      principalRepayments.sort((a, b) => a.days - b.days);
+      interestPaymentDates.sort((a, b) => a - b);
+      
+      const finalDay = Math.max(
+        Math.max(...principalRepayments.map(p => p.days)),
+        Math.max(...interestPaymentDates)
+      );
+
+      let remainingPrincipal = loanAmount;
+      let totalAccruedInterest = 0;
+      let principalIndex = 0;
+      let interestIndex = 0;
+      const schedule = [];
+      let totalPrincipalPaid = 0;
+      let totalInterestPaid = 0;
+      let totalPayments = 0;
+
+      for (let day = 1; day <= finalDay; day++) {
+        const record = {
+          day: day,
+          remainingPrincipalBefore: remainingPrincipal,
+          principalPayment: 0,
+          interestPayment: 0,
+          totalPayment: 0,
+          description: '',
+          remainingPrincipalAfter: remainingPrincipal
+        };
+
+        const dailyInterest = remainingPrincipal * dailyRate;
+        totalAccruedInterest += dailyInterest;
+
+        // پرداخت اصل پول
+        if (principalIndex < principalRepayments.length && 
+            principalRepayments[principalIndex].days === day) {
+          const amount = principalRepayments[principalIndex].amount;
+          record.principalPayment = amount;
+          remainingPrincipal -= amount;
+          totalPrincipalPaid += amount;
+          record.remainingPrincipalAfter = remainingPrincipal;
+          record.description = 'پرداخت بخشی از اصل وام';
+          principalIndex++;
+        }
+
+        // پرداخت سود
+        if (interestIndex < interestPaymentDates.length && 
+            interestPaymentDates[interestIndex] === day) {
+          record.interestPayment = totalAccruedInterest;
+          totalInterestPaid += totalAccruedInterest;
+          totalAccruedInterest = 0;
+          if (record.description) record.description += ' + ';
+          record.description += 'پرداخت سود انباشته';
+          interestIndex++;
+        }
+
+        record.totalPayment = record.principalPayment + record.interestPayment;
+        totalPayments += record.totalPayment;
+
+        if (!record.description) {
+          record.description = 'هیچ پرداختی انجام نشد';
+        }
+
+        schedule.push(record);
+      }
+
+      // نمایش نتایج
+      displayResults(schedule, {
+        totalPrincipalPaid,
+        totalInterestPaid,
+        totalPayments,
+        finalDay
+      });
+    }
+
+    // نمایش نتایج
+    function displayResults(schedule, summary) {
+      // خلاصه
+      document.getElementById('summaryCards').innerHTML = `
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">کل سود قابل پرداخت</div>
+          <div class="text-2xl font-bold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${formatToman(summary.totalInterestPaid)}
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">کل مبلغ بازپرداخت</div>
+          <div class="text-2xl font-bold text-indigo-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${formatToman(summary.totalPayments)}
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">مدت زمان بازپرداخت</div>
+          <div class="text-2xl font-bold text-purple-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${toPersian(summary.finalDay)} روز
+          </div>
+        </div>
+        <div class="bg-white p-4 rounded-lg border border-blue-100">
+          <div class="text-sm text-slate-600 mb-1">اصل پول پرداخت شده</div>
+          <div class="text-2xl font-bold text-green-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+            ${formatToman(summary.totalPrincipalPaid)}
+          </div>
+        </div>
+      `;
+
+      // جدول - فقط روزهای با پرداخت
+      const paymentDays = schedule.filter(d => d.principalPayment > 0 || d.interestPayment > 0);
+      const firstDay = schedule[0];
+      const lastDay = schedule[schedule.length - 1];
+      const daysToShow = [firstDay, ...paymentDays, lastDay]
+        .filter((d, i, arr) => arr.findIndex(x => x.day === d.day) === i)
+        .sort((a, b) => a.day - b.day);
+
+      const tbody = document.getElementById('scheduleBody');
+      tbody.innerHTML = daysToShow.map(day => {
+        const isPayment = day.principalPayment > 0 || day.interestPayment > 0;
+        return `
+          <tr class="${isPayment ? 'bg-blue-50' : ''}">
+            <td class="font-semibold">${toPersian(day.day)}</td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${formatToman(day.remainingPrincipalBefore)}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${day.principalPayment > 0 ? `<span class="font-semibold text-green-600">${formatToman(day.principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${day.interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(day.interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${day.totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(day.totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td class="text-sm text-slate-600">${day.description}</td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('results').classList.remove('hidden');
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // به‌روزرسانی مجموع هنگام تغییر
+    document.querySelectorAll('[name="principalAmount"]').forEach(input => {
+      input.addEventListener('input', function() {
+        this.value = formatInput(this.value);
+        updateTotalPrincipal();
+      });
+    });
+  </script>
+</body>
+</html>
