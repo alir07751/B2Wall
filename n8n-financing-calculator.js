@@ -58,6 +58,13 @@ const Taxes = Array.isArray(input.Taxes || input.TaxRows)
       rate: Number(t.rate ?? t.taxRate) || 0
     })).filter(t => t.base && t.rate > 0)
   : [];
+// Optional cost schedule: [{ day, percent }]
+const CostSchedule = Array.isArray(input.CostSchedule || input.costSchedule)
+  ? (input.CostSchedule || input.costSchedule).map(cs => ({
+      day: Number(cs.day ?? cs.days) || 0,
+      percent: Number(cs.percent ?? cs.share ?? cs.rate) || 0
+    })).filter(cs => cs.day > 0 && cs.percent >= 0)
+  : [];
 
 // Input validation
 if (LoanAmount <= 0) {
@@ -385,6 +392,40 @@ const taxesBreakdown = Taxes.map(t => {
   return { base: t.base, rate: t.rate, baseAmount, amount };
 });
 const totalTaxes = taxesBreakdown.reduce((s, x) => s + x.amount, 0);
+const totalOneTimeCosts = totalUpfrontFees + totalTaxes;
+
+// Apply cost schedule into day-by-day schedule (optional)
+if (totalOneTimeCosts > 0) {
+  let normalized = CostSchedule.slice();
+  if (normalized.length === 0) {
+    const defaultDay = (InterestPaymentDates[0] || PrincipalRepayments[0]?.days || 1);
+    normalized = [{ day: defaultDay, percent: 100 }];
+  }
+  const sum = normalized.reduce((s, x) => s + (x.percent || 0), 0) || 0;
+  const scale = sum > 0 ? (100 / sum) : 1;
+  normalized.forEach(cs => cs.percent = (cs.percent || 0) * scale);
+  normalized.forEach(cs => {
+    const amount = totalOneTimeCosts * (cs.percent / 100);
+    const idx = schedule.findIndex(d => d.day === cs.day);
+    if (idx >= 0) {
+      schedule[idx].costPayment = (schedule[idx].costPayment || 0) + amount;
+      schedule[idx].totalPayment += amount;
+      schedule[idx].description = (schedule[idx].description ? (schedule[idx].description + ' + ') : '') + 'پرداخت هزینه‌ها';
+    } else {
+      schedule.push({
+        day: cs.day,
+        remainingPrincipalBefore: 0,
+        principalPayment: 0,
+        interestPayment: 0,
+        costPayment: amount,
+        totalPayment: amount,
+        description: 'پرداخت هزینه‌ها',
+        remainingPrincipalAfter: 0
+      });
+    }
+  });
+  schedule.sort((a, b) => a.day - b.day);
+}
 
 /**
  * Format schedule for JSON output with Persian formatting
@@ -394,6 +435,7 @@ const formattedSchedule = schedule.map(day => ({
   'اصل پول باقی‌مانده (قبل از پرداخت)': formatToman(day.remainingPrincipalBefore),
   'مبلغ پرداخت اصل پول': day.principalPayment > 0 ? formatToman(day.principalPayment) : '-',
   'سود انباشته پرداخت شده': day.interestPayment > 0 ? formatToman(day.interestPayment) : '-',
+  'هزینه‌ها': day.costPayment > 0 ? formatToman(day.costPayment) : '-',
   'مبلغ کل پرداختی در این روز': day.totalPayment > 0 ? formatToman(day.totalPayment) : '-',
   'توضیحات': day.description,
   // Raw numeric values for calculations
@@ -402,6 +444,7 @@ const formattedSchedule = schedule.map(day => ({
     remainingPrincipalBefore: day.remainingPrincipalBefore,
     principalPayment: day.principalPayment,
     interestPayment: day.interestPayment,
+    costPayment: day.costPayment || 0,
     totalPayment: day.totalPayment,
     remainingPrincipalAfter: day.remainingPrincipalAfter
   }
@@ -442,7 +485,8 @@ const persianSummary = {
     guaranteeAmount: guaranteeAmount,
     totalUpfrontFees: totalUpfrontFees,
     taxes: taxesBreakdown,
-    totalTaxes: totalTaxes
+    totalTaxes: totalTaxes,
+    totalOneTimeCosts: totalOneTimeCosts
   }
 };
 
@@ -465,7 +509,8 @@ return {
       dailyRate: dailyRate,
       principalRepayments: PrincipalRepayments,
       interestPaymentDates: InterestPaymentDates,
-      finalDay: finalDay
+      finalDay: finalDay,
+      costSchedule: CostSchedule
     }
   }
 };
