@@ -18,6 +18,11 @@
     th, td { padding: 0.75rem; text-align: right; border-bottom: 1px solid #e5e7eb; }
     th { background: #f1f5f9; font-weight: 700; }
     tr:hover { background: #f8fafc; }
+    /* Collapsible (neutralized to prevent clipping/overlap on long lists) */
+    .collapsible { overflow: visible; transition: none; max-height: none; opacity: 1; }
+    .collapsible.collapsed { max-height: none; opacity: 1; }
+    .placeholder-box { border: 2px dashed #e2e8f0; border-radius: 0.75rem; background: #f8fafc; padding: 0.75rem 1rem; color: #64748b; font-size: 0.875rem; }
+    .clear-both { clear: both; }
   </style>
 </head>
 <body class="min-h-screen bg-slate-50">
@@ -32,20 +37,22 @@
     <form id="calculatorForm" class="space-y-6">
       <!-- مبلغ وام -->
       <div class="card p-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۱ — مبلغ وام</h3>
         <label class="block text-sm font-semibold text-slate-700 mb-2">
           مبلغ وام <span class="text-red-500">*</span>
         </label>
-        <input type="text" id="loanAmount" placeholder="مثال: 330000000" class="input-clean" dir="ltr" />
+        <input type="text" id="loanAmount" placeholder="مثال: ۳۳۰۰۰۰۰۰۰" class="input-clean" dir="ltr" />
         <div id="loanAmountDisplay" class="mt-2 text-sm font-semibold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';"></div>
         <p class="text-xs text-slate-500 mt-2">💡 مبلغ کل وام را وارد کنید</p>
       </div>
 
       <!-- نرخ سود -->
       <div class="card p-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۲ — نرخ سود</h3>
         <label class="block text-sm font-semibold text-slate-700 mb-2">
           نرخ سود ماهیانه (%) <span class="text-red-500">*</span>
         </label>
-        <input type="text" id="monthlyRate" placeholder="مثال: 4.5" class="input-clean" dir="ltr" />
+        <input type="text" id="monthlyRate" placeholder="مثال: ۴٫۵" class="input-clean" dir="ltr" />
         <p class="text-xs text-slate-500 mt-2">💡 نرخ سود به صورت درصد ماهیانه</p>
       </div>
 
@@ -60,6 +67,7 @@
 
       <!-- پرداخت‌های اصل پول -->
       <div class="card p-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۳ — پرداخت‌های اصل پول</h3>
         <div class="flex items-center justify-between mb-4">
           <label class="block text-sm font-semibold text-slate-700">
             پرداخت‌های اصل پول <span class="text-red-500">*</span>
@@ -78,35 +86,42 @@
           <div id="autoPrincipalOptions" class="hidden mt-4 grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
-              <input type="text" id="numberOfPayments" placeholder="مثال: 4" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatInput(this.value); updateAutoPrincipal();" />
+              <input type="text" id="numberOfPayments" placeholder="مثال: ۴" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatIntegerPersian(this.value); updateAutoPrincipal();" />
             </div>
             <div>
               <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
-              <input type="text" id="paymentInterval" value="30" placeholder="مثال: 30" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatInput(this.value); updateAutoPrincipal();" />
+              <input type="text" id="paymentInterval" value="۳۰" placeholder="مثال: ۳۰" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatIntegerPersian(this.value); updateAutoPrincipal();" />
             </div>
           </div>
+
+          <!-- پیش‌نمایش خودکار حذف شد -->
         </div>
         
-        <div id="principalRows" class="space-y-4">
+        <div id="principalRows" class="space-y-4" onkeydown="handlePrincipalKeydown(event)">
           <div class="flex gap-4">
             <div class="flex-1">
               <label class="block text-xs text-slate-600 mb-1">روز</label>
-              <input type="text" name="principalDay" placeholder="60" class="input-clean" dir="ltr" />
+              <input type="text" name="principalDay" placeholder="۶۰" class="input-clean" dir="ltr" />
             </div>
             <div class="flex-1">
               <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-              <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatInput(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
+              <input type="text" name="principalAmount" placeholder="۳۰۰۰۰۰۰۰" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatInputPersian(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
             </div>
           </div>
         </div>
-        <div id="totalPrincipal" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
+        <div class="mt-3">
+          <button type="button" onclick="addPrincipalRow(); focusLastPrincipal();" class="btn btn-secondary text-sm py-2 px-4">+ افزودن ردیف</button>
+        </div>
+        <div id="principalRowsPlaceholder" class="hidden placeholder-box mt-4">حالت تقسیم خودکار فعال است. ردیف‌های دستی پنهان شدند.</div>
+        <div id="totalPrincipal" class="mt-4 p-4 bg-slate-50 rounded-lg clear-both"></div>
       </div>
 
       <!-- تاریخ‌های پرداخت سود -->
       <div class="card p-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۴ — تاریخ‌های پرداخت سود</h3>
         <div class="flex items-center justify-between mb-4">
           <label class="block text-sm font-semibold text-slate-700">
             تاریخ‌های پرداخت سود <span class="text-red-500">*</span>
@@ -125,24 +140,86 @@
           <div id="autoInterestOptions" class="hidden mt-4 grid grid-cols-2 gap-4">
             <div>
               <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
-              <input type="text" id="numberOfInterestPayments" placeholder="مثال: 2" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatInput(this.value); updateAutoInterest();" />
+              <input type="text" id="numberOfInterestPayments" placeholder="مثال: ۲" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatIntegerPersian(this.value); updateAutoInterest();" />
             </div>
             <div>
               <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
-              <input type="text" id="interestPaymentInterval" value="30" placeholder="مثال: 90" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatInput(this.value); updateAutoInterest();" />
+              <input type="text" id="interestPaymentInterval" value="۳۰" placeholder="مثال: ۹۰" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatIntegerPersian(this.value); updateAutoInterest();" />
             </div>
           </div>
+
+          <!-- پیش‌نمایش خودکار حذف شد -->
         </div>
         
-        <div id="interestDateRows" class="space-y-4">
+        <div id="interestDateRows" class="space-y-4" onkeydown="handleInterestKeydown(event)">
           <div>
             <label class="block text-xs text-slate-600 mb-1">روز</label>
-            <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" 
+            <input type="text" name="interestDate" placeholder="۱۸۰" class="input-clean" dir="ltr" 
                    oninput="updateEstimatedInterest();" />
           </div>
         </div>
+        <div class="mt-3">
+          <button type="button" onclick="addInterestDateRow(); focusLastInterest();" class="btn btn-secondary text-sm py-2 px-4">+ افزودن تاریخ</button>
+        </div>
+        <div id="interestRowsPlaceholder" class="hidden placeholder-box mt-4">حالت تقسیم خودکار فعال است. تاریخ‌های دستی پنهان شدند.</div>
+      </div>
+
+      <!-- بخش کارمزد -->
+      <div class="card p-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۵ — کارمزد</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="feeRate" class="block text-sm font-semibold text-slate-700 mb-2">نرخ کارمزد از اصل وام (%)</label>
+            <input type="text" id="feeRate" placeholder="مثال: ۲" class="input-clean" dir="ltr" oninput="this.value = formatDecimalInputPersian(this.value); updateAllTaxes();" />
+            <p class="text-xs text-slate-500 mt-2">درصدی از مبلغ اصلی وام که به‌عنوان کارمزد دریافت می‌شود.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- بخش ضمانت‌ها -->
+      <div class="card p-6">
+        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۶ — ضمانت</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <label for="guaranteeRate" class="block text-sm font-semibold text-slate-700 mb-2">نرخ هزینه ضمانت از اصل وام (%)</label>
+            <input type="text" id="guaranteeRate" placeholder="مثال: ۱٫۵" class="input-clean" dir="ltr" oninput="this.value = formatDecimalInputPersian(this.value); updateAllTaxes();" />
+            <p class="text-xs text-slate-500 mt-2">درصدی از مبلغ اصلی وام که به‌عنوان هزینه ضمانت لحاظ می‌شود.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- بخش مالیات (پس از کارمزد و ضمانت) -->
+      <div class="card p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-bold text-slate-900">مرحله ۷ — مالیات</h3>
+          <button type="button" class="btn btn-secondary text-sm py-2 px-4" onclick="addTaxRow()">+ اضافه کردن</button>
+        </div>
+        <p class="text-xs text-slate-600 mb-4">می‌توانید مالیات‌هایی را که درصدی از «مبلغ وام»، «هزینه کارمزد» یا «هزینه ضمانت» هستند اضافه کنید.</p>
+        <div id="taxRows" class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 tax-row">
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-2">پایه محاسبه</label>
+              <select name="taxBase" class="input-clean">
+                <option value="interest">سود وام</option>
+                <option value="fees">هزینه کارمزد</option>
+                <option value="guarantee">هزینه ضمانت</option>
+              </select>
+              <div class="text-xs text-amber-600 mt-1 tax-hint hidden">این محاسبه تقریبی است.</div>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-slate-700 mb-2">نرخ مالیات (%)</label>
+              <input type="text" name="taxRate" placeholder="مثال: ۹" class="input-clean" dir="ltr" oninput="this.value = formatInputPersian(this.value);" />
+            </div>
+            <div class="self-end">
+              <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
+              <div class="font-bold text-blue-700 tax-amount" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">۰ تومان</div>
+            </div>
+            <button type="button" onclick="this.parentElement.remove();" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl md:justify-self-start">×</button>
+          </div>
+        </div>
+        <div id="totalTaxes" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
       </div>
 
       <div class="flex justify-center">
@@ -168,6 +245,7 @@
                 <th>اصل پول باقی‌مانده (قبل از پرداخت)</th>
                 <th>مبلغ پرداخت اصل پول</th>
                 <th>سود انباشته پرداخت شده</th>
+                <th>هزینه‌ها</th>
                 <th>مبلغ کل پرداختی در این روز</th>
                 <th>توضیحات</th>
               </tr>
@@ -223,10 +301,33 @@
       const cleaned = toEnglish(str).replace(/[^\d]/g, '');
       return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
+    // فرمت ورودی با نمایش اعداد فارسی
+    function formatInputPersian(str) {
+      const formatted = formatInput(str);
+      return toPersian(formatted);
+    }
+    // فرمت عدد صحیح با نمایش فارسی
+    function formatIntegerPersian(str) {
+      const cleaned = toEnglish(str).replace(/[^\d]/g, '');
+      return toPersian(cleaned);
+    }
+    // فرمت اعشاری با نمایش فارسی (یک ممیز)
+    function formatDecimalInputPersian(str) {
+      let cleaned = toEnglish(str).replace(/[^\d.]/g, '');
+      // فقط یک ممیز مجاز
+      const parts = cleaned.split('.');
+      if (parts.length > 2) {
+        cleaned = parts[0] + '.' + parts.slice(1).join('');
+      }
+      const [intPart, decPart] = cleaned.split('.');
+      const groupedInt = (intPart || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      const combined = decPart !== undefined ? `${groupedInt}.${decPart}` : groupedInt;
+      return toPersian(combined);
+    }
 
     // نمایش مبلغ وام
     document.getElementById('loanAmount').addEventListener('input', function(e) {
-      const value = formatInput(e.target.value);
+      const value = formatInputPersian(e.target.value);
       e.target.value = value;
       const num = parseNumber(value);
       if (num > 0) {
@@ -239,13 +340,16 @@
         updateAutoPrincipal();
       }
       updateEstimatedInterest();
+      updateAllTaxes();
     });
 
-    // به‌روزرسانی نرخ سود
+    // به‌روزرسانی نرخ سود (نمایش اعداد فارسی اعشاری + محاسبه)
     document.getElementById('monthlyRate').addEventListener('input', function(e) {
+      e.target.value = formatDecimalInputPersian(e.target.value);
       updateEstimatedInterest();
     });
 
+    let estimatedTotalInterestGlobal = 0;
     // محاسبه پیش‌نمایش سود
     function updateEstimatedInterest() {
       const loanAmount = parseNumber(document.getElementById('loanAmount').value);
@@ -282,11 +386,15 @@
             }
           }
           
+          estimatedTotalInterestGlobal = totalAccrued;
           document.getElementById('estimatedInterest').classList.remove('hidden');
           document.getElementById('estimatedInterestAmount').textContent = formatToman(totalAccrued);
+          updateAllTaxes();
         }
       } else {
         document.getElementById('estimatedInterest').classList.add('hidden');
+        estimatedTotalInterestGlobal = 0;
+        updateAllTaxes();
       }
     }
 
@@ -296,15 +404,21 @@
       const options = document.getElementById('autoPrincipalOptions');
       const addBtn = document.getElementById('addPrincipalBtn');
       const rows = document.getElementById('principalRows');
+      const placeholder = document.getElementById('principalRowsPlaceholder');
+      // preview removed
       
       if (isChecked) {
         options.classList.remove('hidden');
         addBtn.style.display = 'none';
-        rows.querySelectorAll('input').forEach(input => input.disabled = true);
+        rows.classList.remove('collapsed');
+        placeholder.classList.add('hidden');
+        rows.querySelectorAll('input').forEach(input => input.disabled = false);
         updateAutoPrincipal();
       } else {
         options.classList.add('hidden');
         addBtn.style.display = 'inline-flex';
+        rows.classList.remove('collapsed');
+        placeholder.classList.add('hidden');
         rows.querySelectorAll('input').forEach(input => input.disabled = false);
       }
     }
@@ -332,14 +446,19 @@
           div.innerHTML = `
             <div class="flex-1">
               <label class="block text-xs text-slate-600 mb-1">روز</label>
-              <input type="text" name="principalDay" value="${days}" class="input-clean" dir="ltr" disabled />
+              <input type="text" name="principalDay" value="${toPersian(days.toString())}" class="input-clean" dir="ltr" />
             </div>
             <div class="flex-1">
               <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-              <input type="text" name="principalAmount" value="${formatInput(amount.toString())}" class="input-clean" dir="ltr" disabled />
+              <input type="text" name="principalAmount" value="${formatInputPersian(amount.toString())}" class="input-clean" dir="ltr" 
+                     oninput="this.value = formatInputPersian(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
             </div>
+            <button type="button" onclick="this.parentElement.remove(); updateTotalPrincipal(); updateEstimatedInterest();" 
+                    class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
           `;
           rows.appendChild(div);
+
+          // preview removed
         }
         
         updateTotalPrincipal();
@@ -353,15 +472,21 @@
       const options = document.getElementById('autoInterestOptions');
       const addBtn = document.getElementById('addInterestBtn');
       const rows = document.getElementById('interestDateRows');
+      const placeholder = document.getElementById('interestRowsPlaceholder');
+      // preview removed
       
       if (isChecked) {
         options.classList.remove('hidden');
         addBtn.style.display = 'none';
-        rows.querySelectorAll('input').forEach(input => input.disabled = true);
+        rows.classList.remove('collapsed');
+        placeholder.classList.add('hidden');
+        rows.querySelectorAll('input').forEach(input => input.disabled = false);
         updateAutoInterest();
       } else {
         options.classList.add('hidden');
         addBtn.style.display = 'inline-flex';
+        rows.classList.remove('collapsed');
+        placeholder.classList.add('hidden');
         rows.querySelectorAll('input').forEach(input => input.disabled = false);
       }
     }
@@ -384,10 +509,14 @@
           div.innerHTML = `
             <div class="flex-1">
               <label class="block text-xs text-slate-600 mb-1">روز</label>
-              <input type="text" name="interestDate" value="${days}" class="input-clean" dir="ltr" disabled />
+              <input type="text" name="interestDate" value="${toPersian(days.toString())}" class="input-clean" dir="ltr" />
             </div>
+            <button type="button" onclick="this.parentElement.remove(); updateEstimatedInterest();" 
+                    class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
           `;
           rows.appendChild(div);
+
+          // preview removed
         }
         
         updateEstimatedInterest();
@@ -430,12 +559,12 @@
       div.innerHTML = `
         <div class="flex-1">
           <label class="block text-xs text-slate-600 mb-1">روز</label>
-          <input type="text" name="principalDay" placeholder="60" class="input-clean" dir="ltr" />
+          <input type="text" name="principalDay" placeholder="۶۰" class="input-clean" dir="ltr" />
         </div>
         <div class="flex-1">
           <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-          <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" 
-                 oninput="this.value = formatInput(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
+          <input type="text" name="principalAmount" placeholder="۳۰۰۰۰۰۰۰" class="input-clean" dir="ltr" 
+                 oninput="this.value = formatInputPersian(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
         </div>
         <button type="button" onclick="this.parentElement.remove(); updateTotalPrincipal(); updateEstimatedInterest();" 
                 class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
@@ -452,7 +581,7 @@
       div.innerHTML = `
         <div class="flex-1">
           <label class="block text-xs text-slate-600 mb-1">روز</label>
-          <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" 
+          <input type="text" name="interestDate" placeholder="۱۸۰" class="input-clean" dir="ltr" 
                  oninput="updateEstimatedInterest();" />
         </div>
         <button type="button" onclick="this.parentElement.remove(); updateEstimatedInterest();" 
@@ -461,12 +590,141 @@
       container.appendChild(div);
     }
 
+    // اضافه کردن ردیف مالیات
+    function attachTaxRowListeners(row) {
+      const baseSel = row.querySelector('[name="taxBase"]');
+      const rateInput = row.querySelector('[name="taxRate"]');
+      if (baseSel) baseSel.addEventListener('change', updateAllTaxes);
+      if (rateInput) rateInput.addEventListener('input', updateAllTaxes);
+    }
+
+    function addTaxRow() {
+      const container = document.getElementById('taxRows');
+      const row = document.createElement('div');
+      row.className = 'grid grid-cols-1 md:grid-cols-4 gap-4 tax-row';
+      row.innerHTML = `
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">پایه محاسبه</label>
+          <select name="taxBase" class="input-clean">
+            <option value="interest">سود وام</option>
+            <option value="fees">هزینه کارمزد</option>
+            <option value="guarantee">هزینه ضمانت</option>
+          </select>
+          <div class="text-xs text-amber-600 mt-1 tax-hint hidden">این محاسبه تقریبی است.</div>
+        </div>
+        <div>
+          <label class="block text-sm font-semibold text-slate-700 mb-2">نرخ مالیات (%)</label>
+          <input type="text" name="taxRate" placeholder="مثال: ۹" class="input-clean" dir="ltr" oninput="this.value = formatInputPersian(this.value);" />
+        </div>
+        <div class="self-end">
+          <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
+          <div class="font-bold text-blue-700 tax-amount" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">۰ تومان</div>
+        </div>
+        <button type="button" onclick="this.parentElement.remove();" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl md:justify-self-start">×</button>
+      `;
+      container.appendChild(row);
+      attachTaxRowListeners(row);
+      updateAllTaxes();
+    }
+
+    function getFeeAmount() {
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const feeRate = parseNumber(document.getElementById('feeRate').value);
+      return loanAmount * (feeRate / 100);
+    }
+    function getGuaranteeAmount() {
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const guaranteeRate = parseNumber(document.getElementById('guaranteeRate').value);
+      return loanAmount * (guaranteeRate / 100);
+    }
+    function recalcTaxRow(row) {
+      const baseSel = row.querySelector('[name="taxBase"]');
+      const rateInput = row.querySelector('[name="taxRate"]');
+      const amountEl = row.querySelector('.tax-amount');
+      const hintEl = row.querySelector('.tax-hint');
+      if (!baseSel || !rateInput || !amountEl) return;
+      const base = baseSel.value;
+      const rate = parseNumber(rateInput.value);
+      let baseAmount = 0;
+      if (base === 'interest') baseAmount = estimatedTotalInterestGlobal;
+      else if (base === 'fees') baseAmount = getFeeAmount();
+      else if (base === 'guarantee') baseAmount = getGuaranteeAmount();
+      const taxAmount = baseAmount * (rate / 100);
+      amountEl.textContent = formatToman(taxAmount || 0);
+      if (hintEl) {
+        if (base === 'interest') hintEl.classList.remove('hidden');
+        else hintEl.classList.add('hidden');
+      }
+    }
+    function updateAllTaxes() {
+      let total = 0;
+      document.querySelectorAll('#taxRows .tax-row').forEach(row => {
+        recalcTaxRow(row);
+        const amountText = row.querySelector('.tax-amount')?.textContent || '۰';
+        total += parseNumber(amountText);
+      });
+      const totalBox = document.getElementById('totalTaxes');
+      if (totalBox) {
+        totalBox.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-semibold">مجموع مالیات‌ها:</span>
+            <span class="text-lg font-bold text-blue-700" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${formatToman(total)}
+            </span>
+          </div>
+        `;
+      }
+    }
+
+    // اتصال رویداد به ردیف اولیه مالیات
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('#taxRows .tax-row').forEach(attachTaxRowListeners);
+      updateAllTaxes();
+    });
+
+    // UX: افزودن سریع ردیف با Enter در آخرین ردیف
+    function handlePrincipalKeydown(e) {
+      if (e.key === 'Enter') {
+        const rows = document.querySelectorAll('#principalRows .flex.gap-4');
+        const lastRow = rows[rows.length - 1];
+        if (lastRow && lastRow.contains(e.target)) {
+          e.preventDefault();
+          addPrincipalRow();
+          focusLastPrincipal();
+        }
+      }
+    }
+    function focusLastPrincipal() {
+      const inputs = document.querySelectorAll('#principalRows [name="principalDay"]');
+      if (inputs.length > 0) inputs[inputs.length - 1].focus();
+    }
+    function handleInterestKeydown(e) {
+      if (e.key === 'Enter') {
+        const rows = document.querySelectorAll('#interestDateRows > div');
+        const lastRow = rows[rows.length - 1];
+        if (lastRow && lastRow.contains(e.target)) {
+          e.preventDefault();
+          addInterestDateRow();
+          focusLastInterest();
+        }
+      }
+    }
+    function focusLastInterest() {
+      const inputs = document.querySelectorAll('#interestDateRows [name="interestDate"]');
+      if (inputs.length > 0) inputs[inputs.length - 1].focus();
+    }
+
     // محاسبه
     document.getElementById('calculatorForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
       const loanAmount = parseNumber(document.getElementById('loanAmount').value);
       const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
+      const lenderFeeRate = parseNumber(document.getElementById('lenderFeeRate').value);
+      const guaranteeFeeBasis = parseNumber(document.getElementById('guaranteeFeeBasis').value);
+      const guaranteeStrength = parseFloat(toEnglish(document.getElementById('guaranteeStrength').value)) || 0;
+      const interestVATRate = parseNumber(document.getElementById('interestVATRate').value);
+      const upfrontFeesVATRate = parseNumber(document.getElementById('upfrontFeesVATRate').value);
       
       if (!loanAmount || !monthlyRate) {
         alert('لطفاً مبلغ وام و نرخ سود را وارد کنید');
@@ -496,11 +754,23 @@
       }
 
       // ارسال به n8n
-      calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates);
+      calculateWithN8N(
+        loanAmount,
+        monthlyRate,
+        principalRepayments,
+        interestPaymentDates,
+        {
+          lenderFeeRate,
+          guaranteeFeeBasis,
+          guaranteeStrength,
+          interestVATRate,
+          upfrontFeesVATRate
+        }
+      );
     });
 
     // تابع ارسال به n8n
-    async function calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates) {
+    async function calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates, lenderConfig) {
       const submitBtn = document.querySelector('button[type="submit"]');
       const originalText = submitBtn.innerHTML;
       submitBtn.disabled = true;
@@ -516,7 +786,13 @@
             LoanAmount: loanAmount,
             MonthlyInterestRate: monthlyRate,
             PrincipalRepayments: principalRepayments,
-            InterestPaymentDates: interestPaymentDates
+            InterestPaymentDates: interestPaymentDates,
+            // Lender configuration
+            LenderFeeRate: Number(lenderConfig?.lenderFeeRate) || 0,
+            GuaranteeFeeBasis: Number(lenderConfig?.guaranteeFeeBasis) || 0,
+            GuaranteeStrength: Number(lenderConfig?.guaranteeStrength) || 0,
+            InterestVATRate: Number(lenderConfig?.interestVATRate) || 0,
+            UpfrontFeesVATRate: Number(lenderConfig?.upfrontFeesVATRate) || 0
           })
         });
 
@@ -546,30 +822,51 @@
       const schedule = data.schedule || [];
       const summary = data.summary?._raw || data.summary || {};
 
-      // خلاصه
+      // خلاصه - تقسیم به دو بخش: هزینه‌های وام‌گیرنده و اطلاعات مالی وام‌دهنده
+      const lenderVatOnInterest = Number(summary.vatOnInterest || data.rawData?.summary?.vatOnInterest || 0);
+      const lenderVatOnUpfrontFees = Number(summary.vatOnUpfrontFees || data.rawData?.summary?.vatOnUpfrontFees || 0);
+      const guaranteeDiscountFactor = Number(summary.guaranteeDiscountFactor || data.rawData?.summary?.guaranteeDiscountFactor || data?.rawData?.calculationParams?.guaranteeStrength || 0);
+      const totalUpfrontFees = Number(summary.totalUpfrontFees || data.rawData?.summary?.totalUpfrontFees || 0);
+
       document.getElementById('summaryCards').innerHTML = `
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">کل سود قابل پرداخت</div>
-          <div class="text-2xl font-bold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${formatToman(summary.totalInterestPaid || 0)}
+        <div class="bg-white p-4 rounded-lg border border-blue-100 md:col-span-2">
+          <div class="text-sm font-bold text-slate-800 mb-3">بخش الف: هزینه‌های وام‌گیرنده</div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <div class="text-sm text-slate-600 mb-1">مجموع سود پرداختی</div>
+              <div class="text-2xl font-bold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+                ${formatToman(summary.totalInterestPaid || 0)}
+              </div>
+            </div>
+            <div>
+              <div class="text-sm text-slate-600 mb-1">مجموع کارمزدهای ابتدایی</div>
+              <div class="text-2xl font-bold text-indigo-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+                ${formatToman(totalUpfrontFees || 0)}
+              </div>
+            </div>
           </div>
         </div>
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">کل مبلغ بازپرداخت</div>
-          <div class="text-2xl font-bold text-indigo-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${formatToman(summary.totalPayments || 0)}
-          </div>
-        </div>
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">مدت زمان بازپرداخت</div>
-          <div class="text-2xl font-bold text-purple-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${toPersian(summary.finalDay || 0)} روز
-          </div>
-        </div>
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">اصل پول پرداخت شده</div>
-          <div class="text-2xl font-bold text-green-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${formatToman(summary.totalPrincipalPaid || 0)}
+        <div class="bg-white p-4 rounded-lg border border-indigo-100 md:col-span-2">
+          <div class="text-sm font-bold text-slate-800 mb-3">بخش ب: اطلاعات مالی وام‌دهنده</div>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <div class="text-sm text-slate-600 mb-1">VAT سود</div>
+              <div class="text-2xl font-bold text-purple-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+                ${formatToman(lenderVatOnInterest || 0)}
+              </div>
+            </div>
+            <div>
+              <div class="text-sm text-slate-600 mb-1">VAT کارمزدها</div>
+              <div class="text-2xl font-bold text-amber-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+                ${formatToman(lenderVatOnUpfrontFees || 0)}
+              </div>
+            </div>
+            <div>
+              <div class="text-sm text-slate-600 mb-1">میزان تخفیف کارمزد ضمانت</div>
+              <div class="text-2xl font-bold text-emerald-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+                ${toPersian(guaranteeDiscountFactor)} ×
+              </div>
+            </div>
           </div>
         </div>
       `;

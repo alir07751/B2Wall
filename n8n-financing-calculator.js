@@ -48,6 +48,17 @@ const InterestPaymentDates = Array.isArray(input.InterestPaymentDates)
   ? input.InterestPaymentDates.map(d => Number(d) || 0).filter(d => d > 0)
   : [];
 
+// Optional: Upfront fees, guarantees, and taxes
+const FeeRate = Number(input.FeeRate ?? input.feeRate) || 0;              // % of LoanAmount
+const GuaranteeRate = Number(input.GuaranteeRate ?? input.guaranteeRate) || 0; // % of LoanAmount
+// Taxes can arrive as Taxes or TaxRows; items: { base: 'interest'|'fees'|'guarantee', rate: number% }
+const Taxes = Array.isArray(input.Taxes || input.TaxRows)
+  ? (input.Taxes || input.TaxRows).map(t => ({
+      base: (t.base || t.taxBase || '').toString(),
+      rate: Number(t.rate ?? t.taxRate) || 0
+    })).filter(t => t.base && t.rate > 0)
+  : [];
+
 // Input validation
 if (LoanAmount <= 0) {
   return {
@@ -361,6 +372,20 @@ const formattedReport = generatePersianReport();
 // SECTION 5: OUTPUT FORMATTING FOR N8N
 // ============================================================================
 
+// Compute optional financials (fees, guarantees, taxes) based on provided inputs
+const feeAmount = LoanAmount * (FeeRate / 100);
+const guaranteeAmount = LoanAmount * (GuaranteeRate / 100);
+const totalUpfrontFees = feeAmount + guaranteeAmount;
+const taxesBreakdown = Taxes.map(t => {
+  let baseAmount = 0;
+  if (t.base === 'interest') baseAmount = summary.totalInterestPaid;
+  else if (t.base === 'fees') baseAmount = feeAmount;
+  else if (t.base === 'guarantee') baseAmount = guaranteeAmount;
+  const amount = baseAmount * (t.rate / 100);
+  return { base: t.base, rate: t.rate, baseAmount, amount };
+});
+const totalTaxes = taxesBreakdown.reduce((s, x) => s + x.amount, 0);
+
 /**
  * Format schedule for JSON output with Persian formatting
  */
@@ -392,6 +417,15 @@ const persianSummary = {
   'مجموع سود پرداخت شده': formatToman(summary.totalInterestPaid),
   'مجموع کل پرداخت‌ها': formatToman(summary.totalPayments),
   'هزینه کل وام (سود)': formatToman(summary.totalInterestPaid),
+  // Upfront fees and taxes (if provided)
+  ...(FeeRate > 0 || GuaranteeRate > 0 ? {
+    'کارمزد از اصل وام': formatToman(feeAmount),
+    'هزینه ضمانت از اصل وام': formatToman(guaranteeAmount),
+    'مجموع کارمزدهای ابتدایی': formatToman(totalUpfrontFees),
+  } : {}),
+  ...(Taxes.length > 0 ? {
+    'مجموع مالیات‌ها': formatToman(totalTaxes),
+  } : {}),
   // Raw numeric values
   _raw: {
     loanAmount: LoanAmount,
@@ -400,7 +434,15 @@ const persianSummary = {
     finalDay: finalDay,
     totalPrincipalPaid: summary.totalPrincipalPaid,
     totalInterestPaid: summary.totalInterestPaid,
-    totalPayments: summary.totalPayments
+    totalPayments: summary.totalPayments,
+    // Optionals
+    feeRate: FeeRate,
+    guaranteeRate: GuaranteeRate,
+    feeAmount: feeAmount,
+    guaranteeAmount: guaranteeAmount,
+    totalUpfrontFees: totalUpfrontFees,
+    taxes: taxesBreakdown,
+    totalTaxes: totalTaxes
   }
 };
 
