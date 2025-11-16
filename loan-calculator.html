@@ -795,6 +795,16 @@
         if (day) interestPaymentDates.push(day);
       });
 
+      // جمع‌آوری زمان‌بندی پرداخت هزینه‌ها (مرحله ۸)
+      const costSchedule = [];
+      document.querySelectorAll('[name="costDay"]').forEach((dayInput, index) => {
+        const day = parseInt(toEnglish(dayInput.value));
+        const percent = parseNumber(document.querySelectorAll('[name="costPercent"]')[index].value);
+        if (!isNaN(day) && day > 0 && !isNaN(percent) && percent >= 0) {
+          costSchedule.push({ day, percent });
+        }
+      });
+
       if (principalRepayments.length === 0 || interestPaymentDates.length === 0) {
         alert('لطفاً حداقل یک پرداخت اصل پول و یک تاریخ پرداخت سود وارد کنید');
         return;
@@ -806,7 +816,7 @@
         monthlyRate,
         principalRepayments,
         interestPaymentDates,
-        { feeRate, guaranteeRate, taxes }
+        { feeRate, guaranteeRate, taxes, costSchedule }
       );
     });
 
@@ -831,7 +841,8 @@
             // New financials
             FeeRate: Number(extras?.feeRate) || 0,
             GuaranteeRate: Number(extras?.guaranteeRate) || 0,
-            Taxes: Array.isArray(extras?.taxes) ? extras.taxes : []
+            Taxes: Array.isArray(extras?.taxes) ? extras.taxes : [],
+            CostSchedule: Array.isArray(extras?.costSchedule) ? extras.costSchedule : []
           })
         });
 
@@ -907,6 +918,7 @@
         const principalBefore = raw.remainingPrincipalBefore || 0;
         const principalPayment = raw.principalPayment || 0;
         const interestPayment = raw.interestPayment || 0;
+        const costPayment = raw.costPayment || 0;
         const totalPayment = raw.totalPayment || 0;
         const description = day.توضیحات || 'هیچ پرداختی انجام نشد';
         const isPayment = principalPayment > 0 || interestPayment > 0;
@@ -922,6 +934,9 @@
             </td>
             <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
               ${interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              ${costPayment > 0 ? `<span class="font-semibold text-amber-600">${formatToman(costPayment)}</span>` : '<span class="text-slate-400">-</span>'}
             </td>
             <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
               ${totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
@@ -1063,6 +1078,9 @@
             </td>
             <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
               ${day.interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(day.interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}
+            </td>
+            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
+              <span class="text-slate-400">-</span>
             </td>
             <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
               ${day.totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(day.totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
