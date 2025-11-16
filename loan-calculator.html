@@ -720,11 +720,14 @@
       
       const loanAmount = parseNumber(document.getElementById('loanAmount').value);
       const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
-      const lenderFeeRate = parseNumber(document.getElementById('lenderFeeRate').value);
-      const guaranteeFeeBasis = parseNumber(document.getElementById('guaranteeFeeBasis').value);
-      const guaranteeStrength = parseFloat(toEnglish(document.getElementById('guaranteeStrength').value)) || 0;
-      const interestVATRate = parseNumber(document.getElementById('interestVATRate').value);
-      const upfrontFeesVATRate = parseNumber(document.getElementById('upfrontFeesVATRate').value);
+      // new fee/guarantee/tax inputs
+      const feeRate = parseNumber(document.getElementById('feeRate').value);
+      const guaranteeRate = parseNumber(document.getElementById('guaranteeRate').value);
+      const taxes = Array.from(document.querySelectorAll('#taxRows .tax-row')).map(row => {
+        const base = row.querySelector('[name=\"taxBase\"]').value;
+        const rate = parseNumber(row.querySelector('[name=\"taxRate\"]').value);
+        return { base, rate };
+      }).filter(t => t.rate > 0);
       
       if (!loanAmount || !monthlyRate) {
         alert('لطفاً مبلغ وام و نرخ سود را وارد کنید');
@@ -759,18 +762,12 @@
         monthlyRate,
         principalRepayments,
         interestPaymentDates,
-        {
-          lenderFeeRate,
-          guaranteeFeeBasis,
-          guaranteeStrength,
-          interestVATRate,
-          upfrontFeesVATRate
-        }
+        { feeRate, guaranteeRate, taxes }
       );
     });
 
     // تابع ارسال به n8n
-    async function calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates, lenderConfig) {
+    async function calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates, extras) {
       const submitBtn = document.querySelector('button[type="submit"]');
       const originalText = submitBtn.innerHTML;
       submitBtn.disabled = true;
@@ -787,12 +784,10 @@
             MonthlyInterestRate: monthlyRate,
             PrincipalRepayments: principalRepayments,
             InterestPaymentDates: interestPaymentDates,
-            // Lender configuration
-            LenderFeeRate: Number(lenderConfig?.lenderFeeRate) || 0,
-            GuaranteeFeeBasis: Number(lenderConfig?.guaranteeFeeBasis) || 0,
-            GuaranteeStrength: Number(lenderConfig?.guaranteeStrength) || 0,
-            InterestVATRate: Number(lenderConfig?.interestVATRate) || 0,
-            UpfrontFeesVATRate: Number(lenderConfig?.upfrontFeesVATRate) || 0
+            // New financials
+            FeeRate: Number(extras?.feeRate) || 0,
+            GuaranteeRate: Number(extras?.guaranteeRate) || 0,
+            Taxes: Array.isArray(extras?.taxes) ? extras.taxes : []
           })
         });
 
