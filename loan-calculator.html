@@ -3,275 +3,584 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>محاسبه‌گر بازپرداخت وام | B2Wall</title>
+  <title>محاسبه‌گر بازپرداخت وام</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <style>
-    body { font-family: 'Vazirmatn', system-ui, -apple-system, sans-serif; background: #f8fafc; }
-    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 1.25rem; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
-    .input-clean { width: 100%; padding: 0.875rem 1rem; border: 2px solid #e2e8f0; border-radius: 0.875rem; font-size: 1.125rem; font-weight: 600; transition: all 0.2s; background: #fff; font-family: 'Vazirmatn', system-ui; font-feature-settings: "tnum"; }
-    .input-clean:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
-    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 0.875rem 1.5rem; border-radius: 0.875rem; font-weight: 700; transition: all 0.2s; cursor: pointer; border: none; font-size: 1rem; }
-    .btn-primary { background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,0.3); }
-    .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
-    table { width: 100%; border-collapse: separate; border-spacing: 0; }
-    th, td { padding: 0.75rem; text-align: right; border-bottom: 1px solid #e5e7eb; }
-    th { background: #f1f5f9; font-weight: 700; }
-    tr:hover { background: #f8fafc; }
-    /* Collapsible (neutralized to prevent clipping/overlap on long lists) */
-    .collapsible { overflow: visible; transition: none; max-height: none; opacity: 1; }
-    .collapsible.collapsed { max-height: none; opacity: 1; }
-    .placeholder-box { border: 2px dashed #e2e8f0; border-radius: 0.75rem; background: #f8fafc; padding: 0.75rem 1rem; color: #64748b; font-size: 0.875rem; }
-    .clear-both { clear: both; }
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Vazirmatn', 'IRANSans', system-ui, -apple-system, sans-serif; 
+      background: #f5f7fa; 
+      line-height: 1.6;
+      direction: rtl;
+    }
+    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    .card { 
+      background: #fff; 
+      border: 1px solid #e2e8f0; 
+      border-radius: 1rem; 
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      transition: box-shadow 0.2s;
+    }
+    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .card-header {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-bottom: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid #e2e8f0;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .input-field {
+      width: 100%;
+      padding: 0.875rem 1rem;
+      border: 2px solid #cbd5e1;
+      border-radius: 0.75rem;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      background: #fff;
+      font-family: 'Vazirmatn', system-ui;
+      direction: ltr;
+      text-align: left;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .input-field.error {
+      border-color: #ef4444;
+    }
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 0.75rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+      font-family: 'Vazirmatn', system-ui;
+    }
+    .btn-primary {
+      background: #3b82f6;
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    .btn-primary:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    }
+    .btn-primary:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-secondary {
+      background: #f1f5f9;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+    }
+    .btn-secondary:hover {
+      background: #e2e8f0;
+    }
+    .btn-success {
+      background: #10b981;
+      color: #fff;
+    }
+    .btn-success:hover {
+      background: #059669;
+    }
+    .btn-danger {
+      background: #ef4444;
+      color: #fff;
+    }
+    .btn-danger:hover {
+      background: #dc2626;
+    }
+    .label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #475569;
+      margin-bottom: 0.5rem;
+    }
+    .label-required::after {
+      content: ' *';
+      color: #ef4444;
+    }
+    .help-text {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+    .error-text {
+      font-size: 0.8rem;
+      color: #ef4444;
+      margin-top: 0.25rem;
+    }
+    .toggle-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem;
+      background: #f8fafc;
+      border-radius: 0.75rem;
+      border: 1px solid #e2e8f0;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .toggle-switch:hover {
+      background: #f1f5f9;
+    }
+    .toggle-switch input[type="checkbox"] {
+      width: 2.5rem;
+      height: 1.5rem;
+      cursor: pointer;
+    }
+    .module-content {
+      margin-top: 1rem;
+      padding: 1rem;
+      background: #fafbfc;
+      border-radius: 0.75rem;
+      border: 1px solid #e2e8f0;
+    }
+    .module-content.hidden {
+      display: none;
+    }
+    .auto-split-section {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    .auto-split-controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 1rem;
+      align-items: end;
+      margin-top: 1rem;
+    }
+    @media (max-width: 768px) {
+      .auto-split-controls {
+        grid-template-columns: 1fr;
+      }
+    }
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 0.9rem;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 700;
+      padding: 1rem;
+      text-align: right;
+      border-bottom: 2px solid #e2e8f0;
+      color: #334155;
+      white-space: nowrap;
+    }
+    td {
+      padding: 0.875rem 1rem;
+      text-align: right;
+      border-bottom: 1px solid #e5e7eb;
+      color: #475569;
+    }
+    tr:hover {
+      background: #f8fafc;
+    }
+    .summary-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      padding: 1.5rem;
+      border-radius: 1rem;
+      margin-bottom: 1rem;
+    }
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
+    }
+    .summary-item:last-child {
+      border-bottom: none;
+    }
+    .summary-label {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    .summary-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      font-family: 'Vazirmatn', system-ui;
+      font-feature-settings: 'tnum';
+    }
+    .loading {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border: 2px solid #fff;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .row-item {
+      display: flex;
+      gap: 1rem;
+      align-items: flex-start;
+      margin-bottom: 1rem;
+      padding: 1rem;
+      background: #fafbfc;
+      border-radius: 0.75rem;
+      border: 1px solid #e2e8f0;
+    }
+    .row-item > div {
+      flex: 1;
+    }
+    .remove-btn {
+      background: none;
+      border: none;
+      color: #ef4444;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+    }
+    .remove-btn:hover {
+      background: #fee2e2;
+    }
+    .persian-number {
+      font-family: 'Vazirmatn', system-ui;
+      font-feature-settings: 'tnum';
+      direction: rtl;
+    }
+    .divider {
+      height: 1px;
+      background: #e2e8f0;
+      margin: 1.5rem 0;
+    }
   </style>
 </head>
-<body class="min-h-screen bg-slate-50">
+<body>
   <header class="bg-white border-b border-slate-200 shadow-sm">
-    <div class="max-w-6xl mx-auto px-4 py-6">
+    <div class="container">
       <h1 class="text-2xl font-bold text-slate-900">محاسبه‌گر بازپرداخت وام</h1>
-      <p class="text-sm text-slate-600 mt-1">برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی</p>
+      <p class="text-sm text-slate-600 mt-1">برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی روزانه</p>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
-    <form id="calculatorForm" class="space-y-6">
-      <!-- مبلغ وام -->
-      <div class="card p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۱ — مبلغ وام</h3>
-        <label class="block text-sm font-semibold text-slate-700 mb-2">
-          مبلغ وام <span class="text-red-500">*</span>
-        </label>
-        <input type="text" id="loanAmount" placeholder="مثال: ۳۳۰۰۰۰۰۰۰" class="input-clean" dir="ltr" />
-        <div id="loanAmountDisplay" class="mt-2 text-sm font-semibold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';"></div>
-        <p class="text-xs text-slate-500 mt-2">💡 مبلغ کل وام را وارد کنید</p>
-      </div>
-
-      <!-- نرخ سود -->
-      <div class="card p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۲ — نرخ سود</h3>
-        <label class="block text-sm font-semibold text-slate-700 mb-2">
-          نرخ سود ماهیانه (%) <span class="text-red-500">*</span>
-        </label>
-        <input type="text" id="monthlyRate" placeholder="مثال: ۴٫۵" class="input-clean" dir="ltr" />
-        <p class="text-xs text-slate-500 mt-2">💡 نرخ سود به صورت درصد ماهیانه</p>
-      </div>
-
-      <!-- پیش‌نمایش سود -->
-      <div id="estimatedInterest" class="hidden card p-4 bg-amber-50 border border-amber-200">
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-semibold text-amber-900">💰 پیش‌نمایش سود تقریبی:</span>
-          <span id="estimatedInterestAmount" class="text-lg font-bold text-amber-700" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';"></span>
-        </div>
-        <p class="text-xs text-amber-700 mt-1">این مبلغ تقریبی است و پس از محاسبه دقیق ممکن است تغییر کند</p>
-      </div>
-
-      <!-- پرداخت‌های اصل پول -->
-      <div class="card p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۳ — پرداخت‌های اصل پول</h3>
-        <div class="flex items-center justify-between mb-4">
-          <label class="block text-sm font-semibold text-slate-700">
-            پرداخت‌های اصل پول <span class="text-red-500">*</span>
-          </label>
-          <button type="button" id="addPrincipalBtn" onclick="addPrincipalRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
-        </div>
+  <main class="container">
+    <form id="calculatorForm">
+      <!-- بخش ۱: اطلاعات وام -->
+      <div class="card">
+        <div class="card-header">📋 اطلاعات وام</div>
         
-        <!-- تقسیم خودکار اصل پول -->
-        <div class="mb-4 bg-blue-50 p-3 rounded-lg border border-blue-200">
-          <label class="flex items-center cursor-pointer">
-            <input type="checkbox" id="autoPrincipalMode" onchange="toggleAutoPrincipal()" class="ml-3 w-4 h-4 text-blue-600 rounded" />
-            <span class="text-sm font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
+        <div class="mb-4">
+          <label for="loanAmount" class="label label-required">مبلغ وام (تومان)</label>
+          <input type="text" id="loanAmount" class="input-field" placeholder="مثال: 330000000" 
+                 oninput="LoanModule.updateAmountDisplay()" />
+          <div id="loanAmountDisplay" class="help-text persian-number text-blue-600 font-semibold"></div>
+          <div class="help-text">💡 مبلغ کل وام را به تومان وارد کنید. اعداد را به صورت انگلیسی وارد کنید.</div>
+        </div>
+
+        <div class="mb-4">
+          <label for="monthlyRate" class="label label-required">نرخ سود ماهیانه (%)</label>
+          <input type="text" id="monthlyRate" class="input-field" placeholder="مثال: 4.5" 
+                 oninput="LoanModule.validateRate()" />
+          <div id="monthlyRateError" class="error-text"></div>
+          <div class="help-text">💡 نرخ سود ماهیانه برحسب درصد وارد شود (مثلاً ۴.۵ برای ۴.۵٪)</div>
+        </div>
+      </div>
+
+      <!-- بخش ۲: برنامه بازپرداخت اصل -->
+      <div class="card">
+        <div class="card-header">📅 برنامه بازپرداخت اصل پول</div>
+        
+        <div class="auto-split-section">
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoPrincipalMode" onchange="PrincipalModule.toggleAuto()" />
+            <span class="font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
           </label>
-          <p class="text-xs text-slate-600 mt-1 mr-7">با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند</p>
+          <div class="help-text mr-7 mt-2">با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند</div>
           
-          <div id="autoPrincipalOptions" class="hidden mt-4 grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
-              <input type="text" id="numberOfPayments" placeholder="مثال: ۴" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatIntegerPersian(this.value); updateAutoPrincipal();" />
+          <div id="autoPrincipalOptions" class="hidden mt-4">
+            <div class="auto-split-controls">
+              <div>
+                <label class="label">روش تقسیم</label>
+                <select id="principalSplitMethod" class="input-field">
+                  <option value="equal">تقسیم مساوی</option>
+                  <option value="interval">تقسیم بر اساس فاصله زمانی</option>
+                </select>
+                <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
+              </div>
+              <div id="principalIntervalContainer">
+                <label class="label">فاصله بین پرداخت‌ها (روز)</label>
+                <input type="text" id="principalPaymentInterval" class="input-field" value="30" placeholder="مثال: 30" 
+                       oninput="this.value = formatInteger(this.value)" />
+                <div class="help-text">فاصله زمانی بین هر پرداخت</div>
+              </div>
+              <div>
+                <label class="label">تعداد پرداخت‌ها</label>
+                <input type="text" id="numberOfPayments" class="input-field" placeholder="مثال: 4" 
+                       oninput="this.value = formatInteger(this.value)" />
+                <div class="help-text">تعداد کل پرداخت‌های اصل پول</div>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
-              <input type="text" id="paymentInterval" value="۳۰" placeholder="مثال: ۳۰" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatIntegerPersian(this.value); updateAutoPrincipal();" />
-            </div>
+            <button type="button" onclick="PrincipalModule.calculateAuto()" class="btn btn-primary mt-4">
+              🧮 محاسبه خودکار
+            </button>
           </div>
-
-          <!-- پیش‌نمایش خودکار حذف شد -->
         </div>
         
-        <div id="principalRows" class="space-y-4" onkeydown="handlePrincipalKeydown(event)">
-          <div class="flex gap-4">
-            <div class="flex-1">
-              <label class="block text-xs text-slate-600 mb-1">روز</label>
-              <input type="text" name="principalDay" placeholder="۶۰" class="input-clean" dir="ltr" />
-            </div>
-            <div class="flex-1">
-              <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-              <input type="text" name="principalAmount" placeholder="۳۰۰۰۰۰۰۰" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatInputPersian(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
-            </div>
-          </div>
-        </div>
-        <div class="mt-3">
-          <button type="button" onclick="addPrincipalRow(); focusLastPrincipal();" class="btn btn-secondary text-sm py-2 px-4">+ افزودن ردیف</button>
-        </div>
-        <div id="principalRowsPlaceholder" class="hidden placeholder-box mt-4">حالت تقسیم خودکار فعال است. ردیف‌های دستی پنهان شدند.</div>
-        <div id="totalPrincipal" class="mt-4 p-4 bg-slate-50 rounded-lg clear-both"></div>
+        <div id="principalRows" class="space-y-3"></div>
+        
+        <button type="button" onclick="PrincipalModule.addRow()" class="btn btn-secondary mt-3">
+          ➕ افزودن ردیف پرداخت
+        </button>
+        
+        <div id="totalPrincipal" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
       </div>
 
-      <!-- تاریخ‌های پرداخت سود -->
-      <div class="card p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۴ — تاریخ‌های پرداخت سود</h3>
-        <div class="flex items-center justify-between mb-4">
-          <label class="block text-sm font-semibold text-slate-700">
-            تاریخ‌های پرداخت سود <span class="text-red-500">*</span>
-          </label>
-          <button type="button" id="addInterestBtn" onclick="addInterestDateRow()" class="btn btn-secondary text-sm py-2 px-4">+ اضافه کردن</button>
-        </div>
+      <!-- بخش ۳: تاریخ‌های پرداخت سود -->
+      <div class="card">
+        <div class="card-header">📆 تاریخ‌های پرداخت سود</div>
         
-        <!-- تقسیم خودکار تاریخ‌های پرداخت سود -->
-        <div class="mb-4 bg-purple-50 p-3 rounded-lg border border-purple-200">
-          <label class="flex items-center cursor-pointer">
-            <input type="checkbox" id="autoInterestMode" onchange="toggleAutoInterest()" class="ml-3 w-4 h-4 text-purple-600 rounded" />
-            <span class="text-sm font-semibold text-slate-900">تقسیم خودکار تاریخ‌های پرداخت سود</span>
+        <div class="auto-split-section">
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoInterestMode" onchange="InterestModule.toggleAuto()" />
+            <span class="font-semibold text-slate-900">تقسیم خودکار تاریخ‌های پرداخت سود</span>
           </label>
-          <p class="text-xs text-slate-600 mt-1 mr-7">با فعال کردن این گزینه، سیستم به صورت خودکار تاریخ‌های پرداخت سود را تقسیم می‌کند</p>
+          <div class="help-text mr-7 mt-2">با فعال کردن این گزینه، سیستم به صورت خودکار تاریخ‌های پرداخت سود را تقسیم می‌کند</div>
           
-          <div id="autoInterestOptions" class="hidden mt-4 grid grid-cols-2 gap-4">
-            <div>
-              <label class="block text-xs text-slate-600 mb-1">تعداد پرداخت‌ها</label>
-              <input type="text" id="numberOfInterestPayments" placeholder="مثال: ۲" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatIntegerPersian(this.value); updateAutoInterest();" />
+          <div id="autoInterestOptions" class="hidden mt-4">
+            <div class="auto-split-controls">
+              <div>
+                <label class="label">روش تقسیم</label>
+                <select id="interestSplitMethod" class="input-field">
+                  <option value="equal">تقسیم مساوی</option>
+                  <option value="interval">تقسیم بر اساس فاصله زمانی</option>
+                </select>
+                <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
+              </div>
+              <div id="interestIntervalContainer">
+                <label class="label">فاصله بین پرداخت‌ها (روز)</label>
+                <input type="text" id="interestPaymentInterval" class="input-field" value="90" placeholder="مثال: 90" 
+                       oninput="this.value = formatInteger(this.value)" />
+                <div class="help-text">فاصله زمانی بین هر پرداخت سود</div>
+              </div>
+              <div>
+                <label class="label">تعداد پرداخت‌ها</label>
+                <input type="text" id="numberOfInterestPayments" class="input-field" placeholder="مثال: 2" 
+                       oninput="this.value = formatInteger(this.value)" />
+                <div class="help-text">تعداد کل پرداخت‌های سود</div>
+              </div>
             </div>
-            <div>
-              <label class="block text-xs text-slate-600 mb-1">فاصله بین پرداخت‌ها (روز)</label>
-              <input type="text" id="interestPaymentInterval" value="۳۰" placeholder="مثال: ۹۰" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatIntegerPersian(this.value); updateAutoInterest();" />
-            </div>
+            <button type="button" onclick="InterestModule.calculateAuto()" class="btn btn-primary mt-4">
+              🧮 محاسبه خودکار
+            </button>
           </div>
-
-          <!-- پیش‌نمایش خودکار حذف شد -->
         </div>
         
-        <div id="interestDateRows" class="space-y-4" onkeydown="handleInterestKeydown(event)">
-          <div>
-            <label class="block text-xs text-slate-600 mb-1">روز</label>
-            <input type="text" name="interestDate" placeholder="۱۸۰" class="input-clean" dir="ltr" 
-                   oninput="updateEstimatedInterest();" />
-          </div>
-        </div>
-        <div class="mt-3">
-          <button type="button" onclick="addInterestDateRow(); focusLastInterest();" class="btn btn-secondary text-sm py-2 px-4">+ افزودن تاریخ</button>
-        </div>
-        <div id="interestRowsPlaceholder" class="hidden placeholder-box mt-4">حالت تقسیم خودکار فعال است. تاریخ‌های دستی پنهان شدند.</div>
+        <div id="interestDateRows" class="space-y-3"></div>
+        
+        <button type="button" onclick="InterestModule.addRow()" class="btn btn-secondary mt-3">
+          ➕ افزودن تاریخ پرداخت
+        </button>
       </div>
 
-      <!-- بخش کارمزد -->
-      <div class="card p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۵ — کارمزد</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label for="feeRate" class="block text-sm font-semibold text-slate-700 mb-2">نرخ کارمزد از اصل وام (%)</label>
-            <input type="text" id="feeRate" placeholder="مثال: ۲" class="input-clean" dir="ltr" oninput="this.value = formatDecimalInputPersian(this.value); updateAllTaxes();" />
-            <p class="text-xs text-slate-500 mt-2">درصدی از مبلغ اصلی وام که به‌عنوان کارمزد دریافت می‌شود.</p>
+      <!-- بخش ۴: ماژول‌ها -->
+      <div class="card">
+        <div class="card-header">⚙️ ماژول‌های اختیاری</div>
+        
+        <!-- ماژول کارمزد -->
+        <div class="mb-4">
+          <label class="toggle-switch">
+            <input type="checkbox" id="feeModuleEnabled" onchange="FeeModule.toggle()" />
+            <span class="font-semibold text-slate-900">فعال‌سازی ماژول کارمزد</span>
+          </label>
+          <div id="feeModuleContent" class="module-content hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label class="label">نوع کارمزد</label>
+                <select id="feeMode" class="input-field" onchange="FeeModule.updateDisplay()">
+                  <option value="percentage">درصدی از اصل وام</option>
+                  <option value="fixed">مبلغ ثابت</option>
+                </select>
+              </div>
+              <div id="feeRateContainer">
+                <label class="label">نرخ کارمزد (%)</label>
+                <input type="text" id="feeRate" class="input-field" placeholder="مثال: 2" 
+                       oninput="this.value = formatDecimal(this.value); FeeModule.updateDisplay()" />
+              </div>
+              <div id="feeAmountContainer" class="hidden">
+                <label class="label">مبلغ کارمزد (تومان)</label>
+                <input type="text" id="feeAmount" class="input-field" placeholder="مثال: 1000000" 
+                       oninput="this.value = formatNumber(this.value); FeeModule.updateDisplay()" />
+              </div>
+            </div>
+            <div id="feeDisplay" class="mt-4 p-3 bg-blue-50 rounded-lg hidden">
+              <div class="text-sm font-semibold text-slate-700">مبلغ کارمزد:</div>
+              <div id="feeAmountDisplay" class="text-lg font-bold text-blue-700 persian-number"></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- بخش ضمانت‌ها -->
-      <div class="card p-6">
-        <h3 class="text-lg font-bold text-slate-900 mb-4">مرحله ۶ — ضمانت</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label for="guaranteeRate" class="block text-sm font-semibold text-slate-700 mb-2">نرخ هزینه ضمانت از اصل وام (%)</label>
-            <input type="text" id="guaranteeRate" placeholder="مثال: ۱٫۵" class="input-clean" dir="ltr" oninput="this.value = formatDecimalInputPersian(this.value); updateAllTaxes();" />
-            <p class="text-xs text-slate-500 mt-2">درصدی از مبلغ اصلی وام که به‌عنوان هزینه ضمانت لحاظ می‌شود.</p>
-          </div>
-        </div>
-      </div>
+        <div class="divider"></div>
 
-      <!-- بخش مالیات (پس از کارمزد و ضمانت) -->
-      <div class="card p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-bold text-slate-900">مرحله ۷ — مالیات</h3>
-          <button type="button" class="btn btn-secondary text-sm py-2 px-4" onclick="addTaxRow()">+ اضافه کردن</button>
-        </div>
-        <p class="text-xs text-slate-600 mb-4">می‌توانید مالیات‌هایی را که درصدی از «مبلغ وام»، «هزینه کارمزد» یا «هزینه ضمانت» هستند اضافه کنید.</p>
-        <div id="taxRows" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-4 gap-4 tax-row">
+        <!-- ماژول ضمانت -->
+        <div class="mb-4">
+          <label class="toggle-switch">
+            <input type="checkbox" id="guaranteeModuleEnabled" onchange="GuaranteeModule.toggle()" />
+            <span class="font-semibold text-slate-900">فعال‌سازی ماژول ضمانت</span>
+          </label>
+          <div id="guaranteeModuleContent" class="module-content hidden">
             <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">پایه محاسبه</label>
-              <select name="taxBase" class="input-clean">
-                <option value="interest">سود وام</option>
-                <option value="fees">هزینه کارمزد</option>
-                <option value="guarantee">هزینه ضمانت</option>
-              </select>
-              <div class="text-xs text-amber-600 mt-1 tax-hint hidden">این محاسبه تقریبی است.</div>
+              <label class="label">نرخ هزینه ضمانت از اصل وام (%)</label>
+              <input type="text" id="guaranteeRate" class="input-field" placeholder="مثال: 1.5" 
+                     oninput="this.value = formatDecimal(this.value); GuaranteeModule.updateDisplay()" />
+              <div class="help-text">درصدی از مبلغ اصلی وام که به‌عنوان هزینه ضمانت لحاظ می‌شود</div>
             </div>
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">نرخ مالیات (%)</label>
-              <input type="text" name="taxRate" placeholder="مثال: ۹" class="input-clean" dir="ltr" oninput="this.value = formatInputPersian(this.value);" />
+            <div id="guaranteeDisplay" class="mt-4 p-3 bg-green-50 rounded-lg hidden">
+              <div class="text-sm font-semibold text-slate-700">مبلغ ضمانت:</div>
+              <div id="guaranteeAmountDisplay" class="text-lg font-bold text-green-700 persian-number"></div>
             </div>
-            <div class="self-end">
-              <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
-              <div class="font-bold text-blue-700 tax-amount" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">۰ تومان</div>
-            </div>
-            <button type="button" onclick="this.parentElement.remove();" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl md:justify-self-start">×</button>
           </div>
         </div>
-        <div id="totalTaxes" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
-      </div>
 
-      <!-- زمان‌بندی پرداخت هزینه‌ها (کارمزد، ضمانت، مالیات‌ها) -->
-      <div class="card p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-bold text-slate-900">مرحله ۸ — زمان‌بندی پرداخت هزینه‌ها</h3>
-          <button type="button" class="btn btn-secondary text-sm py-2 px-4" onclick="addCostScheduleRow()">+ اضافه کردن</button>
-        </div>
-        <p class="text-xs text-slate-600 mb-4">
-          هزینه‌های یک‌باره (کارمزد، ضمانت و مجموع مالیات‌ها) را می‌توانید در یک یا چند روز از دوره پرداخت کنید. مجموع درصدها باید ۱۰۰٪ باشد.
-        </p>
-        <div id="costScheduleRows" class="space-y-4">
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">روز پرداخت</label>
-              <input type="text" name="costDay" placeholder="مثال: ۳۰" class="input-clean" dir="ltr" oninput="this.value = formatIntegerPersian(this.value);" />
-            </div>
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-2">سهم از کل هزینه‌ها (%)</label>
-              <input type="text" name="costPercent" placeholder="مثال: ۱۰۰" class="input-clean" dir="ltr" oninput="this.value = formatDecimalInputPersian(this.value);" />
-            </div>
-            <button type="button" onclick="this.parentElement.remove();" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl md:justify-self-start">×</button>
+        <div class="divider"></div>
+
+        <!-- ماژول مالیات -->
+        <div class="mb-4">
+          <label class="toggle-switch">
+            <input type="checkbox" id="taxModuleEnabled" onchange="TaxModule.toggle()" />
+            <span class="font-semibold text-slate-900">فعال‌سازی ماژول مالیات</span>
+          </label>
+          <div id="taxModuleContent" class="module-content hidden">
+            <div class="help-text mb-4">می‌توانید مالیات‌هایی را که درصدی از «سود وام»، «هزینه کارمزد» یا «هزینه ضمانت» هستند اضافه کنید.</div>
+            <div id="taxRows" class="space-y-3"></div>
+            <button type="button" onclick="TaxModule.addRow()" class="btn btn-secondary mt-3">
+              ➕ افزودن ردیف مالیات
+            </button>
+            <div id="totalTaxes" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
           </div>
         </div>
-        <div id="costSplitHint" class="text-xs text-slate-600 mt-3">می‌توانید چند ردیف اضافه کنید تا هزینه‌ها بین ماه‌های مختلف تقسیم شوند.</div>
+
+        <div class="divider"></div>
+
+        <!-- ماژول زمان‌بندی هزینه‌ها -->
+        <div class="mb-4">
+          <label class="toggle-switch">
+            <input type="checkbox" id="costScheduleModuleEnabled" onchange="CostScheduleModule.toggle()" />
+            <span class="font-semibold text-slate-900">فعال‌سازی تقسیم هزینه‌ها</span>
+          </label>
+          <div id="costScheduleModuleContent" class="module-content hidden">
+            <div class="help-text mb-4">
+              هزینه‌های یک‌باره (کارمزد، ضمانت و مجموع مالیات‌ها) را می‌توانید در یک یا چند روز از دوره پرداخت کنید. مجموع درصدها باید ۱۰۰٪ باشد.
+            </div>
+            
+            <!-- Auto-Split Section for Cost Schedule -->
+            <div class="auto-split-section">
+              <label class="toggle-switch">
+                <input type="checkbox" id="autoCostScheduleMode" onchange="CostScheduleModule.toggleAutoSplit()" />
+                <span class="font-semibold text-slate-900">تقسیم خودکار هزینه‌ها</span>
+              </label>
+              <div class="help-text mr-7 mt-2">با فعال کردن این گزینه، می‌توانید هزینه‌ها را به صورت خودکار تقسیم کنید</div>
+              
+              <div id="autoCostScheduleOptions" class="hidden mt-4">
+                <div class="auto-split-controls">
+                  <div>
+                    <label class="label">روش تقسیم هزینه‌ها</label>
+                    <select id="costSplitMethod" class="input-field">
+                      <option value="equal">تقسیم مساوی</option>
+                      <option value="weighted">تقسیم متناسب با روز</option>
+                      <option value="normalize">تقسیم درصدی (پیشرفته)</option>
+                    </select>
+                    <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
+                  </div>
+                </div>
+                <button type="button" onclick="CostScheduleModule.calculateAuto()" class="btn btn-primary mt-4">
+                  🧮 محاسبه خودکار
+                </button>
+              </div>
+            </div>
+            
+            <div id="costScheduleRows" class="space-y-3 mt-4"></div>
+            <button type="button" onclick="CostScheduleModule.addRow()" class="btn btn-secondary mt-3">
+              ➕ افزودن ردیف زمان‌بندی
+            </button>
+            <div id="costScheduleTotal" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
+          </div>
+        </div>
       </div>
 
-      <div class="flex justify-center">
-        <button type="submit" class="btn btn-primary text-lg py-4 px-8">📊 محاسبه جدول بازپرداخت</button>
+      <!-- دکمه محاسبه -->
+      <div class="card">
+        <button type="submit" id="submitBtn" class="btn btn-primary w-full py-4 text-lg">
+          🧮 محاسبه جدول بازپرداخت
+        </button>
       </div>
     </form>
 
-    <div id="results" class="hidden mt-8 space-y-6">
-      <!-- خلاصه -->
-      <div class="card p-6 bg-gradient-to-l from-blue-50 to-indigo-50">
-        <h2 class="text-2xl font-bold text-slate-900 mb-6">📊 خلاصه اطلاعات بازپرداخت</h2>
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="summaryCards"></div>
+    <!-- بخش نتایج -->
+    <div id="results" class="hidden">
+      <div class="card">
+        <div class="card-header">📊 خلاصه نتایج</div>
+        <div id="summaryCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        
+        <div class="mt-6 flex gap-3">
+          <button type="button" onclick="ResultsModule.copyJSON()" class="btn btn-success">
+            📋 کپی نتایج (JSON)
+          </button>
+          <button type="button" onclick="ResultsModule.downloadJSON()" class="btn btn-success">
+            💾 دانلود فایل JSON
+          </button>
+          <button type="button" onclick="resetForm()" class="btn btn-secondary">
+            🔄 محاسبه مجدد
+          </button>
+        </div>
       </div>
 
-      <!-- جدول تفصیلی -->
-      <div class="card p-6">
-        <h2 class="text-2xl font-bold text-slate-900 mb-6">📋 جدول تفصیلی برنامه بازپرداخت</h2>
+      <div class="card">
+        <div class="card-header">📋 جدول تفصیلی برنامه بازپرداخت</div>
         <div class="overflow-x-auto">
           <table id="scheduleTable">
             <thead>
               <tr>
                 <th>روز</th>
-                <th>اصل پول باقی‌مانده (قبل از پرداخت)</th>
-                <th>مبلغ پرداخت اصل پول</th>
-                <th>سود انباشته پرداخت شده</th>
+                <th>اصل پول باقی‌مانده (قبل)</th>
+                <th>پرداخت اصل پول</th>
+                <th>پرداخت سود</th>
                 <th>هزینه‌ها</th>
-                <th>مبلغ کل پرداختی در این روز</th>
+                <th>کل پرداختی</th>
                 <th>توضیحات</th>
               </tr>
             </thead>
@@ -279,585 +588,994 @@
           </table>
         </div>
       </div>
-
-      <!-- دکمه‌های عملیات -->
-      <div class="flex justify-center gap-4">
-        <button type="button" onclick="resetForm()" class="btn btn-secondary text-lg py-4 px-8">
-          🔄 محاسبه مجدد
-        </button>
-        <button type="button" onclick="window.print()" class="btn btn-primary text-lg py-4 px-8">
-          🖨️ چاپ گزارش
-        </button>
-      </div>
     </div>
   </main>
 
   <script>
-    // تبدیل اعداد فارسی به انگلیسی
+    // ============================================================================
+    // UTILITY FUNCTIONS
+    // ============================================================================
+
     function toEnglish(str) {
+      if (!str) return '';
       const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
       const arabic = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
-      let result = str;
+      let result = str.toString();
       persian.forEach((p, i) => result = result.replace(new RegExp(p, 'g'), i));
       arabic.forEach((a, i) => result = result.replace(new RegExp(a, 'g'), i));
       return result;
     }
 
-    // تبدیل اعداد انگلیسی به فارسی
     function toPersian(num) {
       const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
       return num.toString().replace(/\d/g, d => persian[parseInt(d)]);
     }
 
-    // فرمت تومان
     function formatToman(num) {
-      return toPersian(Math.round(num).toLocaleString('en-US')) + ' تومان';
+      if (typeof num !== 'number' || isNaN(num)) return '۰ تومان';
+      const rounded = Math.round(num);
+      const formatted = rounded.toLocaleString('en-US');
+      return toPersian(formatted) + ' تومان';
     }
 
-    // پارس کردن عدد
     function parseNumber(str) {
       if (!str) return 0;
       const cleaned = toEnglish(str).replace(/[^\d.]/g, '');
       return parseFloat(cleaned) || 0;
     }
 
-    // فرمت ورودی
-    function formatInput(str) {
+    function formatNumber(str) {
       const cleaned = toEnglish(str).replace(/[^\d]/g, '');
       return cleaned.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
     }
-    // فرمت ورودی با نمایش اعداد فارسی
-    function formatInputPersian(str) {
-      const formatted = formatInput(str);
-      return toPersian(formatted);
-    }
-    // فرمت عدد صحیح با نمایش فارسی
-    function formatIntegerPersian(str) {
+
+    function formatInteger(str) {
       const cleaned = toEnglish(str).replace(/[^\d]/g, '');
-      return toPersian(cleaned);
+      return cleaned;
     }
-    // فرمت اعشاری با نمایش فارسی (یک ممیز)
-    function formatDecimalInputPersian(str) {
+
+    function formatDecimal(str) {
       let cleaned = toEnglish(str).replace(/[^\d.]/g, '');
-      // فقط یک ممیز مجاز
       const parts = cleaned.split('.');
       if (parts.length > 2) {
         cleaned = parts[0] + '.' + parts.slice(1).join('');
       }
       const [intPart, decPart] = cleaned.split('.');
       const groupedInt = (intPart || '').replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-      const combined = decPart !== undefined ? `${groupedInt}.${decPart}` : groupedInt;
-      return toPersian(combined);
+      return decPart !== undefined ? `${groupedInt}.${decPart}` : groupedInt;
     }
 
-    // نمایش مبلغ وام
-    document.getElementById('loanAmount').addEventListener('input', function(e) {
-      const value = formatInputPersian(e.target.value);
-      e.target.value = value;
-      const num = parseNumber(value);
-      if (num > 0) {
-        document.getElementById('loanAmountDisplay').textContent = formatToman(num);
-      } else {
-        document.getElementById('loanAmountDisplay').textContent = '';
-      }
-      updateTotalPrincipal();
-      if (document.getElementById('autoPrincipalMode').checked) {
-        updateAutoPrincipal();
-      }
-      updateEstimatedInterest();
-      updateAllTaxes();
-    });
+    // ============================================================================
+    // AUTOSPLIT MODULE (Unified)
+    // ============================================================================
 
-    // به‌روزرسانی نرخ سود (نمایش اعداد فارسی اعشاری + محاسبه)
-    document.getElementById('monthlyRate').addEventListener('input', function(e) {
-      e.target.value = formatDecimalInputPersian(e.target.value);
-      updateEstimatedInterest();
-    });
+    const AutoSplit = {
+      /**
+       * Equal distribution: divide 100% equally among all days
+       */
+      equalSplit(days) {
+        if (!Array.isArray(days) || days.length === 0) return [];
+        const percent = 100 / days.length;
+        return days.map(() => percent);
+      },
 
-    let estimatedTotalInterestGlobal = 0;
-    // محاسبه پیش‌نمایش سود
-    function updateEstimatedInterest() {
-      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-      const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
-      
-      if (loanAmount > 0 && monthlyRate > 0) {
-        const dailyRate = monthlyRate / 100 / 30;
-        const interestDates = Array.from(document.querySelectorAll('[name="interestDate"]'))
-          .map(input => parseInt(toEnglish(input.value)) || 0)
-          .filter(d => d > 0);
-        
-        const finalDay = interestDates.length > 0 ? Math.max(...interestDates) : 180;
-        
-        if (finalDay > 0) {
-          let remainingPrincipal = loanAmount;
-          let totalAccrued = 0;
-          
-          const principalRepayments = Array.from(document.querySelectorAll('[name="principalDay"]'))
-            .map((dayInput, index) => {
-              const day = parseInt(toEnglish(dayInput.value)) || 0;
-              const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
-              return { day, amount };
-            })
-            .filter(pr => pr.day > 0 && pr.amount > 0)
-            .sort((a, b) => a.day - b.day);
-          
-          for (let day = 1; day <= finalDay; day++) {
-            const dailyInterest = remainingPrincipal * dailyRate;
-            totalAccrued += dailyInterest;
-            
-            const repayment = principalRepayments.find(pr => pr.day === day);
-            if (repayment) {
-              remainingPrincipal -= repayment.amount;
-            }
-          }
-          
-          estimatedTotalInterestGlobal = totalAccrued;
-          document.getElementById('estimatedInterest').classList.remove('hidden');
-          document.getElementById('estimatedInterestAmount').textContent = formatToman(totalAccrued);
-          updateAllTaxes();
+      /**
+       * Weighted by day: distribute based on day values (proportional)
+       */
+      weightedSplit(days) {
+        if (!Array.isArray(days) || days.length === 0) return [];
+        const total = days.reduce((sum, day) => sum + day, 0);
+        if (total === 0) return this.equalSplit(days);
+        return days.map(day => (day / total) * 100);
+      },
+
+      /**
+       * Normalize entered percentages: scale to sum to 100%
+       */
+      normalizeSplit(entries) {
+        if (!Array.isArray(entries) || entries.length === 0) return [];
+        const sum = entries.reduce((s, e) => s + (e.percent || 0), 0);
+        if (sum === 0) return this.equalSplit(entries.map(e => e.day));
+        const scale = 100 / sum;
+        return entries.map(e => (e.percent || 0) * scale);
+      },
+
+      /**
+       * Apply calculated percentages to rows
+       */
+      applyToRows(containerSelector, percentages, dayInputName, percentInputName) {
+        const rows = document.querySelectorAll(containerSelector + ' .row-item');
+        if (rows.length !== percentages.length) {
+          console.error('Row count mismatch');
+          return false;
         }
-      } else {
-        document.getElementById('estimatedInterest').classList.add('hidden');
-        estimatedTotalInterestGlobal = 0;
-        updateAllTaxes();
-      }
-    }
 
-    // تقسیم خودکار اصل پول
-    function toggleAutoPrincipal() {
-      const isChecked = document.getElementById('autoPrincipalMode').checked;
-      const options = document.getElementById('autoPrincipalOptions');
-      const addBtn = document.getElementById('addPrincipalBtn');
-      const rows = document.getElementById('principalRows');
-      const placeholder = document.getElementById('principalRowsPlaceholder');
-      // preview removed
-      
-      if (isChecked) {
-        options.classList.remove('hidden');
-        addBtn.style.display = 'none';
-        rows.classList.remove('collapsed');
-        placeholder.classList.add('hidden');
-        rows.querySelectorAll('input').forEach(input => input.disabled = false);
-        updateAutoPrincipal();
-      } else {
-        options.classList.add('hidden');
-        addBtn.style.display = 'inline-flex';
-        rows.classList.remove('collapsed');
-        placeholder.classList.add('hidden');
-        rows.querySelectorAll('input').forEach(input => input.disabled = false);
-      }
-    }
+        rows.forEach((row, index) => {
+          const percentInput = row.querySelector(`[name="${percentInputName}"]`);
+          if (percentInput) {
+            const percent = percentages[index];
+            percentInput.value = percent.toFixed(2);
+            // Trigger input event to format
+            percentInput.dispatchEvent(new Event('input'));
+          }
+        });
 
-    function updateAutoPrincipal() {
-      if (!document.getElementById('autoPrincipalMode').checked) return;
-      
-      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-      const numPayments = parseInt(toEnglish(document.getElementById('numberOfPayments').value)) || 0;
-      const interval = parseInt(toEnglish(document.getElementById('paymentInterval').value)) || 30;
-      
-      if (loanAmount > 0 && numPayments > 0 && interval > 0) {
-        const amountPerPayment = Math.floor(loanAmount / numPayments);
-        const remainder = loanAmount - (amountPerPayment * numPayments);
+        return true;
+      }
+    };
+
+    // ============================================================================
+    // LOAN MODULE
+    // ============================================================================
+
+    const LoanModule = {
+      updateAmountDisplay() {
+        const value = document.getElementById('loanAmount').value;
+        const num = parseNumber(value);
+        const display = document.getElementById('loanAmountDisplay');
+        if (num > 0) {
+          display.textContent = formatToman(num);
+        } else {
+          display.textContent = '';
+        }
+        FeeModule.updateDisplay();
+        GuaranteeModule.updateDisplay();
+      },
+
+      validateRate() {
+        const value = document.getElementById('monthlyRate').value;
+        const num = parseNumber(value);
+        const errorEl = document.getElementById('monthlyRateError');
+        const inputEl = document.getElementById('monthlyRate');
+        
+        if (value && (num <= 0 || num > 100)) {
+          errorEl.textContent = 'نرخ سود باید بین ۰ تا ۱۰۰ درصد باشد';
+          inputEl.classList.add('error');
+        } else {
+          errorEl.textContent = '';
+          inputEl.classList.remove('error');
+        }
+      },
+
+      getConfig() {
+        const amount = parseNumber(document.getElementById('loanAmount').value);
+        const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
+        
+        if (amount <= 0 || monthlyRate <= 0 || monthlyRate > 100) {
+          return null;
+        }
+        
+        return { amount, monthlyInterestRate: monthlyRate };
+      },
+
+      validate() {
+        const config = this.getConfig();
+        if (!config) {
+          alert('لطفاً مبلغ وام و نرخ سود را به درستی وارد کنید');
+          return false;
+        }
+        return true;
+      }
+    };
+
+    // ============================================================================
+    // PRINCIPAL MODULE
+    // ============================================================================
+
+    const PrincipalModule = {
+      init() {
+        this.addRow();
+      },
+
+      toggleAuto() {
+        const isChecked = document.getElementById('autoPrincipalMode').checked;
+        const options = document.getElementById('autoPrincipalOptions');
+        const rows = document.getElementById('principalRows');
+        
+        if (isChecked) {
+          options.classList.remove('hidden');
+          rows.innerHTML = '';
+        } else {
+          options.classList.add('hidden');
+          if (rows.children.length === 0) {
+            this.addRow();
+          }
+        }
+      },
+
+      calculateAuto() {
+        if (!document.getElementById('autoPrincipalMode').checked) return;
+        
+        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        const method = document.getElementById('principalSplitMethod').value;
+        const numPayments = parseInt(formatInteger(document.getElementById('numberOfPayments').value)) || 0;
+        const interval = parseInt(formatInteger(document.getElementById('principalPaymentInterval').value)) || 30;
+        
+        if (loanAmount <= 0) {
+          alert('لطفاً ابتدا مبلغ وام را وارد کنید');
+          return;
+        }
+        
+        if (numPayments <= 0) {
+          alert('تعداد پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+          return;
+        }
+        
+        if (method === 'interval' && interval <= 0) {
+          alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+          return;
+        }
         
         const rows = document.getElementById('principalRows');
         rows.innerHTML = '';
         
+        const amountPerPayment = Math.floor(loanAmount / numPayments);
+        const remainder = loanAmount - (amountPerPayment * numPayments);
+        
         for (let i = 0; i < numPayments; i++) {
-          const days = (i + 1) * interval;
+          const days = method === 'interval' ? (i + 1) * interval : (i + 1) * Math.ceil(365 / numPayments);
           const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
           
           const div = document.createElement('div');
-          div.className = 'flex gap-4';
+          div.className = 'row-item';
           div.innerHTML = `
-            <div class="flex-1">
-              <label class="block text-xs text-slate-600 mb-1">روز</label>
-              <input type="text" name="principalDay" value="${toPersian(days.toString())}" class="input-clean" dir="ltr" />
+            <div>
+              <label class="label">روز</label>
+              <input type="text" name="principalDay" class="input-field" value="${days}" />
+              <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
             </div>
-            <div class="flex-1">
-              <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-              <input type="text" name="principalAmount" value="${formatInputPersian(amount.toString())}" class="input-clean" dir="ltr" 
-                     oninput="this.value = formatInputPersian(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
+            <div>
+              <label class="label">مبلغ (تومان)</label>
+              <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
+                     oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
             </div>
-            <button type="button" onclick="this.parentElement.remove(); updateTotalPrincipal(); updateEstimatedInterest();" 
-                    class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
+            <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
           `;
           rows.appendChild(div);
-
-          // preview removed
         }
         
-        updateTotalPrincipal();
-        updateEstimatedInterest();
-      }
-    }
+        this.updateTotal();
+      },
 
-    // تقسیم خودکار تاریخ‌های پرداخت سود
-    function toggleAutoInterest() {
-      const isChecked = document.getElementById('autoInterestMode').checked;
-      const options = document.getElementById('autoInterestOptions');
-      const addBtn = document.getElementById('addInterestBtn');
-      const rows = document.getElementById('interestDateRows');
-      const placeholder = document.getElementById('interestRowsPlaceholder');
-      // preview removed
-      
-      if (isChecked) {
-        options.classList.remove('hidden');
-        addBtn.style.display = 'none';
-        rows.classList.remove('collapsed');
-        placeholder.classList.add('hidden');
-        rows.querySelectorAll('input').forEach(input => input.disabled = false);
-        updateAutoInterest();
-      } else {
-        options.classList.add('hidden');
-        addBtn.style.display = 'inline-flex';
-        rows.classList.remove('collapsed');
-        placeholder.classList.add('hidden');
-        rows.querySelectorAll('input').forEach(input => input.disabled = false);
-      }
-    }
+      addRow() {
+        if (document.getElementById('autoPrincipalMode').checked) return;
+        const container = document.getElementById('principalRows');
+        const div = document.createElement('div');
+        div.className = 'row-item';
+        div.innerHTML = `
+          <div>
+            <label class="label">روز</label>
+            <input type="text" name="principalDay" class="input-field" placeholder="مثال: 60" />
+            <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+          </div>
+          <div>
+            <label class="label">مبلغ (تومان)</label>
+            <input type="text" name="principalAmount" class="input-field" placeholder="مثال: 30000000" 
+                   oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
+          </div>
+          <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
+        `;
+        container.appendChild(div);
+      },
 
-    function updateAutoInterest() {
-      if (!document.getElementById('autoInterestMode').checked) return;
-      
-      const numPayments = parseInt(toEnglish(document.getElementById('numberOfInterestPayments').value)) || 0;
-      const interval = parseInt(toEnglish(document.getElementById('interestPaymentInterval').value)) || 30;
-      
-      if (numPayments > 0 && interval > 0) {
+      updateTotal() {
+        const rows = document.querySelectorAll('[name="principalAmount"]');
+        let total = 0;
+        rows.forEach(row => total += parseNumber(row.value));
+        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        const display = document.getElementById('totalPrincipal');
+        
+        display.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-semibold">مجموع پرداخت‌های اصل پول:</span>
+            <span class="text-lg font-bold ${Math.abs(total - loanAmount) <= 1 ? 'text-green-600' : 'text-red-600'} persian-number">
+              ${formatToman(total)}
+            </span>
+          </div>
+          ${loanAmount > 0 ? `
+            <div class="mt-2 flex items-center justify-between">
+              <span class="text-sm text-slate-600">مبلغ وام:</span>
+              <span class="text-sm font-semibold persian-number">${formatToman(loanAmount)}</span>
+            </div>
+          ` : ''}
+          ${Math.abs(total - loanAmount) <= 1 && loanAmount > 0 ? 
+            '<p class="text-green-600 text-sm mt-2">✓ مجموع پرداخت‌ها با مبلغ وام مطابقت دارد</p>' : ''}
+        `;
+      },
+
+      getConfig() {
+        const repayments = [];
+        document.querySelectorAll('[name="principalDay"]').forEach((dayInput, index) => {
+          const day = parseInt(toEnglish(dayInput.value));
+          const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
+          if (day > 0 && amount > 0) {
+            repayments.push({ days: day, amount: amount });
+          }
+        });
+        return repayments;
+      },
+
+      validate() {
+        const repayments = this.getConfig();
+        if (repayments.length === 0) {
+          alert('لطفاً حداقل یک پرداخت اصل پول وارد کنید');
+          return false;
+        }
+        return true;
+      }
+    };
+
+    // ============================================================================
+    // INTEREST MODULE
+    // ============================================================================
+
+    const InterestModule = {
+      init() {
+        this.addRow();
+      },
+
+      toggleAuto() {
+        const isChecked = document.getElementById('autoInterestMode').checked;
+        const options = document.getElementById('autoInterestOptions');
+        const rows = document.getElementById('interestDateRows');
+        
+        if (isChecked) {
+          options.classList.remove('hidden');
+          rows.innerHTML = '';
+        } else {
+          options.classList.add('hidden');
+          if (rows.children.length === 0) {
+            this.addRow();
+          }
+        }
+      },
+
+      calculateAuto() {
+        if (!document.getElementById('autoInterestMode').checked) return;
+        
+        const method = document.getElementById('interestSplitMethod').value;
+        const numPayments = parseInt(formatInteger(document.getElementById('numberOfInterestPayments').value)) || 0;
+        const interval = parseInt(formatInteger(document.getElementById('interestPaymentInterval').value)) || 90;
+        
+        if (numPayments <= 0) {
+          alert('تعداد پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+          return;
+        }
+        
+        if (method === 'interval' && interval <= 0) {
+          alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+          return;
+        }
+        
         const rows = document.getElementById('interestDateRows');
         rows.innerHTML = '';
         
         for (let i = 0; i < numPayments; i++) {
-          const days = (i + 1) * interval;
+          const days = method === 'interval' ? (i + 1) * interval : (i + 1) * Math.ceil(365 / numPayments);
           
           const div = document.createElement('div');
-          div.className = 'flex gap-4 items-start';
+          div.className = 'row-item';
           div.innerHTML = `
-            <div class="flex-1">
-              <label class="block text-xs text-slate-600 mb-1">روز</label>
-              <input type="text" name="interestDate" value="${toPersian(days.toString())}" class="input-clean" dir="ltr" />
+            <div>
+              <label class="label">روز</label>
+              <input type="text" name="interestDate" class="input-field" value="${days}" />
+              <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
             </div>
-            <button type="button" onclick="this.parentElement.remove(); updateEstimatedInterest();" 
-                    class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
+            <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
           `;
           rows.appendChild(div);
+        }
+      },
 
-          // preview removed
+      addRow() {
+        if (document.getElementById('autoInterestMode').checked) return;
+        const container = document.getElementById('interestDateRows');
+        const div = document.createElement('div');
+        div.className = 'row-item';
+        div.innerHTML = `
+          <div>
+            <label class="label">روز</label>
+            <input type="text" name="interestDate" class="input-field" placeholder="مثال: 180" />
+            <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+          </div>
+          <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+        `;
+        container.appendChild(div);
+      },
+
+      getConfig() {
+        const dates = [];
+        document.querySelectorAll('[name="interestDate"]').forEach(input => {
+          const day = parseInt(toEnglish(input.value));
+          if (day > 0) dates.push(day);
+        });
+        return dates;
+      },
+
+      validate() {
+        const dates = this.getConfig();
+        if (dates.length === 0) {
+          alert('لطفاً حداقل یک تاریخ پرداخت سود وارد کنید');
+          return false;
+        }
+        return true;
+      }
+    };
+
+    // ============================================================================
+    // FEE MODULE
+    // ============================================================================
+
+    const FeeModule = {
+      toggle() {
+        const isEnabled = document.getElementById('feeModuleEnabled').checked;
+        const content = document.getElementById('feeModuleContent');
+        if (isEnabled) {
+          content.classList.remove('hidden');
+        } else {
+          content.classList.add('hidden');
+        }
+      },
+
+      updateDisplay() {
+        const mode = document.getElementById('feeMode').value;
+        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        
+        document.getElementById('feeRateContainer').classList.toggle('hidden', mode !== 'percentage');
+        document.getElementById('feeAmountContainer').classList.toggle('hidden', mode !== 'fixed');
+        
+        const config = this.getConfig();
+        const display = document.getElementById('feeDisplay');
+        
+        if (!config || loanAmount <= 0) {
+          display.classList.add('hidden');
+          return;
         }
         
-        updateEstimatedInterest();
-      }
-    }
+        let feeAmount = 0;
+        if (config.mode === 'percentage') {
+          feeAmount = loanAmount * (config.rate / 100);
+        } else if (config.mode === 'fixed') {
+          feeAmount = config.amount;
+        }
+        
+        document.getElementById('feeAmountDisplay').textContent = formatToman(feeAmount);
+        display.classList.remove('hidden');
+        TaxModule.updateAll();
+      },
 
-    // به‌روزرسانی مجموع اصل پول
-    function updateTotalPrincipal() {
-      const rows = document.querySelectorAll('[name="principalAmount"]');
-      let total = 0;
-      rows.forEach(row => total += parseNumber(row.value));
-      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-      const display = document.getElementById('totalPrincipal');
-      display.innerHTML = `
-        <div class="flex items-center justify-between">
-          <span class="text-sm font-semibold">مجموع پرداخت‌های اصل پول:</span>
-          <span class="text-lg font-bold ${Math.abs(total - loanAmount) <= 1 ? 'text-green-600' : 'text-red-600'}" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${formatToman(total)}
-          </span>
-        </div>
-        ${loanAmount > 0 ? `
-          <div class="mt-2 flex items-center justify-between">
-            <span class="text-sm text-slate-600">مبلغ وام:</span>
-            <span class="text-sm font-semibold" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${formatToman(loanAmount)}
+      getConfig() {
+        if (!document.getElementById('feeModuleEnabled').checked) {
+          return null;
+        }
+        
+        const mode = document.getElementById('feeMode').value;
+        if (mode === 'percentage') {
+          const rate = parseNumber(document.getElementById('feeRate').value);
+          if (rate > 0) {
+            return { mode, rate };
+          }
+        } else if (mode === 'fixed') {
+          const amount = parseNumber(document.getElementById('feeAmount').value);
+          if (amount > 0) {
+            return { mode, amount };
+          }
+        }
+        return null;
+      },
+
+      clear() {
+        document.getElementById('feeModuleEnabled').checked = false;
+        document.getElementById('feeMode').value = 'percentage';
+        document.getElementById('feeRate').value = '';
+        document.getElementById('feeAmount').value = '';
+        this.toggle();
+      }
+    };
+
+    // ============================================================================
+    // GUARANTEE MODULE
+    // ============================================================================
+
+    const GuaranteeModule = {
+      toggle() {
+        const isEnabled = document.getElementById('guaranteeModuleEnabled').checked;
+        const content = document.getElementById('guaranteeModuleContent');
+        if (isEnabled) {
+          content.classList.remove('hidden');
+        } else {
+          content.classList.add('hidden');
+        }
+      },
+
+      updateDisplay() {
+        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        const config = this.getConfig();
+        const display = document.getElementById('guaranteeDisplay');
+        
+        if (!config || loanAmount <= 0) {
+          display.classList.add('hidden');
+          return;
+        }
+        
+        const guaranteeAmount = loanAmount * (config.rate / 100);
+        document.getElementById('guaranteeAmountDisplay').textContent = formatToman(guaranteeAmount);
+        display.classList.remove('hidden');
+        TaxModule.updateAll();
+      },
+
+      getConfig() {
+        if (!document.getElementById('guaranteeModuleEnabled').checked) {
+          return null;
+        }
+        
+        const rate = parseNumber(document.getElementById('guaranteeRate').value);
+        if (rate > 0) {
+          return { rate };
+        }
+        return null;
+      },
+
+      clear() {
+        document.getElementById('guaranteeModuleEnabled').checked = false;
+        document.getElementById('guaranteeRate').value = '';
+        this.toggle();
+      }
+    };
+
+    // ============================================================================
+    // TAX MODULE
+    // ============================================================================
+
+    const TaxModule = {
+      toggle() {
+        const isEnabled = document.getElementById('taxModuleEnabled').checked;
+        const content = document.getElementById('taxModuleContent');
+        if (isEnabled) {
+          content.classList.remove('hidden');
+          if (document.getElementById('taxRows').children.length === 0) {
+            this.addRow();
+          }
+        } else {
+          content.classList.add('hidden');
+        }
+      },
+
+      addRow() {
+        const container = document.getElementById('taxRows');
+        const div = document.createElement('div');
+        div.className = 'row-item';
+        div.innerHTML = `
+          <div>
+            <label class="label">پایه محاسبه</label>
+            <select name="taxBase" class="input-field" onchange="TaxModule.updateAll()">
+              <option value="interest">سود وام</option>
+              <option value="fees">هزینه کارمزد</option>
+              <option value="guarantee">هزینه ضمانت</option>
+            </select>
+          </div>
+          <div>
+            <label class="label">نرخ مالیات (%)</label>
+            <input type="text" name="taxRate" class="input-field" placeholder="مثال: 9" 
+                   oninput="this.value = formatDecimal(this.value); TaxModule.updateAll()" />
+          </div>
+          <div class="self-end">
+            <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
+            <div class="font-bold text-blue-700 tax-amount persian-number">۰ تومان</div>
+          </div>
+          <button type="button" onclick="this.parentElement.remove(); TaxModule.updateAll()" class="remove-btn">×</button>
+        `;
+        container.appendChild(div);
+        this.updateAll();
+      },
+
+      updateAll() {
+        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        const feeConfig = FeeModule.getConfig();
+        const guaranteeConfig = GuaranteeModule.getConfig();
+        
+        let feeAmount = 0;
+        if (feeConfig) {
+          if (feeConfig.mode === 'percentage') {
+            feeAmount = loanAmount * (feeConfig.rate / 100);
+          } else if (feeConfig.mode === 'fixed') {
+            feeAmount = feeConfig.amount;
+          }
+        }
+        
+        let guaranteeAmount = 0;
+        if (guaranteeConfig) {
+          guaranteeAmount = loanAmount * (guaranteeConfig.rate / 100);
+        }
+        
+        const baseValues = {
+          interest: 0,
+          fees: feeAmount,
+          guarantee: guaranteeAmount
+        };
+        
+        let total = 0;
+        document.querySelectorAll('#taxRows .row-item').forEach(row => {
+          const baseSel = row.querySelector('[name="taxBase"]');
+          const rateInput = row.querySelector('[name="taxRate"]');
+          const amountEl = row.querySelector('.tax-amount');
+          
+          if (!baseSel || !rateInput || !amountEl) return;
+          
+          const base = baseSel.value;
+          const rate = parseNumber(rateInput.value);
+          let baseAmount = baseValues[base] || 0;
+          
+          const taxAmount = baseAmount * (rate / 100);
+          amountEl.textContent = formatToman(taxAmount || 0);
+          total += taxAmount;
+        });
+        
+        const totalBox = document.getElementById('totalTaxes');
+        if (totalBox) {
+          totalBox.innerHTML = total > 0 ? `
+            <div class="flex items-center justify-between">
+              <span class="font-semibold">مجموع مالیات‌ها:</span>
+              <span class="text-lg font-bold text-blue-700 persian-number">${formatToman(total)}</span>
+            </div>
+          ` : '';
+        }
+      },
+
+      getConfig() {
+        if (!document.getElementById('taxModuleEnabled').checked) {
+          return null;
+        }
+        
+        const taxes = [];
+        document.querySelectorAll('#taxRows .row-item').forEach(row => {
+          const base = row.querySelector('[name="taxBase"]').value;
+          const rate = parseNumber(row.querySelector('[name="taxRate"]').value);
+          if (base && rate > 0) {
+            taxes.push({ base, rate });
+          }
+        });
+        
+        return taxes.length > 0 ? taxes : null;
+      },
+
+      clear() {
+        document.getElementById('taxModuleEnabled').checked = false;
+        document.getElementById('taxRows').innerHTML = '';
+        document.getElementById('totalTaxes').innerHTML = '';
+        this.toggle();
+      }
+    };
+
+    // ============================================================================
+    // COST SCHEDULE MODULE
+    // ============================================================================
+
+    const CostScheduleModule = {
+      toggle() {
+        const isEnabled = document.getElementById('costScheduleModuleEnabled').checked;
+        const content = document.getElementById('costScheduleModuleContent');
+        if (isEnabled) {
+          content.classList.remove('hidden');
+          if (document.getElementById('costScheduleRows').children.length === 0) {
+            this.addRow();
+          }
+        } else {
+          content.classList.add('hidden');
+        }
+      },
+
+      toggleAutoSplit() {
+        const isEnabled = document.getElementById('autoCostScheduleMode').checked;
+        const options = document.getElementById('autoCostScheduleOptions');
+        if (isEnabled) {
+          options.classList.remove('hidden');
+        } else {
+          options.classList.add('hidden');
+        }
+      },
+
+      calculateAuto() {
+        if (!document.getElementById('autoCostScheduleMode').checked) return;
+        
+        const method = document.getElementById('costSplitMethod').value;
+        const rows = document.querySelectorAll('#costScheduleRows .row-item');
+        
+        if (rows.length === 0) {
+          alert('لطفاً ابتدا ردیف‌های زمان‌بندی را اضافه کنید');
+          return;
+        }
+        
+        // Collect days and existing percentages
+        const entries = [];
+        let hasInvalidDay = false;
+        
+        rows.forEach(row => {
+          const dayInput = row.querySelector('[name="costDay"]');
+          const percentInput = row.querySelector('[name="costPercent"]');
+          const day = parseInt(toEnglish(dayInput.value));
+          const percent = parseNumber(percentInput.value);
+          
+          if (day <= 0) {
+            hasInvalidDay = true;
+            dayInput.classList.add('error');
+          } else {
+            dayInput.classList.remove('error');
+          }
+          
+          entries.push({ day, percent });
+        });
+        
+        if (hasInvalidDay) {
+          alert('روز باید بزرگ‌تر از صفر باشد');
+          return;
+        }
+        
+        // Calculate percentages based on method
+        let percentages = [];
+        const days = entries.map(e => e.day);
+        
+        if (method === 'equal') {
+          percentages = AutoSplit.equalSplit(days);
+        } else if (method === 'weighted') {
+          percentages = AutoSplit.weightedSplit(days);
+        } else if (method === 'normalize') {
+          percentages = AutoSplit.normalizeSplit(entries);
+        }
+        
+        // Apply to rows
+        AutoSplit.applyToRows('#costScheduleRows', percentages, 'costDay', 'costPercent');
+        
+        // Update total display
+        this.updateTotal();
+      },
+
+      addRow() {
+        const container = document.getElementById('costScheduleRows');
+        const div = document.createElement('div');
+        div.className = 'row-item';
+        div.innerHTML = `
+          <div>
+            <label class="label">روز پرداخت</label>
+            <input type="text" name="costDay" class="input-field" placeholder="مثال: 30" 
+                   oninput="this.value = formatInteger(this.value); CostScheduleModule.updateTotal()" />
+            <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+          </div>
+          <div>
+            <label class="label">سهم از کل هزینه‌ها (%)</label>
+            <input type="text" name="costPercent" class="input-field" placeholder="مثال: 100" 
+                   oninput="this.value = formatDecimal(this.value); CostScheduleModule.updateTotal()" />
+            <div class="help-text">درصد سهم این روز از کل هزینه‌ها</div>
+          </div>
+          <button type="button" onclick="this.parentElement.remove(); CostScheduleModule.updateTotal()" class="remove-btn">×</button>
+        `;
+        container.appendChild(div);
+        this.updateTotal();
+      },
+
+      updateTotal() {
+        const rows = document.querySelectorAll('[name="costPercent"]');
+        let total = 0;
+        rows.forEach(row => total += parseNumber(row.value));
+        
+        const display = document.getElementById('costScheduleTotal');
+        const isValid = Math.abs(total - 100) < 0.01;
+        
+        display.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-semibold">مجموع درصدها:</span>
+            <span class="text-lg font-bold ${isValid ? 'text-green-600' : 'text-red-600'} persian-number">
+              ${total.toFixed(2)}%
             </span>
           </div>
-        ` : ''}
-        ${Math.abs(total - loanAmount) <= 1 && loanAmount > 0 ? 
-          '<p class="text-green-600 text-sm mt-2">✓ مجموع پرداخت‌ها با مبلغ وام مطابقت دارد</p>' : ''}
-      `;
-    }
+          ${isValid ? 
+            '<p class="text-green-600 text-sm mt-2">✓ مجموع درصدها برابر ۱۰۰٪ است</p>' : 
+            '<p class="text-red-600 text-sm mt-2">⚠ مجموع درصدها باید برابر ۱۰۰٪ باشد</p>'}
+        `;
+      },
 
-    // اضافه کردن سطر پرداخت اصل پول
-    function addPrincipalRow() {
-      if (document.getElementById('autoPrincipalMode').checked) return;
-      const container = document.getElementById('principalRows');
-      const div = document.createElement('div');
-      div.className = 'flex gap-4';
-      div.innerHTML = `
-        <div class="flex-1">
-          <label class="block text-xs text-slate-600 mb-1">روز</label>
-          <input type="text" name="principalDay" placeholder="۶۰" class="input-clean" dir="ltr" />
-        </div>
-        <div class="flex-1">
-          <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-          <input type="text" name="principalAmount" placeholder="۳۰۰۰۰۰۰۰" class="input-clean" dir="ltr" 
-                 oninput="this.value = formatInputPersian(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
-        </div>
-        <button type="button" onclick="this.parentElement.remove(); updateTotalPrincipal(); updateEstimatedInterest();" 
-                class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
-      `;
-      container.appendChild(div);
-    }
+      getConfig() {
+        if (!document.getElementById('costScheduleModuleEnabled').checked) {
+          return null;
+        }
+        
+        const schedule = [];
+        document.querySelectorAll('[name="costDay"]').forEach((dayInput, index) => {
+          const day = parseInt(toEnglish(dayInput.value));
+          const percent = parseNumber(document.querySelectorAll('[name="costPercent"]')[index].value);
+          if (day > 0 && percent >= 0) {
+            schedule.push({ day, percent });
+          }
+        });
+        
+        return schedule.length > 0 ? schedule : null;
+      },
 
-    // اضافه کردن سطر تاریخ پرداخت سود
-    function addInterestDateRow() {
-      if (document.getElementById('autoInterestMode').checked) return;
-      const container = document.getElementById('interestDateRows');
-      const div = document.createElement('div');
-      div.className = 'flex gap-4 items-start';
-      div.innerHTML = `
-        <div class="flex-1">
-          <label class="block text-xs text-slate-600 mb-1">روز</label>
-          <input type="text" name="interestDate" placeholder="۱۸۰" class="input-clean" dir="ltr" 
-                 oninput="updateEstimatedInterest();" />
-        </div>
-        <button type="button" onclick="this.parentElement.remove(); updateEstimatedInterest();" 
-                class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl">×</button>
-      `;
-      container.appendChild(div);
-    }
-
-    // اضافه کردن ردیف مالیات
-    function attachTaxRowListeners(row) {
-      const baseSel = row.querySelector('[name="taxBase"]');
-      const rateInput = row.querySelector('[name="taxRate"]');
-      if (baseSel) baseSel.addEventListener('change', updateAllTaxes);
-      if (rateInput) rateInput.addEventListener('input', updateAllTaxes);
-    }
-
-    function addTaxRow() {
-      const container = document.getElementById('taxRows');
-      const row = document.createElement('div');
-      row.className = 'grid grid-cols-1 md:grid-cols-4 gap-4 tax-row';
-      row.innerHTML = `
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">پایه محاسبه</label>
-          <select name="taxBase" class="input-clean">
-            <option value="interest">سود وام</option>
-            <option value="fees">هزینه کارمزد</option>
-            <option value="guarantee">هزینه ضمانت</option>
-          </select>
-          <div class="text-xs text-amber-600 mt-1 tax-hint hidden">این محاسبه تقریبی است.</div>
-        </div>
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">نرخ مالیات (%)</label>
-          <input type="text" name="taxRate" placeholder="مثال: ۹" class="input-clean" dir="ltr" oninput="this.value = formatInputPersian(this.value);" />
-        </div>
-        <div class="self-end">
-          <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
-          <div class="font-bold text-blue-700 tax-amount" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">۰ تومان</div>
-        </div>
-        <button type="button" onclick="this.parentElement.remove();" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl md:justify-self-start">×</button>
-      `;
-      container.appendChild(row);
-      attachTaxRowListeners(row);
-      updateAllTaxes();
-    }
-
-    function getFeeAmount() {
-      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-      const feeRate = parseNumber(document.getElementById('feeRate').value);
-      return loanAmount * (feeRate / 100);
-    }
-    function getGuaranteeAmount() {
-      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-      const guaranteeRate = parseNumber(document.getElementById('guaranteeRate').value);
-      return loanAmount * (guaranteeRate / 100);
-    }
-    function recalcTaxRow(row) {
-      const baseSel = row.querySelector('[name="taxBase"]');
-      const rateInput = row.querySelector('[name="taxRate"]');
-      const amountEl = row.querySelector('.tax-amount');
-      const hintEl = row.querySelector('.tax-hint');
-      if (!baseSel || !rateInput || !amountEl) return;
-      const base = baseSel.value;
-      const rate = parseNumber(rateInput.value);
-      let baseAmount = 0;
-      if (base === 'interest') baseAmount = estimatedTotalInterestGlobal;
-      else if (base === 'fees') baseAmount = getFeeAmount();
-      else if (base === 'guarantee') baseAmount = getGuaranteeAmount();
-      const taxAmount = baseAmount * (rate / 100);
-      amountEl.textContent = formatToman(taxAmount || 0);
-      if (hintEl) {
-        if (base === 'interest') hintEl.classList.remove('hidden');
-        else hintEl.classList.add('hidden');
+      clear() {
+        document.getElementById('costScheduleModuleEnabled').checked = false;
+        document.getElementById('autoCostScheduleMode').checked = false;
+        document.getElementById('costScheduleRows').innerHTML = '';
+        document.getElementById('costScheduleTotal').innerHTML = '';
+        this.toggle();
+        this.toggleAutoSplit();
       }
-    }
-    function updateAllTaxes() {
-      let total = 0;
-      document.querySelectorAll('#taxRows .tax-row').forEach(row => {
-        recalcTaxRow(row);
-        const amountText = row.querySelector('.tax-amount')?.textContent || '۰';
-        total += parseNumber(amountText);
-      });
-      const totalBox = document.getElementById('totalTaxes');
-      if (totalBox) {
-        totalBox.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-semibold">مجموع مالیات‌ها:</span>
-            <span class="text-lg font-bold text-blue-700" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${formatToman(total)}
-            </span>
+    };
+
+    // ============================================================================
+    // RESULTS MODULE
+    // ============================================================================
+
+    const ResultsModule = {
+      display(data) {
+        const schedule = data.schedule || [];
+        const summary = data.summary?._raw || data.summary || {};
+        
+        const summaryCards = document.getElementById('summaryCards');
+        summaryCards.innerHTML = `
+          <div class="summary-card">
+            <div class="summary-item">
+              <span class="summary-label">مجموع سود پرداختی</span>
+              <span class="summary-value persian-number">${formatToman(summary.totalInterestPaid || 0)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">مجموع کارمزدهای ابتدایی</span>
+              <span class="summary-value persian-number">${formatToman(summary.totalUpfrontFees || 0)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">مجموع مالیات‌ها</span>
+              <span class="summary-value persian-number">${formatToman(summary.totalTaxes || 0)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">مدت زمان بازپرداخت</span>
+              <span class="summary-value persian-number">${toPersian(summary.finalDay || 0)} روز</span>
+            </div>
           </div>
         `;
-      }
-    }
+        
+        const paymentDays = schedule.filter(d => {
+          const raw = d._raw || {};
+          return (raw.principalPayment > 0 || raw.interestPayment > 0 || raw.costPayment > 0);
+        });
+        const firstDay = schedule[0];
+        const lastDay = schedule[schedule.length - 1];
+        const daysToShow = [firstDay, ...paymentDays, lastDay]
+          .filter((d, i, arr) => arr.findIndex(x => (x._raw?.day || x.روز) === (d._raw?.day || d.روز)) === i)
+          .sort((a, b) => (a._raw?.day || a.روز || 0) - (b._raw?.day || b.روز || 0));
+        
+        const tbody = document.getElementById('scheduleBody');
+        tbody.innerHTML = daysToShow.map(day => {
+          const raw = day._raw || {};
+          const dayNum = raw.day || day.روز || 0;
+          const principalBefore = raw.remainingPrincipalBefore || 0;
+          const principalPayment = raw.principalPayment || 0;
+          const interestPayment = raw.interestPayment || 0;
+          const costPayment = raw.costPayment || 0;
+          const totalPayment = raw.totalPayment || 0;
+          const description = day.توضیحات || 'هیچ پرداختی انجام نشد';
+          const isPayment = principalPayment > 0 || interestPayment > 0 || costPayment > 0;
+          
+          return `
+            <tr class="${isPayment ? 'bg-blue-50' : ''}">
+              <td class="font-semibold persian-number">${toPersian(dayNum)}</td>
+              <td class="persian-number">${formatToman(principalBefore)}</td>
+              <td class="persian-number">${principalPayment > 0 ? `<span class="font-semibold text-green-600">${formatToman(principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+              <td class="persian-number">${interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+              <td class="persian-number">${costPayment > 0 ? `<span class="font-semibold text-amber-600">${formatToman(costPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+              <td class="persian-number">${totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+              <td class="text-sm text-slate-600">${description}</td>
+            </tr>
+          `;
+        }).join('');
+        
+        window.lastCalculationResult = data;
+        
+        document.getElementById('results').classList.remove('hidden');
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+      },
 
-    // اتصال رویداد به ردیف اولیه مالیات
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('#taxRows .tax-row').forEach(attachTaxRowListeners);
-      updateAllTaxes();
-    });
-
-    // اضافه کردن ردیف زمان‌بندی هزینه‌ها
-    function addCostScheduleRow() {
-      const container = document.getElementById('costScheduleRows');
-      const row = document.createElement('div');
-      row.className = 'grid grid-cols-1 md:grid-cols-3 gap-4';
-      row.innerHTML = `
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">روز پرداخت</label>
-          <input type="text" name="costDay" placeholder="مثال: ۶۰" class="input-clean" dir="ltr" oninput="this.value = formatIntegerPersian(this.value);" />
-        </div>
-        <div>
-          <label class="block text-sm font-semibold text-slate-700 mb-2">سهم از کل هزینه‌ها (%)</label>
-          <input type="text" name="costPercent" placeholder="مثال: ۵۰" class="input-clean" dir="ltr" oninput="this.value = formatDecimalInputPersian(this.value);" />
-        </div>
-        <button type="button" onclick="this.parentElement.remove();" class="mt-6 text-red-500 hover:text-red-700 font-bold text-xl md:justify-self-start">×</button>
-      `;
-      container.appendChild(row);
-    }
-
-    // UX: افزودن سریع ردیف با Enter در آخرین ردیف
-    function handlePrincipalKeydown(e) {
-      if (e.key === 'Enter') {
-        const rows = document.querySelectorAll('#principalRows .flex.gap-4');
-        const lastRow = rows[rows.length - 1];
-        if (lastRow && lastRow.contains(e.target)) {
-          e.preventDefault();
-          addPrincipalRow();
-          focusLastPrincipal();
+      copyJSON() {
+        if (!window.lastCalculationResult) {
+          alert('هیچ نتیجه‌ای برای کپی وجود ندارد');
+          return;
         }
-      }
-    }
-    function focusLastPrincipal() {
-      const inputs = document.querySelectorAll('#principalRows [name="principalDay"]');
-      if (inputs.length > 0) inputs[inputs.length - 1].focus();
-    }
-    function handleInterestKeydown(e) {
-      if (e.key === 'Enter') {
-        const rows = document.querySelectorAll('#interestDateRows > div');
-        const lastRow = rows[rows.length - 1];
-        if (lastRow && lastRow.contains(e.target)) {
-          e.preventDefault();
-          addInterestDateRow();
-          focusLastInterest();
-        }
-      }
-    }
-    function focusLastInterest() {
-      const inputs = document.querySelectorAll('#interestDateRows [name="interestDate"]');
-      if (inputs.length > 0) inputs[inputs.length - 1].focus();
-    }
+        
+        const json = JSON.stringify(window.lastCalculationResult, null, 2);
+        navigator.clipboard.writeText(json).then(() => {
+          alert('نتایج با موفقیت کپی شد');
+        }).catch(() => {
+          alert('خطا در کپی کردن نتایج');
+        });
+      },
 
-    // محاسبه
-    document.getElementById('calculatorForm').addEventListener('submit', function(e) {
+      downloadJSON() {
+        if (!window.lastCalculationResult) {
+          alert('هیچ نتیجه‌ای برای دانلود وجود ندارد');
+          return;
+        }
+        
+        const json = JSON.stringify(window.lastCalculationResult, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `loan-calculation-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }
+    };
+
+    // ============================================================================
+    // FORM SUBMISSION
+    // ============================================================================
+
+    document.getElementById('calculatorForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-      const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
-      // new fee/guarantee/tax inputs
-      const feeRate = parseNumber(document.getElementById('feeRate').value);
-      const guaranteeRate = parseNumber(document.getElementById('guaranteeRate').value);
-      const taxes = Array.from(document.querySelectorAll('#taxRows .tax-row')).map(row => {
-        const base = row.querySelector('[name=\"taxBase\"]').value;
-        const rate = parseNumber(row.querySelector('[name=\"taxRate\"]').value);
-        return { base, rate };
-      }).filter(t => t.rate > 0);
+      if (!LoanModule.validate()) return;
+      if (!PrincipalModule.validate()) return;
+      if (!InterestModule.validate()) return;
       
-      if (!loanAmount || !monthlyRate) {
-        alert('لطفاً مبلغ وام و نرخ سود را وارد کنید');
-        return;
+      const loanConfig = LoanModule.getConfig();
+      const principalRepayments = PrincipalModule.getConfig();
+      const interestPaymentDates = InterestModule.getConfig();
+      
+      const payload = {
+        Loan: {
+          amount: loanConfig.amount,
+          monthlyInterestRate: loanConfig.monthlyInterestRate,
+          principalRepayments: principalRepayments,
+          interestPaymentDates: interestPaymentDates
+        },
+        Modules: {}
+      };
+      
+      const feeConfig = FeeModule.getConfig();
+      if (feeConfig) {
+        payload.Modules.fee = feeConfig;
       }
-
-      // جمع‌آوری پرداخت‌های اصل پول
-      const principalRepayments = [];
-      document.querySelectorAll('[name="principalDay"]').forEach((dayInput, index) => {
-        const day = parseInt(toEnglish(dayInput.value));
-        const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
-        if (day && amount) {
-          principalRepayments.push({ days: day, amount: amount });
-        }
-      });
-
-      // جمع‌آوری تاریخ‌های پرداخت سود
-      const interestPaymentDates = [];
-      document.querySelectorAll('[name="interestDate"]').forEach(input => {
-        const day = parseInt(toEnglish(input.value));
-        if (day) interestPaymentDates.push(day);
-      });
-
-      // جمع‌آوری زمان‌بندی پرداخت هزینه‌ها (مرحله ۸)
-      const costSchedule = [];
-      document.querySelectorAll('[name="costDay"]').forEach((dayInput, index) => {
-        const day = parseInt(toEnglish(dayInput.value));
-        const percent = parseNumber(document.querySelectorAll('[name="costPercent"]')[index].value);
-        if (!isNaN(day) && day > 0 && !isNaN(percent) && percent >= 0) {
-          costSchedule.push({ day, percent });
-        }
-      });
-
-      if (principalRepayments.length === 0 || interestPaymentDates.length === 0) {
-        alert('لطفاً حداقل یک پرداخت اصل پول و یک تاریخ پرداخت سود وارد کنید');
-        return;
+      
+      const guaranteeConfig = GuaranteeModule.getConfig();
+      if (guaranteeConfig) {
+        payload.Modules.guarantee = guaranteeConfig;
       }
-
-      // ارسال به n8n
-      calculateWithN8N(
-        loanAmount,
-        monthlyRate,
-        principalRepayments,
-        interestPaymentDates,
-        { feeRate, guaranteeRate, taxes, costSchedule }
-      );
-    });
-
-    // تابع ارسال به n8n
-    async function calculateWithN8N(loanAmount, monthlyRate, principalRepayments, interestPaymentDates, extras) {
-      const submitBtn = document.querySelector('button[type="submit"]');
+      
+      const taxConfig = TaxModule.getConfig();
+      if (taxConfig) {
+        payload.Modules.taxes = taxConfig;
+      }
+      
+      const costScheduleConfig = CostScheduleModule.getConfig();
+      if (costScheduleConfig) {
+        payload.Modules.costSchedule = costScheduleConfig;
+      }
+      
+      const submitBtn = document.getElementById('submitBtn');
       const originalText = submitBtn.innerHTML;
       submitBtn.disabled = true;
-      submitBtn.innerHTML = '⏳ در حال محاسبه...';
-
+      submitBtn.innerHTML = '<span class="loading"></span> در حال محاسبه...';
+      
       try {
-        const response = await fetch('https://n8nb2wall.darkube.app/webhook/internal-calculator', {
+        const response = await fetch('https://n8nb2wall.darkube.app/webhook/calculate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            LoanAmount: loanAmount,
-            MonthlyInterestRate: monthlyRate,
-            PrincipalRepayments: principalRepayments,
-            InterestPaymentDates: interestPaymentDates,
-            // New financials
-            FeeRate: Number(extras?.feeRate) || 0,
-            GuaranteeRate: Number(extras?.guaranteeRate) || 0,
-            Taxes: Array.isArray(extras?.taxes) ? extras.taxes : [],
-            CostSchedule: Array.isArray(extras?.costSchedule) ? extras.costSchedule : []
-          })
+          body: JSON.stringify(payload)
         });
-
+        
         if (!response.ok) {
           throw new Error(`خطای HTTP: ${response.status}`);
         }
-
+        
         const data = await response.json();
         
         if (!data.success) {
           throw new Error(data.message || data.error || 'خطا در محاسبه');
         }
-
-        // نمایش نتایج
-        displayResultsFromN8N(data);
+        
+        ResultsModule.display(data);
       } catch (error) {
         alert('خطا در ارتباط با سرور: ' + error.message);
         console.error('Error:', error);
@@ -865,287 +1583,31 @@
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
       }
-    }
+    });
 
-    // نمایش نتایج از n8n
-    function displayResultsFromN8N(data) {
-      const schedule = data.schedule || [];
-      const summary = data.summary?._raw || data.summary || {};
+    // ============================================================================
+    // INITIALIZATION
+    // ============================================================================
 
-      // خلاصه - فقط بخش هزینه‌های وام‌گیرنده
-      const totalUpfrontFees = Number(summary.totalUpfrontFees || data.rawData?.summary?.totalUpfrontFees || 0);
-      document.getElementById('summaryCards').innerHTML = `
-        <div class="bg-white p-4 rounded-lg border border-blue-100 md:col-span-4">
-          <div class="text-sm font-bold text-slate-800 mb-3">بخش الف: هزینه‌های وام‌گیرنده</div>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <div class="text-sm text-slate-600 mb-1">مجموع سود پرداختی</div>
-              <div class="text-2xl font-bold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-                ${formatToman(summary.totalInterestPaid || 0)}
-              </div>
-            </div>
-            <div>
-              <div class="text-sm text-slate-600 mb-1">مجموع کارمزدهای ابتدایی</div>
-              <div class="text-2xl font-bold text-indigo-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-                ${formatToman(totalUpfrontFees || 0)}
-              </div>
-            </div>
-            <div>
-              <div class="text-sm text-slate-600 mb-1">مدت زمان بازپرداخت</div>
-              <div class="text-2xl font-bold text-purple-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-                ${toPersian(summary.finalDay || 0)} روز
-              </div>
-            </div>
-          </div>
-        </div>
-      `;
-
-      // جدول - فقط روزهای با پرداخت
-      const paymentDays = schedule.filter(d => {
-        const raw = d._raw || {};
-        return (raw.principalPayment > 0 || raw.interestPayment > 0);
-      });
-      const firstDay = schedule[0];
-      const lastDay = schedule[schedule.length - 1];
-      const daysToShow = [firstDay, ...paymentDays, lastDay]
-        .filter((d, i, arr) => arr.findIndex(x => (x._raw?.day || x.روز) === (d._raw?.day || d.روز)) === i)
-        .sort((a, b) => (a._raw?.day || a.روز || 0) - (b._raw?.day || b.روز || 0));
-
-      const tbody = document.getElementById('scheduleBody');
-      tbody.innerHTML = daysToShow.map(day => {
-        const raw = day._raw || {};
-        const dayNum = raw.day || day.روز || 0;
-        const principalBefore = raw.remainingPrincipalBefore || 0;
-        const principalPayment = raw.principalPayment || 0;
-        const interestPayment = raw.interestPayment || 0;
-        const costPayment = raw.costPayment || 0;
-        const totalPayment = raw.totalPayment || 0;
-        const description = day.توضیحات || 'هیچ پرداختی انجام نشد';
-        const isPayment = principalPayment > 0 || interestPayment > 0;
-
-        return `
-          <tr class="${isPayment ? 'bg-blue-50' : ''}">
-            <td class="font-semibold">${toPersian(dayNum)}</td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${formatToman(principalBefore)}
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${principalPayment > 0 ? `<span class="font-semibold text-green-600">${formatToman(principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${costPayment > 0 ? `<span class="font-semibold text-amber-600">${formatToman(costPayment)}</span>` : '<span class="text-slate-400">-</span>'}
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
-            </td>
-            <td class="text-sm text-slate-600">${description}</td>
-          </tr>
-        `;
-      }).join('');
-
-      document.getElementById('results').classList.remove('hidden');
-      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // تابع محاسبه محلی (fallback - اگر n8n در دسترس نبود)
-    function calculateSchedule(loanAmount, monthlyRate, principalRepayments, interestPaymentDates) {
-      const dailyRate = monthlyRate / 100 / 30;
-      principalRepayments.sort((a, b) => a.days - b.days);
-      interestPaymentDates.sort((a, b) => a - b);
-      
-      const finalDay = Math.max(
-        Math.max(...principalRepayments.map(p => p.days)),
-        Math.max(...interestPaymentDates)
-      );
-
-      let remainingPrincipal = loanAmount;
-      let totalAccruedInterest = 0;
-      let principalIndex = 0;
-      let interestIndex = 0;
-      const schedule = [];
-      let totalPrincipalPaid = 0;
-      let totalInterestPaid = 0;
-      let totalPayments = 0;
-
-      for (let day = 1; day <= finalDay; day++) {
-        const record = {
-          day: day,
-          remainingPrincipalBefore: remainingPrincipal,
-          principalPayment: 0,
-          interestPayment: 0,
-          totalPayment: 0,
-          description: '',
-          remainingPrincipalAfter: remainingPrincipal
-        };
-
-        const dailyInterest = remainingPrincipal * dailyRate;
-        totalAccruedInterest += dailyInterest;
-
-        // پرداخت اصل پول
-        if (principalIndex < principalRepayments.length && 
-            principalRepayments[principalIndex].days === day) {
-          const amount = principalRepayments[principalIndex].amount;
-          record.principalPayment = amount;
-          remainingPrincipal -= amount;
-          totalPrincipalPaid += amount;
-          record.remainingPrincipalAfter = remainingPrincipal;
-          record.description = 'پرداخت بخشی از اصل وام';
-          principalIndex++;
-        }
-
-        // پرداخت سود
-        if (interestIndex < interestPaymentDates.length && 
-            interestPaymentDates[interestIndex] === day) {
-          record.interestPayment = totalAccruedInterest;
-          totalInterestPaid += totalAccruedInterest;
-          totalAccruedInterest = 0;
-          if (record.description) record.description += ' + ';
-          record.description += 'پرداخت سود انباشته';
-          interestIndex++;
-        }
-
-        record.totalPayment = record.principalPayment + record.interestPayment;
-        totalPayments += record.totalPayment;
-
-        if (!record.description) {
-          record.description = 'هیچ پرداختی انجام نشد';
-        }
-
-        schedule.push(record);
-      }
-
-      // نمایش نتایج
-      displayResults(schedule, {
-        totalPrincipalPaid,
-        totalInterestPaid,
-        totalPayments,
-        finalDay
-      });
-    }
-
-    // نمایش نتایج
-    function displayResults(schedule, summary) {
-      // خلاصه
-      document.getElementById('summaryCards').innerHTML = `
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">کل سود قابل پرداخت</div>
-          <div class="text-2xl font-bold text-blue-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${formatToman(summary.totalInterestPaid)}
-          </div>
-        </div>
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">کل مبلغ بازپرداخت</div>
-          <div class="text-2xl font-bold text-indigo-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${formatToman(summary.totalPayments)}
-          </div>
-        </div>
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">مدت زمان بازپرداخت</div>
-          <div class="text-2xl font-bold text-purple-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${toPersian(summary.finalDay)} روز
-          </div>
-        </div>
-        <div class="bg-white p-4 rounded-lg border border-blue-100">
-          <div class="text-sm text-slate-600 mb-1">اصل پول پرداخت شده</div>
-          <div class="text-2xl font-bold text-green-600" dir="rtl" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-            ${formatToman(summary.totalPrincipalPaid)}
-          </div>
-        </div>
-      `;
-
-      // جدول - فقط روزهای با پرداخت
-      const paymentDays = schedule.filter(d => d.principalPayment > 0 || d.interestPayment > 0);
-      const firstDay = schedule[0];
-      const lastDay = schedule[schedule.length - 1];
-      const daysToShow = [firstDay, ...paymentDays, lastDay]
-        .filter((d, i, arr) => arr.findIndex(x => x.day === d.day) === i)
-        .sort((a, b) => a.day - b.day);
-
-      const tbody = document.getElementById('scheduleBody');
-      tbody.innerHTML = daysToShow.map(day => {
-        const isPayment = day.principalPayment > 0 || day.interestPayment > 0;
-        return `
-          <tr class="${isPayment ? 'bg-blue-50' : ''}">
-            <td class="font-semibold">${toPersian(day.day)}</td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${formatToman(day.remainingPrincipalBefore)}
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${day.principalPayment > 0 ? `<span class="font-semibold text-green-600">${formatToman(day.principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${day.interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(day.interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              <span class="text-slate-400">-</span>
-            </td>
-            <td dir="ltr" style="font-family: 'Vazirmatn'; font-feature-settings: 'tnum';">
-              ${day.totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(day.totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}
-            </td>
-            <td class="text-sm text-slate-600">${day.description}</td>
-          </tr>
-        `;
-      }).join('');
-
-      document.getElementById('results').classList.remove('hidden');
-      document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    // تابع ریست فرم
     function resetForm() {
-      // پاک کردن فرم
       document.getElementById('calculatorForm').reset();
-      
-      // پاک کردن نمایش‌ها
       document.getElementById('loanAmountDisplay').textContent = '';
       document.getElementById('totalPrincipal').innerHTML = '';
-      document.getElementById('estimatedInterest').classList.add('hidden');
-      
-      // غیرفعال کردن حالت‌های خودکار
-      document.getElementById('autoPrincipalMode').checked = false;
-      document.getElementById('autoInterestMode').checked = false;
-      toggleAutoPrincipal();
-      toggleAutoInterest();
-      
-      // بازگرداندن به حالت اولیه
-      document.getElementById('principalRows').innerHTML = `
-        <div class="flex gap-4">
-          <div class="flex-1">
-            <label class="block text-xs text-slate-600 mb-1">روز</label>
-            <input type="text" name="principalDay" placeholder="60" class="input-clean" dir="ltr" />
-          </div>
-          <div class="flex-1">
-            <label class="block text-xs text-slate-600 mb-1">مبلغ</label>
-            <input type="text" name="principalAmount" placeholder="30000000" class="input-clean" dir="ltr" 
-                   oninput="this.value = formatInput(this.value); updateTotalPrincipal(); updateEstimatedInterest();" />
-          </div>
-        </div>
-      `;
-      
-      document.getElementById('interestDateRows').innerHTML = `
-        <div>
-          <label class="block text-xs text-slate-600 mb-1">روز</label>
-          <input type="text" name="interestDate" placeholder="180" class="input-clean" dir="ltr" 
-                 oninput="updateEstimatedInterest();" />
-        </div>
-      `;
-      
-      // پنهان کردن نتایج
       document.getElementById('results').classList.add('hidden');
       
-      // اسکرول به بالای صفحه
+      PrincipalModule.init();
+      InterestModule.init();
+      FeeModule.clear();
+      GuaranteeModule.clear();
+      TaxModule.clear();
+      CostScheduleModule.clear();
+      
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    // به‌روزرسانی مجموع هنگام تغییر
-    document.querySelectorAll('[name="principalAmount"]').forEach(input => {
-      input.addEventListener('input', function() {
-        this.value = formatInput(this.value);
-        updateTotalPrincipal();
-      });
+    document.addEventListener('DOMContentLoaded', function() {
+      PrincipalModule.init();
+      InterestModule.init();
     });
   </script>
 </body>
