@@ -288,6 +288,54 @@
       background: #e2e8f0;
       margin: 1.5rem 0;
     }
+    .error-banner {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #fee2e2;
+      border: 2px solid #ef4444;
+      border-radius: 0.75rem;
+      padding: 1rem 1.5rem;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+      z-index: 1000;
+      max-width: 90%;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      animation: slideDown 0.3s ease-out;
+    }
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+    .error-banner.hidden {
+      display: none;
+    }
+    .error-banner-close {
+      background: none;
+      border: none;
+      color: #dc2626;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      width: 2rem;
+      height: 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0.5rem;
+      transition: background 0.2s;
+    }
+    .error-banner-close:hover {
+      background: rgba(220, 38, 38, 0.1);
+    }
   </style>
 </head>
 <body>
@@ -310,7 +358,7 @@
                  oninput="LoanModule.updateAmountDisplay()" />
           <div id="loanAmountDisplay" class="help-text persian-number text-blue-600 font-semibold"></div>
           <div class="help-text">💡 مبلغ کل وام را به تومان وارد کنید. اعداد را به صورت انگلیسی وارد کنید.</div>
-        </div>
+      </div>
 
         <div class="mb-4">
           <label for="monthlyRate" class="label label-required">نرخ سود ماهیانه (%)</label>
@@ -334,7 +382,7 @@
           
           <div id="autoPrincipalOptions" class="hidden mt-4">
             <div class="auto-split-controls">
-              <div>
+            <div>
                 <label class="label">روش تقسیم</label>
                 <select id="principalSplitMethod" class="input-field">
                   <option value="equal">تقسیم مساوی</option>
@@ -347,8 +395,8 @@
                 <input type="text" id="principalPaymentInterval" class="input-field" value="30" placeholder="مثال: 30" 
                        oninput="this.value = formatInteger(this.value)" />
                 <div class="help-text">فاصله زمانی بین هر پرداخت</div>
-              </div>
-              <div>
+            </div>
+            <div>
                 <label class="label">تعداد پرداخت‌ها</label>
                 <input type="text" id="numberOfPayments" class="input-field" placeholder="مثال: 4" 
                        oninput="this.value = formatInteger(this.value)" />
@@ -358,9 +406,9 @@
             <button type="button" onclick="PrincipalModule.calculateAuto()" class="btn btn-primary mt-4">
               🧮 محاسبه خودکار
             </button>
+            </div>
           </div>
-        </div>
-        
+
         <div id="principalRows" class="space-y-3"></div>
         
         <button type="button" onclick="PrincipalModule.addRow()" class="btn btn-secondary mt-3">
@@ -368,8 +416,8 @@
         </button>
         
         <div id="totalPrincipal" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
-      </div>
-
+        </div>
+        
       <!-- بخش ۳: تاریخ‌های پرداخت سود -->
       <div class="card">
         <div class="card-header">📆 تاریخ‌های پرداخت سود</div>
@@ -390,33 +438,33 @@
                   <option value="interval">تقسیم بر اساس فاصله زمانی</option>
                 </select>
                 <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
-              </div>
+            </div>
               <div id="interestIntervalContainer">
                 <label class="label">فاصله بین پرداخت‌ها (روز)</label>
                 <input type="text" id="interestPaymentInterval" class="input-field" value="90" placeholder="مثال: 90" 
                        oninput="this.value = formatInteger(this.value)" />
                 <div class="help-text">فاصله زمانی بین هر پرداخت سود</div>
-              </div>
+            </div>
               <div>
                 <label class="label">تعداد پرداخت‌ها</label>
                 <input type="text" id="numberOfInterestPayments" class="input-field" placeholder="مثال: 2" 
                        oninput="this.value = formatInteger(this.value)" />
                 <div class="help-text">تعداد کل پرداخت‌های سود</div>
-              </div>
-            </div>
+          </div>
+        </div>
             <button type="button" onclick="InterestModule.calculateAuto()" class="btn btn-primary mt-4">
               🧮 محاسبه خودکار
             </button>
-          </div>
         </div>
-        
+      </div>
+
         <div id="interestDateRows" class="space-y-3"></div>
         
         <button type="button" onclick="InterestModule.addRow()" class="btn btn-secondary mt-3">
           ➕ افزودن تاریخ پرداخت
         </button>
-      </div>
-
+        </div>
+        
       <!-- بخش ۴: ماژول‌ها -->
       <div class="card">
         <div class="card-header">⚙️ ماژول‌های اختیاری</div>
@@ -429,30 +477,30 @@
           </label>
           <div id="feeModuleContent" class="module-content hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
+            <div>
                 <label class="label">نوع کارمزد</label>
                 <select id="feeMode" class="input-field" onchange="FeeModule.updateDisplay()">
                   <option value="percentage">درصدی از اصل وام</option>
                   <option value="fixed">مبلغ ثابت</option>
                 </select>
-              </div>
+            </div>
               <div id="feeRateContainer">
                 <label class="label">نرخ کارمزد (%)</label>
                 <input type="text" id="feeRate" class="input-field" placeholder="مثال: 2" 
                        oninput="this.value = formatDecimal(this.value); FeeModule.updateDisplay()" />
-              </div>
+            </div>
               <div id="feeAmountContainer" class="hidden">
                 <label class="label">مبلغ کارمزد (تومان)</label>
                 <input type="text" id="feeAmount" class="input-field" placeholder="مثال: 1000000" 
                        oninput="this.value = formatNumber(this.value); FeeModule.updateDisplay()" />
-              </div>
-            </div>
+          </div>
+        </div>
             <div id="feeDisplay" class="mt-4 p-3 bg-blue-50 rounded-lg hidden">
               <div class="text-sm font-semibold text-slate-700">مبلغ کارمزد:</div>
               <div id="feeAmountDisplay" class="text-lg font-bold text-blue-700 persian-number"></div>
-            </div>
           </div>
         </div>
+      </div>
 
         <div class="divider"></div>
 
@@ -463,7 +511,7 @@
             <span class="font-semibold text-slate-900">فعال‌سازی ماژول ضمانت</span>
           </label>
           <div id="guaranteeModuleContent" class="module-content hidden">
-            <div>
+          <div>
               <label class="label">نرخ هزینه ضمانت از اصل وام (%)</label>
               <input type="text" id="guaranteeRate" class="input-field" placeholder="مثال: 1.5" 
                      oninput="this.value = formatDecimal(this.value); GuaranteeModule.updateDisplay()" />
@@ -472,9 +520,9 @@
             <div id="guaranteeDisplay" class="mt-4 p-3 bg-green-50 rounded-lg hidden">
               <div class="text-sm font-semibold text-slate-700">مبلغ ضمانت:</div>
               <div id="guaranteeAmountDisplay" class="text-lg font-bold text-green-700 persian-number"></div>
-            </div>
           </div>
         </div>
+      </div>
 
         <div class="divider"></div>
 
@@ -491,8 +539,8 @@
               ➕ افزودن ردیف مالیات
             </button>
             <div id="totalTaxes" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
-          </div>
         </div>
+      </div>
 
         <div class="divider"></div>
 
@@ -505,7 +553,7 @@
           <div id="costScheduleModuleContent" class="module-content hidden">
             <div class="help-text mb-4">
               هزینه‌های یک‌باره (کارمزد، ضمانت و مجموع مالیات‌ها) را می‌توانید در یک یا چند روز از دوره پرداخت کنید. مجموع درصدها باید ۱۰۰٪ باشد.
-            </div>
+        </div>
             
             <!-- Auto-Split Section for Cost Schedule -->
             <div class="auto-split-section">
@@ -517,29 +565,29 @@
               
               <div id="autoCostScheduleOptions" class="hidden mt-4">
                 <div class="auto-split-controls">
-                  <div>
+            <div>
                     <label class="label">روش تقسیم هزینه‌ها</label>
                     <select id="costSplitMethod" class="input-field">
                       <option value="equal">تقسیم مساوی</option>
                       <option value="weighted">تقسیم متناسب با روز</option>
                       <option value="normalize">تقسیم درصدی (پیشرفته)</option>
-                    </select>
+              </select>
                     <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
-                  </div>
-                </div>
+            </div>
+            </div>
                 <button type="button" onclick="CostScheduleModule.calculateAuto()" class="btn btn-primary mt-4">
                   🧮 محاسبه خودکار
                 </button>
-              </div>
             </div>
-            
+      </div>
+
             <div id="costScheduleRows" class="space-y-3 mt-4"></div>
             <button type="button" onclick="CostScheduleModule.addRow()" class="btn btn-secondary mt-3">
               ➕ افزودن ردیف زمان‌بندی
             </button>
             <div id="costScheduleTotal" class="mt-4 p-4 bg-slate-50 rounded-lg"></div>
-          </div>
         </div>
+            </div>
       </div>
 
       <!-- دکمه محاسبه -->
@@ -593,7 +641,7 @@
 
   <script>
     // ============================================================================
-    // UTILITY FUNCTIONS
+    // UTILITY FUNCTIONS (Shared utilities - no changes)
     // ============================================================================
 
     function toEnglish(str) {
@@ -705,7 +753,128 @@
     };
 
     // ============================================================================
-    // LOAN MODULE
+    // BASE COMPONENT CLASS (Optional helper for shared functionality)
+    // ============================================================================
+
+    class BaseComponent {
+      constructor(id) {
+        this.id = id;
+        this.element = document.getElementById(id);
+      }
+
+      getElement(selector) {
+        return this.element ? this.element.querySelector(selector) : null;
+      }
+
+      getElements(selector) {
+        return this.element ? Array.from(this.element.querySelectorAll(selector)) : [];
+      }
+    }
+
+    // ============================================================================
+    // COMPONENT CLASSES
+    // ============================================================================
+
+    class LoanInputComponent extends BaseComponent {
+      constructor() {
+        super('calculatorForm');
+        this.loanAmountEl = document.getElementById('loanAmount');
+        this.monthlyRateEl = document.getElementById('monthlyRate');
+        this.loanAmountDisplayEl = document.getElementById('loanAmountDisplay');
+        this.monthlyRateErrorEl = document.getElementById('monthlyRateError');
+      }
+
+      render() {
+        // HTML is already rendered, just bind events
+        this.bindEvents();
+      }
+
+      bindEvents() {
+        if (this.loanAmountEl) {
+          this.loanAmountEl.addEventListener('input', () => this.updateAmountDisplay());
+        }
+        if (this.monthlyRateEl) {
+          this.monthlyRateEl.addEventListener('input', () => this.validateRate());
+        }
+      }
+
+      updateAmountDisplay() {
+        const value = this.loanAmountEl.value;
+        const num = parseNumber(value);
+        if (this.loanAmountDisplayEl) {
+          if (num > 0) {
+            this.loanAmountDisplayEl.textContent = formatToman(num);
+          } else {
+            this.loanAmountDisplayEl.textContent = '';
+          }
+        }
+        // Notify other components
+        if (window.appController) {
+          window.appController.notifyLoanAmountChange();
+        }
+      }
+
+      validateRate() {
+        const value = this.monthlyRateEl.value;
+        const num = parseNumber(value);
+        
+        if (this.monthlyRateErrorEl && this.monthlyRateEl) {
+          if (value && (num <= 0 || num > 100)) {
+            this.monthlyRateErrorEl.textContent = 'نرخ سود باید بین ۰ تا ۱۰۰ درصد باشد';
+            this.monthlyRateEl.classList.add('error');
+          } else {
+            this.monthlyRateErrorEl.textContent = '';
+            this.monthlyRateEl.classList.remove('error');
+          }
+        }
+      }
+
+      getData() {
+        const amount = parseNumber(this.loanAmountEl?.value || '');
+        const monthlyRate = parseNumber(this.monthlyRateEl?.value || '');
+        
+        if (amount <= 0 || monthlyRate <= 0 || monthlyRate > 100) {
+          return null;
+        }
+        
+        return { amount, monthlyInterestRate: monthlyRate };
+      }
+
+      setData(data) {
+        if (data && data.amount) {
+          if (this.loanAmountEl) this.loanAmountEl.value = formatNumber(data.amount.toString());
+        }
+        if (data && data.monthlyInterestRate) {
+          if (this.monthlyRateEl) this.monthlyRateEl.value = formatDecimal(data.monthlyInterestRate.toString());
+        }
+        this.updateAmountDisplay();
+        this.validateRate();
+      }
+
+      reset() {
+        if (this.loanAmountEl) this.loanAmountEl.value = '';
+        if (this.monthlyRateEl) this.monthlyRateEl.value = '';
+        if (this.loanAmountDisplayEl) this.loanAmountDisplayEl.textContent = '';
+        if (this.monthlyRateErrorEl) this.monthlyRateErrorEl.textContent = '';
+        if (this.monthlyRateEl) this.monthlyRateEl.classList.remove('error');
+      }
+
+      validate() {
+        const config = this.getData();
+        if (!config) {
+          alert('لطفاً مبلغ وام و نرخ سود را به درستی وارد کنید');
+          return false;
+        }
+        return true;
+      }
+    }
+
+    // ============================================================================
+    // LEGACY MODULE WRAPPERS (Temporary - will be replaced by components)
+    // ============================================================================
+
+    // ============================================================================
+    // LOAN MODULE (Legacy - will be removed)
     // ============================================================================
 
     const LoanModule = {
@@ -768,15 +937,15 @@
       },
 
       toggleAuto() {
-        const isChecked = document.getElementById('autoPrincipalMode').checked;
-        const options = document.getElementById('autoPrincipalOptions');
-        const rows = document.getElementById('principalRows');
-        
-        if (isChecked) {
-          options.classList.remove('hidden');
+      const isChecked = document.getElementById('autoPrincipalMode').checked;
+      const options = document.getElementById('autoPrincipalOptions');
+      const rows = document.getElementById('principalRows');
+      
+      if (isChecked) {
+        options.classList.remove('hidden');
           rows.innerHTML = '';
-        } else {
-          options.classList.add('hidden');
+      } else {
+        options.classList.add('hidden');
           if (rows.children.length === 0) {
             this.addRow();
           }
@@ -786,55 +955,107 @@
       calculateAuto() {
         if (!document.getElementById('autoPrincipalMode').checked) return;
         
-        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
         const method = document.getElementById('principalSplitMethod').value;
         const numPayments = parseInt(formatInteger(document.getElementById('numberOfPayments').value)) || 0;
         const interval = parseInt(formatInteger(document.getElementById('principalPaymentInterval').value)) || 30;
-        
-        if (loanAmount <= 0) {
-          alert('لطفاً ابتدا مبلغ وام را وارد کنید');
-          return;
-        }
         
         if (numPayments <= 0) {
           alert('تعداد پرداخت‌ها باید بزرگ‌تر از صفر باشد');
           return;
         }
         
-        if (method === 'interval' && interval <= 0) {
-          alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+        // For interval mode: simple calculation, no dependencies
+        if (method === 'interval') {
+          if (interval <= 0) {
+            alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+            return;
+          }
+          
+          // Generate days: day = (i + 1) * interval
+          const rows = document.getElementById('principalRows');
+          rows.innerHTML = '';
+          
+          const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+          const amountPerPayment = loanAmount > 0 ? Math.floor(loanAmount / numPayments) : 0;
+          const remainder = loanAmount > 0 ? loanAmount - (amountPerPayment * numPayments) : 0;
+          
+          for (let i = 0; i < numPayments; i++) {
+            const days = (i + 1) * interval;
+            const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
+            
+            const div = document.createElement('div');
+            div.className = 'row-item';
+            div.innerHTML = `
+              <div>
+                <label class="label">روز</label>
+                <input type="text" name="principalDay" class="input-field" value="${days}" />
+                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+              </div>
+              <div>
+                <label class="label">مبلغ (تومان)</label>
+                <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
+                       oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
+              </div>
+              <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
+            `;
+            rows.appendChild(div);
+          }
+          
+          this.updateTotal();
           return;
         }
         
-        const rows = document.getElementById('principalRows');
-        rows.innerHTML = '';
-        
-        const amountPerPayment = Math.floor(loanAmount / numPayments);
-        const remainder = loanAmount - (amountPerPayment * numPayments);
-        
-        for (let i = 0; i < numPayments; i++) {
-          const days = method === 'interval' ? (i + 1) * interval : (i + 1) * Math.ceil(365 / numPayments);
-          const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
+        // For equal mode: require totalLoanDuration
+        if (method === 'equal') {
+          // Try to derive totalLoanDuration from interest payment dates
+          const interestDates = [];
+          document.querySelectorAll('[name="interestDate"]').forEach(input => {
+            const day = parseInt(toEnglish(input.value));
+            if (day > 0) interestDates.push(day);
+          });
           
-          const div = document.createElement('div');
-          div.className = 'row-item';
-          div.innerHTML = `
-            <div>
-              <label class="label">روز</label>
-              <input type="text" name="principalDay" class="input-field" value="${days}" />
-              <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
-            </div>
-            <div>
-              <label class="label">مبلغ (تومان)</label>
-              <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
-                     oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
-            </div>
-            <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
-          `;
-          rows.appendChild(div);
+          let totalLoanDuration = 0;
+          if (interestDates.length > 0) {
+            totalLoanDuration = Math.max(...interestDates);
+          }
+          
+          if (totalLoanDuration <= 0) {
+            alert('برای تقسیم مساوی، لطفاً مدت کل وام را مشخص کنید');
+            return;
+          }
+          
+          const rows = document.getElementById('principalRows');
+          rows.innerHTML = '';
+          
+          const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+          const amountPerPayment = loanAmount > 0 ? Math.floor(loanAmount / numPayments) : 0;
+          const remainder = loanAmount > 0 ? loanAmount - (amountPerPayment * numPayments) : 0;
+          const daysPerPayment = totalLoanDuration / numPayments;
+          
+          for (let i = 0; i < numPayments; i++) {
+            const days = Math.round((i + 1) * daysPerPayment);
+            const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
+            
+            const div = document.createElement('div');
+            div.className = 'row-item';
+            div.innerHTML = `
+              <div>
+                <label class="label">روز</label>
+                <input type="text" name="principalDay" class="input-field" value="${days}" />
+                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+              </div>
+              <div>
+                <label class="label">مبلغ (تومان)</label>
+                <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
+                       oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
+              </div>
+              <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
+            `;
+            rows.appendChild(div);
+          }
+          
+          this.updateTotal();
         }
-        
-        this.updateTotal();
       },
 
       addRow() {
@@ -859,28 +1080,28 @@
       },
 
       updateTotal() {
-        const rows = document.querySelectorAll('[name="principalAmount"]');
-        let total = 0;
-        rows.forEach(row => total += parseNumber(row.value));
-        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-        const display = document.getElementById('totalPrincipal');
+      const rows = document.querySelectorAll('[name="principalAmount"]');
+      let total = 0;
+      rows.forEach(row => total += parseNumber(row.value));
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const display = document.getElementById('totalPrincipal');
         
-        display.innerHTML = `
-          <div class="flex items-center justify-between">
+      display.innerHTML = `
+        <div class="flex items-center justify-between">
             <span class="font-semibold">مجموع پرداخت‌های اصل پول:</span>
             <span class="text-lg font-bold ${Math.abs(total - loanAmount) <= 1 ? 'text-green-600' : 'text-red-600'} persian-number">
-              ${formatToman(total)}
-            </span>
-          </div>
-          ${loanAmount > 0 ? `
-            <div class="mt-2 flex items-center justify-between">
-              <span class="text-sm text-slate-600">مبلغ وام:</span>
+            ${formatToman(total)}
+          </span>
+        </div>
+        ${loanAmount > 0 ? `
+          <div class="mt-2 flex items-center justify-between">
+            <span class="text-sm text-slate-600">مبلغ وام:</span>
               <span class="text-sm font-semibold persian-number">${formatToman(loanAmount)}</span>
-            </div>
-          ` : ''}
-          ${Math.abs(total - loanAmount) <= 1 && loanAmount > 0 ? 
-            '<p class="text-green-600 text-sm mt-2">✓ مجموع پرداخت‌ها با مبلغ وام مطابقت دارد</p>' : ''}
-        `;
+          </div>
+        ` : ''}
+        ${Math.abs(total - loanAmount) <= 1 && loanAmount > 0 ? 
+          '<p class="text-green-600 text-sm mt-2">✓ مجموع پرداخت‌ها با مبلغ وام مطابقت دارد</p>' : ''}
+      `;
       },
 
       getConfig() {
@@ -915,15 +1136,15 @@
       },
 
       toggleAuto() {
-        const isChecked = document.getElementById('autoInterestMode').checked;
-        const options = document.getElementById('autoInterestOptions');
-        const rows = document.getElementById('interestDateRows');
-        
-        if (isChecked) {
-          options.classList.remove('hidden');
+      const isChecked = document.getElementById('autoInterestMode').checked;
+      const options = document.getElementById('autoInterestOptions');
+      const rows = document.getElementById('interestDateRows');
+      
+      if (isChecked) {
+        options.classList.remove('hidden');
           rows.innerHTML = '';
-        } else {
-          options.classList.add('hidden');
+      } else {
+        options.classList.add('hidden');
           if (rows.children.length === 0) {
             this.addRow();
           }
@@ -942,28 +1163,74 @@
           return;
         }
         
-        if (method === 'interval' && interval <= 0) {
-          alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+        // For interval mode: simple calculation, no dependencies
+        if (method === 'interval') {
+          if (interval <= 0) {
+            alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+            return;
+          }
+          
+          // Generate days: day = (i + 1) * interval
+          const rows = document.getElementById('interestDateRows');
+          rows.innerHTML = '';
+          
+          for (let i = 0; i < numPayments; i++) {
+            const days = (i + 1) * interval;
+            
+            const div = document.createElement('div');
+            div.className = 'row-item';
+            div.innerHTML = `
+              <div>
+                <label class="label">روز</label>
+                <input type="text" name="interestDate" class="input-field" value="${days}" />
+                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+              </div>
+              <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+            `;
+            rows.appendChild(div);
+          }
           return;
         }
         
-        const rows = document.getElementById('interestDateRows');
-        rows.innerHTML = '';
-        
-        for (let i = 0; i < numPayments; i++) {
-          const days = method === 'interval' ? (i + 1) * interval : (i + 1) * Math.ceil(365 / numPayments);
+        // For equal mode: require totalLoanDuration
+        if (method === 'equal') {
+          // Try to derive totalLoanDuration from principal repayment days
+          const principalDays = [];
+          document.querySelectorAll('[name="principalDay"]').forEach(input => {
+            const day = parseInt(toEnglish(input.value));
+            if (day > 0) principalDays.push(day);
+          });
           
-          const div = document.createElement('div');
-          div.className = 'row-item';
-          div.innerHTML = `
-            <div>
-              <label class="label">روز</label>
-              <input type="text" name="interestDate" class="input-field" value="${days}" />
-              <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
-            </div>
-            <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
-          `;
-          rows.appendChild(div);
+          let totalLoanDuration = 0;
+          if (principalDays.length > 0) {
+            totalLoanDuration = Math.max(...principalDays);
+          }
+          
+          if (totalLoanDuration <= 0) {
+            alert('برای تقسیم مساوی، لطفاً مدت کل وام را مشخص کنید');
+            return;
+          }
+          
+          const rows = document.getElementById('interestDateRows');
+          rows.innerHTML = '';
+          
+          const daysPerPayment = totalLoanDuration / numPayments;
+          
+          for (let i = 0; i < numPayments; i++) {
+            const days = Math.round((i + 1) * daysPerPayment);
+            
+            const div = document.createElement('div');
+            div.className = 'row-item';
+            div.innerHTML = `
+              <div>
+                <label class="label">روز</label>
+                <input type="text" name="interestDate" class="input-field" value="${days}" />
+                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+              </div>
+              <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+            `;
+            rows.appendChild(div);
+          }
         }
       },
 
@@ -1142,35 +1409,125 @@
       },
 
       addRow() {
-        const container = document.getElementById('taxRows');
+      const container = document.getElementById('taxRows');
         const div = document.createElement('div');
         div.className = 'row-item';
         div.innerHTML = `
-          <div>
+        <div>
             <label class="label">پایه محاسبه</label>
             <select name="taxBase" class="input-field" onchange="TaxModule.updateAll()">
-              <option value="interest">سود وام</option>
-              <option value="fees">هزینه کارمزد</option>
-              <option value="guarantee">هزینه ضمانت</option>
-            </select>
-          </div>
-          <div>
+            <option value="interest">سود وام</option>
+            <option value="fees">هزینه کارمزد</option>
+            <option value="guarantee">هزینه ضمانت</option>
+          </select>
+        </div>
+        <div>
             <label class="label">نرخ مالیات (%)</label>
             <input type="text" name="taxRate" class="input-field" placeholder="مثال: 9" 
                    oninput="this.value = formatDecimal(this.value); TaxModule.updateAll()" />
-          </div>
-          <div class="self-end">
-            <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
+        </div>
+        <div class="self-end">
+          <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
             <div class="font-bold text-blue-700 tax-amount persian-number">۰ تومان</div>
-          </div>
+        </div>
           <button type="button" onclick="this.parentElement.remove(); TaxModule.updateAll()" class="remove-btn">×</button>
         `;
         container.appendChild(div);
         this.updateAll();
       },
 
+      /**
+       * Estimate interest based on loan parameters
+       * Returns estimated interest amount or null if cannot estimate
+       */
+      estimateInterest() {
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        const monthlyRate = parseNumber(document.getElementById('monthlyRate').value);
+        
+        if (loanAmount <= 0 || monthlyRate <= 0) {
+          return null;
+        }
+        
+        // Get interest payment dates
+        const interestDates = [];
+        document.querySelectorAll('[name="interestDate"]').forEach(input => {
+          const day = parseInt(toEnglish(input.value));
+          if (day > 0) interestDates.push(day);
+        });
+        
+        if (interestDates.length === 0) {
+          return null;
+        }
+        
+        // Get principal repayments
+        const principalRepayments = [];
+        document.querySelectorAll('[name="principalDay"]').forEach((dayInput, index) => {
+          const day = parseInt(toEnglish(dayInput.value));
+          const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
+          if (day > 0 && amount > 0) {
+            principalRepayments.push({ day, amount });
+          }
+        });
+        
+        // Sort by day
+        principalRepayments.sort((a, b) => a.day - b.day);
+        interestDates.sort((a, b) => a - b);
+        
+        const finalDay = Math.max(
+          principalRepayments.length > 0 ? Math.max(...principalRepayments.map(pr => pr.day)) : 0,
+          interestDates.length > 0 ? Math.max(...interestDates) : 0
+        );
+        
+        if (finalDay <= 0) {
+          return null;
+        }
+        
+        // Calculate estimated interest (simple interest, non-compounding)
+        const dailyRate = monthlyRate / 100 / 30;
+        let remainingPrincipal = loanAmount;
+        let totalAccruedInterest = 0;
+        let principalIndex = 0;
+        
+        for (let day = 1; day <= finalDay; day++) {
+          const dailyInterest = remainingPrincipal * dailyRate;
+          totalAccruedInterest += dailyInterest;
+          
+          // Check for principal repayment
+          if (principalIndex < principalRepayments.length && 
+              principalRepayments[principalIndex].day === day) {
+            remainingPrincipal -= principalRepayments[principalIndex].amount;
+            principalIndex++;
+          }
+        }
+        
+        return totalAccruedInterest;
+      },
+
+      /**
+       * Get real interest from backend calculation result
+       * Returns interest amount or null if not available
+       */
+      getRealInterest() {
+        if (!window.lastCalculationResult) {
+          return null;
+        }
+        
+        // Safely access summary with null checks
+        const summary = window.lastCalculationResult.summary;
+        if (!summary || typeof summary !== 'object') {
+          return null;
+        }
+        
+        const realInterest = summary.totalInterestPaid;
+        if (typeof realInterest === 'number' && realInterest > 0) {
+          return realInterest;
+        }
+        
+        return null;
+      },
+
       updateAll() {
-        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
         const feeConfig = FeeModule.getConfig();
         const guaranteeConfig = GuaranteeModule.getConfig();
         
@@ -1188,37 +1545,86 @@
           guaranteeAmount = loanAmount * (guaranteeConfig.rate / 100);
         }
         
+        // Get real interest if available, otherwise try to estimate
+        const realInterest = this.getRealInterest();
+        const estimatedInterest = realInterest === null ? this.estimateInterest() : null;
+        const interestAmount = realInterest !== null ? realInterest : (estimatedInterest !== null ? estimatedInterest : 0);
+        const isInterestEstimated = realInterest === null && estimatedInterest !== null;
+        const isInterestUnknown = realInterest === null && estimatedInterest === null;
+        
         const baseValues = {
-          interest: 0,
+          interest: interestAmount,
           fees: feeAmount,
           guarantee: guaranteeAmount
         };
         
         let total = 0;
         document.querySelectorAll('#taxRows .row-item').forEach(row => {
-          const baseSel = row.querySelector('[name="taxBase"]');
-          const rateInput = row.querySelector('[name="taxRate"]');
-          const amountEl = row.querySelector('.tax-amount');
+      const baseSel = row.querySelector('[name="taxBase"]');
+      const rateInput = row.querySelector('[name="taxRate"]');
+      const amountEl = row.querySelector('.tax-amount');
           
-          if (!baseSel || !rateInput || !amountEl) return;
+      if (!baseSel || !rateInput || !amountEl) return;
           
-          const base = baseSel.value;
-          const rate = parseNumber(rateInput.value);
+      const base = baseSel.value;
+      const rate = parseNumber(rateInput.value);
+          
+          // Handle interest base specially
+          if (base === 'interest') {
+            if (isInterestUnknown) {
+              // Show placeholder when interest is completely unknown
+              amountEl.textContent = 'بسته به سود نهایی محاسبه می‌شود';
+              amountEl.className = 'font-bold text-slate-400 italic persian-number';
+              return; // Don't add to total
+            } else if (isInterestEstimated && rate > 0) {
+              // Show estimated value
+              const estimatedTax = estimatedInterest * (rate / 100);
+              amountEl.textContent = `حدودی: ${formatToman(estimatedTax)}`;
+              amountEl.className = 'font-bold text-amber-500 persian-number';
+              total += estimatedTax; // Add estimated to total
+              return;
+            } else if (realInterest !== null && rate > 0) {
+              // Show real value
+              const taxAmount = realInterest * (rate / 100);
+              amountEl.textContent = formatToman(taxAmount);
+              amountEl.className = 'font-bold text-blue-700 persian-number';
+              total += taxAmount;
+              return;
+            } else {
+              // Rate is 0 or invalid
+              amountEl.textContent = formatToman(0);
+              amountEl.className = 'font-bold text-blue-700 persian-number';
+              return;
+            }
+          }
+          
+          // Handle fees and guarantee (always known)
           let baseAmount = baseValues[base] || 0;
-          
           const taxAmount = baseAmount * (rate / 100);
           amountEl.textContent = formatToman(taxAmount || 0);
+          amountEl.className = 'font-bold text-blue-700 persian-number';
           total += taxAmount;
         });
         
-        const totalBox = document.getElementById('totalTaxes');
-        if (totalBox) {
-          totalBox.innerHTML = total > 0 ? `
-            <div class="flex items-center justify-between">
-              <span class="font-semibold">مجموع مالیات‌ها:</span>
-              <span class="text-lg font-bold text-blue-700 persian-number">${formatToman(total)}</span>
-            </div>
-          ` : '';
+      const totalBox = document.getElementById('totalTaxes');
+      if (totalBox) {
+          // Check if any tax is estimated
+          const hasEstimatedTax = Array.from(document.querySelectorAll('#taxRows .row-item')).some(row => {
+            const baseSel = row.querySelector('[name="taxBase"]');
+            return baseSel && baseSel.value === 'interest' && isInterestEstimated;
+          });
+          
+          if (total > 0 || hasEstimatedTax) {
+            const totalClass = hasEstimatedTax ? 'text-amber-500' : 'text-blue-700';
+        totalBox.innerHTML = `
+          <div class="flex items-center justify-between">
+                <span class="font-semibold">${hasEstimatedTax ? 'مجموع مالیات‌ها (حدودی):' : 'مجموع مالیات‌ها:'}</span>
+                <span class="text-lg font-bold ${totalClass} persian-number">${formatToman(total)}</span>
+          </div>
+        `;
+          } else {
+            totalBox.innerHTML = '';
+          }
         }
       },
 
@@ -1283,9 +1689,9 @@
         
         if (rows.length === 0) {
           alert('لطفاً ابتدا ردیف‌های زمان‌بندی را اضافه کنید');
-          return;
-        }
-        
+        return;
+      }
+
         // Collect days and existing percentages
         const entries = [];
         let hasInvalidDay = false;
@@ -1293,7 +1699,7 @@
         rows.forEach(row => {
           const dayInput = row.querySelector('[name="costDay"]');
           const percentInput = row.querySelector('[name="costPercent"]');
-          const day = parseInt(toEnglish(dayInput.value));
+        const day = parseInt(toEnglish(dayInput.value));
           const percent = parseNumber(percentInput.value);
           
           if (day <= 0) {
@@ -1402,75 +1808,324 @@
     };
 
     // ============================================================================
-    // RESULTS MODULE
+    // RESULTS MODULE (Modernized & Optimized)
     // ============================================================================
 
     const ResultsModule = {
+      // ============================================================================
+      // HELPER FORMATTERS
+      // ============================================================================
+      helpers: {
+        /**
+         * Convert English digits to Persian
+         */
+        persianNumber(n) {
+          if (typeof n !== 'number' && typeof n !== 'string') return '۰';
+          const persian = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+          return n.toString().replace(/\d/g, d => persian[parseInt(d)]);
+        },
+
+        /**
+         * Format currency with Persian digits and commas
+         * Returns: "۱۲۳٬۴۵۶ تومان"
+         */
+        formatCurrency(n) {
+          const num = Number(n) || 0;
+          const rounded = Math.round(num);
+          const formatted = rounded.toLocaleString('en-US');
+          return this.persianNumber(formatted) + ' تومان';
+        },
+
+        /**
+         * Format percentage with Persian digits
+         * Returns: "۱۰٪"
+         */
+        formatPercent(n) {
+          const num = Number(n) || 0;
+          return this.persianNumber(num.toFixed(2)) + '٪';
+        },
+
+        /**
+         * Format day number
+         * Returns: "روز ۱۲۳"
+         */
+        formatDay(n) {
+          const num = Number(n) || 0;
+          return 'روز ' + this.persianNumber(num);
+        }
+      },
+
+      // ============================================================================
+      // MAIN DISPLAY FUNCTION
+      // ============================================================================
       display(data) {
-        const schedule = data.schedule || [];
-        const summary = data.summary?._raw || data.summary || {};
-        
+        try {
+          // Defensive root logic - never throws
+          if (!data || typeof data !== 'object') {
+            console.warn('Invalid data structure in ResultsModule.display()', data);
+            this.showNoResult();
+            return;
+          }
+
+          // Safe fallback structure
+          const safeSummary = {
+            totalInterestPaid: data.summary?.totalInterestPaid ?? 0,
+            totalPrincipal: data.summary?.totalPrincipal ?? 0,
+            totalTaxes: data.modules?.taxes?.totalTaxes ?? 0,
+            totalUpfrontFees: (data.modules?.fee?.feeAmount ?? 0) + (data.modules?.guarantee?.guaranteeAmount ?? 0),
+            finalDay: data.summary?.finalDay ?? 0
+          };
+
+          const safeModules = {
+            fee: data.modules?.fee ?? { feeAmount: 0 },
+            guarantee: data.modules?.guarantee ?? { guaranteeAmount: 0 },
+            taxes: data.modules?.taxes ?? { totalTaxes: 0, breakdown: [] },
+            costSchedule: Array.isArray(data.modules?.costSchedule) ? data.modules.costSchedule : []
+          };
+
+          const safeSchedule = Array.isArray(data.schedule) ? data.schedule : [];
+
+          // Check for no-result state
+          const hasAnyData = safeSummary.totalInterestPaid > 0 || 
+                           safeSummary.totalPrincipal > 0 || 
+                           safeSummary.totalTaxes > 0 || 
+                           safeSummary.totalUpfrontFees > 0 ||
+                           safeSchedule.length > 0;
+
+          if (!hasAnyData && !data.summary) {
+            this.showNoResult();
+            return;
+          }
+
+          // Render all sections
+          this.renderSummary(safeSummary, data.summary);
+          this.renderModules(safeModules);
+          this.renderSchedule(safeSchedule);
+
+          // Store result safely
+          window.lastCalculationResult = data;
+
+          // Update tax module with real interest values (if available)
+          try {
+            if (typeof TaxModule !== 'undefined' && TaxModule.updateAll) {
+              TaxModule.updateAll();
+            }
+          } catch (e) {
+            console.warn('Failed to update tax module:', e);
+          }
+
+          // Show results section
+          const resultsEl = document.getElementById('results');
+          if (resultsEl) {
+            resultsEl.classList.remove('hidden');
+            resultsEl.scrollIntoView({ behavior: 'smooth' });
+          }
+
+        } catch (error) {
+          console.error('Error in ResultsModule.display():', error);
+          this.showNoResult();
+        }
+      },
+
+      // ============================================================================
+      // SUMMARY SECTION RENDERING
+      // ============================================================================
+      renderSummary(summary, originalSummary) {
         const summaryCards = document.getElementById('summaryCards');
+        if (!summaryCards) return;
+
+        // Check if summary is completely missing
+        if (!originalSummary || typeof originalSummary !== 'object') {
+          summaryCards.innerHTML = `
+            <div class="summary-card">
+              <div class="text-center py-4 text-white opacity-90">
+                <div class="text-lg font-semibold">اطلاعات خلاصه هنوز محاسبه نشده است</div>
+              </div>
+            </div>
+          `;
+          return;
+        }
+
+        // Render summary with all fields
         summaryCards.innerHTML = `
           <div class="summary-card">
             <div class="summary-item">
-              <span class="summary-label">مجموع سود پرداختی</span>
-              <span class="summary-value persian-number">${formatToman(summary.totalInterestPaid || 0)}</span>
+              <span class="summary-label">جمع کل سود پرداختی</span>
+              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalInterestPaid)}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">مجموع کارمزدهای ابتدایی</span>
-              <span class="summary-value persian-number">${formatToman(summary.totalUpfrontFees || 0)}</span>
+              <span class="summary-label">جمع کل کارمزدها</span>
+              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalUpfrontFees)}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">مجموع مالیات‌ها</span>
-              <span class="summary-value persian-number">${formatToman(summary.totalTaxes || 0)}</span>
+              <span class="summary-label">جمع کل مالیات‌ها</span>
+              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalTaxes)}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">مدت زمان بازپرداخت</span>
-              <span class="summary-value persian-number">${toPersian(summary.finalDay || 0)} روز</span>
+              <span class="summary-label">مجموع کل هزینه‌های یک‌باره</span>
+              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalUpfrontFees + summary.totalTaxes)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">روز نهایی تسویه</span>
+              <span class="summary-value persian-number">${summary.finalDay > 0 ? this.helpers.formatDay(summary.finalDay) : '—'}</span>
             </div>
           </div>
         `;
-        
-        const paymentDays = schedule.filter(d => {
-          const raw = d._raw || {};
-          return (raw.principalPayment > 0 || raw.interestPayment > 0 || raw.costPayment > 0);
-        });
-        const firstDay = schedule[0];
-        const lastDay = schedule[schedule.length - 1];
-        const daysToShow = [firstDay, ...paymentDays, lastDay]
-          .filter((d, i, arr) => arr.findIndex(x => (x._raw?.day || x.روز) === (d._raw?.day || d.روز)) === i)
-          .sort((a, b) => (a._raw?.day || a.روز || 0) - (b._raw?.day || b.روز || 0));
-        
-        const tbody = document.getElementById('scheduleBody');
-        tbody.innerHTML = daysToShow.map(day => {
-          const raw = day._raw || {};
-          const dayNum = raw.day || day.روز || 0;
-          const principalBefore = raw.remainingPrincipalBefore || 0;
-          const principalPayment = raw.principalPayment || 0;
-          const interestPayment = raw.interestPayment || 0;
-          const costPayment = raw.costPayment || 0;
-          const totalPayment = raw.totalPayment || 0;
-          const description = day.توضیحات || 'هیچ پرداختی انجام نشد';
-          const isPayment = principalPayment > 0 || interestPayment > 0 || costPayment > 0;
-          
+      },
+
+      // ============================================================================
+      // MODULES DISPLAY RENDERING
+      // ============================================================================
+      renderModules(modules) {
+        // This section can be extended to show module details
+        // For now, modules are shown in summary section
+        // Fee, guarantee, and taxes are already displayed in summary
+        // Cost schedule is handled separately in renderSchedule
+      },
+
+      // ============================================================================
+      // COST SCHEDULE SECTION (if needed in separate section)
+      // ============================================================================
+      renderCostSchedule(costSchedule) {
+        if (!Array.isArray(costSchedule) || costSchedule.length === 0) {
+          return '<div class="text-center py-4 text-slate-500">برای هزینه‌های یک‌باره برنامه‌ای تعریف نشده است</div>';
+        }
+
+        return costSchedule.map(item => {
+          const day = Number(item.day || item.days || 0);
+          const percent = Number(item.percent || item.share || 0);
+          const amount = Number(item.amount || 0);
+
           return `
-            <tr class="${isPayment ? 'bg-blue-50' : ''}">
-              <td class="font-semibold persian-number">${toPersian(dayNum)}</td>
-              <td class="persian-number">${formatToman(principalBefore)}</td>
-              <td class="persian-number">${principalPayment > 0 ? `<span class="font-semibold text-green-600">${formatToman(principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
-              <td class="persian-number">${interestPayment > 0 ? `<span class="font-semibold text-orange-600">${formatToman(interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
-              <td class="persian-number">${costPayment > 0 ? `<span class="font-semibold text-amber-600">${formatToman(costPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
-              <td class="persian-number">${totalPayment > 0 ? `<span class="font-semibold text-blue-600">${formatToman(totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
-              <td class="text-sm text-slate-600">${description}</td>
-            </tr>
+            <div class="p-4 bg-slate-50 rounded-lg mb-3">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold">${this.helpers.formatDay(day)}</span>
+                ${percent > 0 ? `<span class="text-blue-600 persian-number">${this.helpers.formatPercent(percent)}</span>` : ''}
+              </div>
+              ${amount > 0 ? `<div class="mt-2 text-sm text-slate-600 persian-number">مبلغ: ${this.helpers.formatCurrency(amount)}</div>` : ''}
+            </div>
           `;
         }).join('');
-        
-        window.lastCalculationResult = data;
-        
-        document.getElementById('results').classList.remove('hidden');
-        document.getElementById('results').scrollIntoView({ behavior: 'smooth' });
+      },
+
+      // ============================================================================
+      // PAYMENT SCHEDULE TABLE RENDERING
+      // ============================================================================
+      renderSchedule(schedule) {
+        const tbody = document.getElementById('scheduleBody');
+        if (!tbody) return;
+
+        // Handle empty schedule
+        if (!Array.isArray(schedule) || schedule.length === 0) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="text-center py-12 text-slate-500">
+                <div class="text-xl font-semibold mb-3">هنوز برنامه بازپرداختی وجود ندارد</div>
+                <div class="text-base">ابتدا محاسبه را انجام دهید</div>
+              </td>
+            </tr>
+          `;
+          return;
+        }
+
+        // Filter payment days safely
+        const paymentDays = schedule.filter(d => {
+          if (!d || typeof d !== 'object') return false;
+          const raw = d._raw || {};
+          const principalPayment = Number(raw.principalPayment || 0);
+          const interestPayment = Number(raw.interestPayment || 0);
+          const costPayment = Number(raw.costPayment || 0);
+          return (principalPayment > 0 || interestPayment > 0 || costPayment > 0);
+        });
+
+        // Get first and last day safely
+        const firstDay = schedule[0] || null;
+        const lastDay = schedule[schedule.length - 1] || null;
+
+        // Build days to show with deduplication
+        const daysToShow = [firstDay, ...paymentDays, lastDay]
+          .filter(d => d !== null && d !== undefined && typeof d === 'object')
+          .filter((d, i, arr) => {
+            const dayNum = this.getDayNumber(d);
+            return arr.findIndex(x => this.getDayNumber(x) === dayNum) === i;
+          })
+          .sort((a, b) => this.getDayNumber(a) - this.getDayNumber(b));
+
+        // Render schedule rows
+        tbody.innerHTML = daysToShow.map(day => this.renderScheduleRow(day)).join('');
+      },
+
+      /**
+       * Extract day number from schedule entry
+       */
+      getDayNumber(day) {
+        if (!day || typeof day !== 'object') return 0;
+        const raw = day._raw || {};
+        return Number(raw.day || day.روز || 0);
+      },
+
+      /**
+       * Render a single schedule row
+       */
+      renderScheduleRow(day) {
+        if (!day || typeof day !== 'object') return '';
+
+        const raw = day._raw || {};
+        const dayNum = Number(raw.day || day.روز || 0);
+        const principalBefore = Number(raw.remainingPrincipalBefore || 0);
+        const principalPayment = Number(raw.principalPayment || 0);
+        const interestPayment = Number(raw.interestPayment || 0);
+        const costPayment = Number(raw.costPayment || 0);
+        const totalPayment = Number(raw.totalPayment || 0);
+        const description = (typeof day.توضیحات === 'string' && day.توضیحات.trim()) ? day.توضیحات : '—';
+        const isPayment = principalPayment > 0 || interestPayment > 0 || costPayment > 0;
+
+        return `
+          <tr class="${isPayment ? 'bg-blue-50' : ''}">
+            <td class="font-semibold persian-number">${this.helpers.persianNumber(dayNum)}</td>
+            <td class="persian-number">${this.helpers.formatCurrency(principalBefore)}</td>
+            <td class="persian-number">${principalPayment > 0 ? `<span class="font-semibold text-green-600">${this.helpers.formatCurrency(principalPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+            <td class="persian-number">${interestPayment > 0 ? `<span class="font-semibold text-orange-600">${this.helpers.formatCurrency(interestPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+            <td class="persian-number">${costPayment > 0 ? `<span class="font-semibold text-amber-600">${this.helpers.formatCurrency(costPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+            <td class="persian-number">${totalPayment > 0 ? `<span class="font-semibold text-blue-600">${this.helpers.formatCurrency(totalPayment)}</span>` : '<span class="text-slate-400">-</span>'}</td>
+            <td class="text-sm text-slate-600">${description}</td>
+          </tr>
+        `;
+      },
+
+      /**
+       * Show no-result state
+       */
+      showNoResult() {
+        const summaryCards = document.getElementById('summaryCards');
+        const tbody = document.getElementById('scheduleBody');
+
+        if (summaryCards) {
+          summaryCards.innerHTML = `
+            <div class="summary-card">
+              <div class="text-center py-8 text-white opacity-90">
+                <div class="text-xl font-semibold mb-2">نتیجه‌ای برای نمایش وجود ندارد</div>
+                <div class="text-base opacity-80">لطفاً محاسبه را انجام دهید</div>
+              </div>
+            </div>
+          `;
+        }
+
+        if (tbody) {
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="7" class="text-center py-12 text-slate-500">
+                <div class="text-xl font-semibold mb-3">هنوز برنامه بازپرداختی وجود ندارد</div>
+                <div class="text-base">ابتدا محاسبه را انجام دهید</div>
+              </td>
+            </tr>
+          `;
+        }
+
+        const resultsEl = document.getElementById('results');
+        if (resultsEl) {
+          resultsEl.classList.remove('hidden');
+        }
       },
 
       copyJSON() {
@@ -1507,11 +2162,58 @@
     };
 
     // ============================================================================
+    // ERROR BANNER MANAGEMENT
+    // ============================================================================
+
+    const ErrorBanner = {
+      getBanner() {
+        let banner = document.getElementById('errorBanner');
+        if (!banner) {
+          banner = document.createElement('div');
+          banner.id = 'errorBanner';
+          banner.className = 'error-banner hidden';
+          banner.innerHTML = `
+            <div class="flex-1">
+              <div class="font-semibold text-red-800" id="errorBannerMessage"></div>
+            </div>
+            <button type="button" class="error-banner-close" onclick="ErrorBanner.hide()">×</button>
+          `;
+          document.body.appendChild(banner);
+        }
+        return banner;
+      },
+
+      show(message) {
+        const banner = this.getBanner();
+        const messageEl = document.getElementById('errorBannerMessage');
+        if (messageEl) {
+          messageEl.textContent = message;
+        }
+        banner.classList.remove('hidden');
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+          this.hide();
+        }, 10000);
+      },
+
+      hide() {
+        const banner = document.getElementById('errorBanner');
+        if (banner) {
+          banner.classList.add('hidden');
+        }
+      }
+    };
+
+    // ============================================================================
     // FORM SUBMISSION
     // ============================================================================
 
     document.getElementById('calculatorForm').addEventListener('submit', async function(e) {
       e.preventDefault();
+      
+      // Hide any previous error banner
+      ErrorBanner.hide();
       
       if (!LoanModule.validate()) return;
       if (!PrincipalModule.validate()) return;
@@ -1557,28 +2259,90 @@
       submitBtn.innerHTML = '<span class="loading"></span> در حال محاسبه...';
       
       try {
-        const response = await fetch('https://n8nb2wall.darkube.app/webhook/calculate', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload)
+        // Fetch with timeout
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        
+        let response;
+        try {
+          response = await fetch('https://n8nb2wall.darkube.app/webhook/calculate', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          });
+        } catch (fetchError) {
+          clearTimeout(timeoutId);
+          if (fetchError.name === 'AbortError') {
+            throw new Error('Timeout: درخواست بیش از حد طول کشید');
+          }
+          throw fetchError;
+        }
+        
+        clearTimeout(timeoutId);
+        
+        // Handle HTTP errors
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => '');
+          console.error('HTTP Error:', response.status, errorText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        // Parse JSON response safely
+        let data;
+        try {
+          const responseText = await response.text();
+          if (!responseText || responseText.trim() === '') {
+            throw new Error('پاسخ خالی از سرور دریافت شد');
+          }
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON Parse Error:', parseError);
+          throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+        }
+        
+        // Validate response structure
+        if (!data || typeof data !== 'object') {
+          console.error('Invalid response structure:', data);
+          throw new Error('ساختار پاسخ نامعتبر است');
+        }
+        
+        // Handle backend errors (success: false)
+        if (data.success === false) {
+          const errorMessage = data.message || data.error || 'خطا در محاسبه';
+          console.error('Backend Error:', errorMessage, data);
+          throw new Error(errorMessage);
+        }
+        
+        // Validate critical data exists (gracefully handle missing data)
+        if (!data.schedule || !Array.isArray(data.schedule)) {
+          console.warn('Missing or invalid schedule in response:', data);
+          // Continue - ResultsModule.display() will handle empty schedule
+        }
+        
+        if (!data.summary) {
+          console.warn('Missing summary in response:', data);
+          // Continue - ResultsModule.display() will handle null summary
+        }
+        
+        // Display results (ResultsModule.display() handles all edge cases)
+        ResultsModule.display(data);
+        
+      } catch (error) {
+        // Log technical details to console only
+        console.error('Calculation Error:', {
+          error: error,
+          message: error.message,
+          stack: error.stack,
+          payload: payload
         });
         
-        if (!response.ok) {
-          throw new Error(`خطای HTTP: ${response.status}`);
-        }
+        // Show user-friendly error message
+        const userMessage = 'در محاسبه مشکلی پیش آمده. لطفاً ورودی‌ها را بررسی کنید.';
+        ErrorBanner.show(userMessage);
         
-        const data = await response.json();
-        
-        if (!data.success) {
-          throw new Error(data.message || data.error || 'خطا در محاسبه');
-        }
-        
-        ResultsModule.display(data);
-      } catch (error) {
-        alert('خطا در ارتباط با سرور: ' + error.message);
-        console.error('Error:', error);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
@@ -1586,28 +2350,264 @@
     });
 
     // ============================================================================
+    // APP CONTROLLER (Single Global - Orchestrates all components)
+    // ============================================================================
+
+    class AppController {
+      constructor() {
+        this.components = {
+          loanInput: new LoanInputComponent(),
+          // Additional components will be added here:
+          // principalSchedule: new PrincipalScheduleComponent(),
+          // interestSchedule: new InterestScheduleComponent(),
+          // feeModule: new FeeModuleComponent(),
+          // guaranteeModule: new GuaranteeModuleComponent(),
+          // taxModule: new TaxModuleComponent(),
+          // costSchedule: new CostScheduleComponent(),
+          // results: new ResultsComponent()
+        };
+        this.lastCalculationResult = null;
+        this.init();
+      }
+
+      init() {
+        // Render all components
+        Object.values(this.components).forEach(component => {
+          if (component && typeof component.render === 'function') {
+            component.render();
+          }
+        });
+
+        // Bind form submission
+        const form = document.getElementById('calculatorForm');
+        if (form) {
+          form.addEventListener('submit', (e) => this.handleSubmit(e));
+        }
+
+        // Initialize legacy modules for backward compatibility
+        if (typeof PrincipalModule !== 'undefined' && PrincipalModule.init) {
+          PrincipalModule.init();
+        }
+        if (typeof InterestModule !== 'undefined' && InterestModule.init) {
+          InterestModule.init();
+        }
+      }
+
+      notifyLoanAmountChange() {
+        // Notify dependent components when loan amount changes
+        if (this.components.feeModule && typeof this.components.feeModule.updateDisplay === 'function') {
+          this.components.feeModule.updateDisplay();
+        }
+        if (this.components.guaranteeModule && typeof this.components.guaranteeModule.updateDisplay === 'function') {
+          this.components.guaranteeModule.updateDisplay();
+        }
+      }
+
+      async handleSubmit(e) {
+        e.preventDefault();
+        
+        // Validate using components
+        if (!this.components.loanInput.validate()) return;
+        if (typeof PrincipalModule !== 'undefined' && !PrincipalModule.validate()) return;
+        if (typeof InterestModule !== 'undefined' && !InterestModule.validate()) return;
+        
+        // Collect data from components
+        const loanConfig = this.components.loanInput.getData();
+        const principalRepayments = typeof PrincipalModule !== 'undefined' ? PrincipalModule.getConfig() : [];
+        const interestPaymentDates = typeof InterestModule !== 'undefined' ? InterestModule.getConfig() : [];
+        
+        const payload = {
+          Loan: {
+            amount: loanConfig.amount,
+            monthlyInterestRate: loanConfig.monthlyInterestRate,
+            principalRepayments: principalRepayments,
+            interestPaymentDates: interestPaymentDates
+          },
+          Modules: {}
+        };
+        
+        // Collect module configs (using legacy modules for now)
+        if (typeof FeeModule !== 'undefined') {
+          const feeConfig = FeeModule.getConfig();
+          if (feeConfig) payload.Modules.fee = feeConfig;
+        }
+        
+        if (typeof GuaranteeModule !== 'undefined') {
+          const guaranteeConfig = GuaranteeModule.getConfig();
+          if (guaranteeConfig) payload.Modules.guarantee = guaranteeConfig;
+        }
+        
+        if (typeof TaxModule !== 'undefined') {
+          const taxConfig = TaxModule.getConfig();
+          if (taxConfig) payload.Modules.taxes = taxConfig;
+        }
+        
+        if (typeof CostScheduleModule !== 'undefined') {
+          const costScheduleConfig = CostScheduleModule.getConfig();
+          if (costScheduleConfig) payload.Modules.costSchedule = costScheduleConfig;
+        }
+        
+        // Submit to backend (using existing fetch logic)
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading"></span> در حال محاسبه...';
+        
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 30000);
+          
+          let response;
+          try {
+            response = await fetch('https://n8nb2wall.darkube.app/webhook/calculate', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+              signal: controller.signal
+            });
+          } catch (fetchError) {
+            clearTimeout(timeoutId);
+            if (fetchError.name === 'AbortError') {
+              throw new Error('Timeout: درخواست بیش از حد طول کشید');
+            }
+            throw fetchError;
+          }
+          
+          clearTimeout(timeoutId);
+          
+          if (!response.ok) {
+            const errorText = await response.text().catch(() => '');
+            console.error('HTTP Error:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          
+          let data;
+          try {
+            const responseText = await response.text();
+            if (!responseText || responseText.trim() === '') {
+              throw new Error('پاسخ خالی از سرور دریافت شد');
+            }
+            data = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+          }
+          
+          if (!data || typeof data !== 'object') {
+            console.error('Invalid response structure:', data);
+            throw new Error('ساختار پاسخ نامعتبر است');
+          }
+          
+          if (data.success === false) {
+            const errorMessage = data.message || data.error || 'خطا در محاسبه';
+            console.error('Backend Error:', errorMessage, data);
+            throw new Error(errorMessage);
+          }
+          
+          // Display results
+          if (typeof ResultsModule !== 'undefined') {
+            ResultsModule.display(data);
+          }
+          
+        } catch (error) {
+          console.error('Calculation Error:', {
+            error: error,
+            message: error.message,
+            stack: error.stack,
+            payload: payload
+          });
+          
+          const userMessage = 'در محاسبه مشکلی پیش آمده. لطفاً ورودی‌ها را بررسی کنید.';
+          if (typeof ErrorBanner !== 'undefined') {
+            ErrorBanner.show(userMessage);
+          } else {
+            alert(userMessage);
+          }
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = originalText;
+        }
+      }
+
+      reset() {
+        // Reset all components
+        Object.values(this.components).forEach(component => {
+          if (component && typeof component.reset === 'function') {
+            component.reset();
+          }
+        });
+        
+        // Reset legacy modules
+        if (typeof PrincipalModule !== 'undefined' && PrincipalModule.init) {
+          PrincipalModule.init();
+        }
+        if (typeof InterestModule !== 'undefined' && InterestModule.init) {
+          InterestModule.init();
+        }
+        if (typeof FeeModule !== 'undefined' && FeeModule.clear) {
+          FeeModule.clear();
+        }
+        if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.clear) {
+          GuaranteeModule.clear();
+        }
+        if (typeof TaxModule !== 'undefined' && TaxModule.clear) {
+          TaxModule.clear();
+        }
+        if (typeof CostScheduleModule !== 'undefined' && CostScheduleModule.clear) {
+          CostScheduleModule.clear();
+        }
+        
+        // Reset form
+        const form = document.getElementById('calculatorForm');
+        if (form) form.reset();
+        
+        const resultsEl = document.getElementById('results');
+        if (resultsEl) resultsEl.classList.add('hidden');
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // ============================================================================
     // INITIALIZATION
     // ============================================================================
 
     function resetForm() {
-      document.getElementById('calculatorForm').reset();
-      document.getElementById('loanAmountDisplay').textContent = '';
-      document.getElementById('totalPrincipal').innerHTML = '';
-      document.getElementById('results').classList.add('hidden');
-      
-      PrincipalModule.init();
-      InterestModule.init();
-      FeeModule.clear();
-      GuaranteeModule.clear();
-      TaxModule.clear();
-      CostScheduleModule.clear();
-      
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (window.appController) {
+        window.appController.reset();
+      } else {
+        // Fallback to legacy reset
+        document.getElementById('calculatorForm').reset();
+        document.getElementById('loanAmountDisplay').textContent = '';
+        document.getElementById('totalPrincipal').innerHTML = '';
+        document.getElementById('results').classList.add('hidden');
+        
+        if (typeof PrincipalModule !== 'undefined' && PrincipalModule.init) {
+          PrincipalModule.init();
+        }
+        if (typeof InterestModule !== 'undefined' && InterestModule.init) {
+          InterestModule.init();
+        }
+        if (typeof FeeModule !== 'undefined' && FeeModule.clear) {
+          FeeModule.clear();
+        }
+        if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.clear) {
+          GuaranteeModule.clear();
+        }
+        if (typeof TaxModule !== 'undefined' && TaxModule.clear) {
+          TaxModule.clear();
+        }
+        if (typeof CostScheduleModule !== 'undefined' && CostScheduleModule.clear) {
+          CostScheduleModule.clear();
+        }
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
 
+    // Initialize AppController as the single global
     document.addEventListener('DOMContentLoaded', function() {
-      PrincipalModule.init();
-      InterestModule.init();
+      window.appController = new AppController();
     });
   </script>
 </body>
