@@ -955,107 +955,50 @@
       calculateAuto() {
         if (!document.getElementById('autoPrincipalMode').checked) return;
         
-        const method = document.getElementById('principalSplitMethod').value;
         const numPayments = parseInt(formatInteger(document.getElementById('numberOfPayments').value)) || 0;
         const interval = parseInt(formatInteger(document.getElementById('principalPaymentInterval').value)) || 30;
         
-        if (numPayments <= 0) {
-          alert('تعداد پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+        // Simple validation: interval > 0 and numPayments > 0
+        if (interval <= 0 || numPayments <= 0) {
+          alert('Interval and number of payments must be greater than zero.');
           return;
         }
         
-        // For interval mode: simple calculation, no dependencies
-        if (method === 'interval') {
-          if (interval <= 0) {
-            alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
-            return;
-          }
+        // Generate days: X, 2X, 3X, ..., N*X
+        const rows = document.getElementById('principalRows');
+        rows.innerHTML = '';
+        
+        // Calculate amounts
+        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        const amountPerPayment = Math.floor(loanAmount / numPayments);
+        const remainder = loanAmount - (amountPerPayment * numPayments);
+        
+        for (let i = 0; i < numPayments; i++) {
+          // Day calculation: (i + 1) * interval
+          const days = (i + 1) * interval;
           
-          // Generate days: day = (i + 1) * interval
-          const rows = document.getElementById('principalRows');
-          rows.innerHTML = '';
+          // Amount calculation: rows 1..N-1 → amountPerPayment, row N → amountPerPayment + remainder
+          const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
           
-          const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-          const amountPerPayment = loanAmount > 0 ? Math.floor(loanAmount / numPayments) : 0;
-          const remainder = loanAmount > 0 ? loanAmount - (amountPerPayment * numPayments) : 0;
-          
-          for (let i = 0; i < numPayments; i++) {
-            const days = (i + 1) * interval;
-            const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
-            
-            const div = document.createElement('div');
-            div.className = 'row-item';
-            div.innerHTML = `
-              <div>
-                <label class="label">روز</label>
-                <input type="text" name="principalDay" class="input-field" value="${days}" />
-                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
-              </div>
-              <div>
-                <label class="label">مبلغ (تومان)</label>
-                <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
-                       oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
-              </div>
-              <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
-            `;
-            rows.appendChild(div);
-          }
-          
-          this.updateTotal();
-          return;
+          const div = document.createElement('div');
+          div.className = 'row-item';
+          div.innerHTML = `
+            <div>
+              <label class="label">روز</label>
+              <input type="text" name="principalDay" class="input-field" value="${days}" />
+              <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+            </div>
+            <div>
+              <label class="label">مبلغ (تومان)</label>
+              <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
+                     oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
+            </div>
+            <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
+          `;
+          rows.appendChild(div);
         }
         
-        // For equal mode: require totalLoanDuration
-        if (method === 'equal') {
-          // Try to derive totalLoanDuration from interest payment dates
-          const interestDates = [];
-          document.querySelectorAll('[name="interestDate"]').forEach(input => {
-            const day = parseInt(toEnglish(input.value));
-            if (day > 0) interestDates.push(day);
-          });
-          
-          let totalLoanDuration = 0;
-          if (interestDates.length > 0) {
-            totalLoanDuration = Math.max(...interestDates);
-          }
-          
-          if (totalLoanDuration <= 0) {
-            alert('برای تقسیم مساوی، لطفاً مدت کل وام را مشخص کنید');
-            return;
-          }
-          
-          const rows = document.getElementById('principalRows');
-          rows.innerHTML = '';
-          
-          const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-          const amountPerPayment = loanAmount > 0 ? Math.floor(loanAmount / numPayments) : 0;
-          const remainder = loanAmount > 0 ? loanAmount - (amountPerPayment * numPayments) : 0;
-          const daysPerPayment = totalLoanDuration / numPayments;
-          
-          for (let i = 0; i < numPayments; i++) {
-            const days = Math.round((i + 1) * daysPerPayment);
-            const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
-            
-            const div = document.createElement('div');
-            div.className = 'row-item';
-            div.innerHTML = `
-              <div>
-                <label class="label">روز</label>
-                <input type="text" name="principalDay" class="input-field" value="${days}" />
-                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
-              </div>
-              <div>
-                <label class="label">مبلغ (تومان)</label>
-                <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
-                       oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
-              </div>
-              <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
-            `;
-            rows.appendChild(div);
-          }
-          
-          this.updateTotal();
-        }
+        this.updateTotal();
       },
 
       addRow() {
@@ -1154,83 +1097,34 @@
       calculateAuto() {
         if (!document.getElementById('autoInterestMode').checked) return;
         
-        const method = document.getElementById('interestSplitMethod').value;
         const numPayments = parseInt(formatInteger(document.getElementById('numberOfInterestPayments').value)) || 0;
         const interval = parseInt(formatInteger(document.getElementById('interestPaymentInterval').value)) || 90;
         
-        if (numPayments <= 0) {
-          alert('تعداد پرداخت‌ها باید بزرگ‌تر از صفر باشد');
+        // Simple validation: interval > 0 and numPayments > 0
+        if (interval <= 0 || numPayments <= 0) {
+          alert('Interval and number of payments must be greater than zero.');
           return;
         }
         
-        // For interval mode: simple calculation, no dependencies
-        if (method === 'interval') {
-          if (interval <= 0) {
-            alert('فاصله بین پرداخت‌ها باید بزرگ‌تر از صفر باشد');
-            return;
-          }
-          
-          // Generate days: day = (i + 1) * interval
-          const rows = document.getElementById('interestDateRows');
-          rows.innerHTML = '';
-          
-          for (let i = 0; i < numPayments; i++) {
-            const days = (i + 1) * interval;
-            
-            const div = document.createElement('div');
-            div.className = 'row-item';
-            div.innerHTML = `
-              <div>
-                <label class="label">روز</label>
-                <input type="text" name="interestDate" class="input-field" value="${days}" />
-                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
-              </div>
-              <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
-            `;
-            rows.appendChild(div);
-          }
-          return;
-        }
+        // Generate days: X, 2X, 3X, ..., N*X
+        const rows = document.getElementById('interestDateRows');
+        rows.innerHTML = '';
         
-        // For equal mode: require totalLoanDuration
-        if (method === 'equal') {
-          // Try to derive totalLoanDuration from principal repayment days
-          const principalDays = [];
-          document.querySelectorAll('[name="principalDay"]').forEach(input => {
-            const day = parseInt(toEnglish(input.value));
-            if (day > 0) principalDays.push(day);
-          });
+        for (let i = 0; i < numPayments; i++) {
+          // Day calculation: (i + 1) * interval
+          const days = (i + 1) * interval;
           
-          let totalLoanDuration = 0;
-          if (principalDays.length > 0) {
-            totalLoanDuration = Math.max(...principalDays);
-          }
-          
-          if (totalLoanDuration <= 0) {
-            alert('برای تقسیم مساوی، لطفاً مدت کل وام را مشخص کنید');
-            return;
-          }
-          
-          const rows = document.getElementById('interestDateRows');
-          rows.innerHTML = '';
-          
-          const daysPerPayment = totalLoanDuration / numPayments;
-          
-          for (let i = 0; i < numPayments; i++) {
-            const days = Math.round((i + 1) * daysPerPayment);
-            
-            const div = document.createElement('div');
-            div.className = 'row-item';
-            div.innerHTML = `
-              <div>
-                <label class="label">روز</label>
-                <input type="text" name="interestDate" class="input-field" value="${days}" />
-                <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
-              </div>
-              <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
-            `;
-            rows.appendChild(div);
-          }
+          const div = document.createElement('div');
+          div.className = 'row-item';
+          div.innerHTML = `
+            <div>
+              <label class="label">روز</label>
+              <input type="text" name="interestDate" class="input-field" value="${days}" />
+              <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+          `;
+          rows.appendChild(div);
         }
       },
 
