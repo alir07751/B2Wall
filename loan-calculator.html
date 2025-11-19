@@ -928,6 +928,33 @@
     };
 
     // ============================================================================
+    // SIMPLIFIED SCHEDULE GENERATOR
+    // ============================================================================
+
+    function generateSimpleSchedule({
+      amount,
+      count,
+      intervalDays,
+      type = "equal",
+      manualDays = [],
+      manualAmounts = []
+    }) {
+      let days = [];
+      if (type === "equal") {
+        for (let i = 1; i <= count; i++) days.push(i * intervalDays);
+      }
+      if (type === "manual") days = manualDays;
+      let amounts = (type === "equal")
+          ? Array(count).fill(amount / count)
+          : manualAmounts;
+
+      return {
+        principalRepayments: days.map((d,i)=>({ days: d, amount: Math.round(amounts[i]) })),
+        interestPaymentDates: days
+      };
+    }
+
+    // ============================================================================
     // PRINCIPAL MODULE
     // ============================================================================
 
@@ -956,47 +983,51 @@
         if (!document.getElementById('autoPrincipalMode').checked) return;
         
         const numPayments = parseInt(formatInteger(document.getElementById('numberOfPayments').value)) || 0;
-        const interval = parseInt(formatInteger(document.getElementById('principalPaymentInterval').value)) || 30;
+        const intervalDays = parseInt(formatInteger(document.getElementById('principalPaymentInterval').value)) || 30;
         
         // Simple validation: interval > 0 and numPayments > 0
-        if (interval <= 0 || numPayments <= 0) {
+        if (intervalDays <= 0 || numPayments <= 0) {
           alert('Interval and number of payments must be greater than zero.');
           return;
         }
         
-        // Generate days: X, 2X, 3X, ..., N*X
+        // Get loan amount
+        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+        if (loanAmount <= 0) {
+          alert('لطفاً مبلغ وام را وارد کنید');
+          return;
+        }
+        
+        // Generate schedule using simplified generator
+        const schedule = generateSimpleSchedule({
+          amount: loanAmount,
+          count: numPayments,
+          intervalDays: intervalDays,
+          type: "equal"
+        });
+        
+        // Render rows from generated schedule
         const rows = document.getElementById('principalRows');
         rows.innerHTML = '';
         
-        // Calculate amounts
-        const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-        const amountPerPayment = Math.floor(loanAmount / numPayments);
-        const remainder = loanAmount - (amountPerPayment * numPayments);
-        
-        for (let i = 0; i < numPayments; i++) {
-          // Day calculation: (i + 1) * interval
-          const days = (i + 1) * interval;
-          
-          // Amount calculation: rows 1..N-1 → amountPerPayment, row N → amountPerPayment + remainder
-          const amount = i === numPayments - 1 ? amountPerPayment + remainder : amountPerPayment;
-          
+        schedule.principalRepayments.forEach(repayment => {
           const div = document.createElement('div');
           div.className = 'row-item';
           div.innerHTML = `
             <div>
               <label class="label">روز</label>
-              <input type="text" name="principalDay" class="input-field" value="${days}" />
+              <input type="text" name="principalDay" class="input-field" value="${repayment.days}" />
               <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
             </div>
             <div>
               <label class="label">مبلغ (تومان)</label>
-              <input type="text" name="principalAmount" class="input-field" value="${formatNumber(amount.toString())}" 
+              <input type="text" name="principalAmount" class="input-field" value="${formatNumber(repayment.amount.toString())}" 
                      oninput="this.value = formatNumber(this.value); PrincipalModule.updateTotal()" />
             </div>
             <button type="button" onclick="this.parentElement.remove(); PrincipalModule.updateTotal()" class="remove-btn">×</button>
           `;
           rows.appendChild(div);
-        }
+        });
         
         this.updateTotal();
       },
@@ -1048,15 +1079,51 @@
       },
 
       getConfig() {
-        const repayments = [];
-        document.querySelectorAll('[name="principalDay"]').forEach((dayInput, index) => {
-          const day = parseInt(toEnglish(dayInput.value));
-          const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
-          if (day > 0 && amount > 0) {
-            repayments.push({ days: day, amount: amount });
+        const isAutoMode = document.getElementById('autoPrincipalMode').checked;
+        
+        if (isAutoMode) {
+          // Auto mode: regenerate using generateSimpleSchedule
+          const numPayments = parseInt(formatInteger(document.getElementById('numberOfPayments').value)) || 0;
+          const intervalDays = parseInt(formatInteger(document.getElementById('principalPaymentInterval').value)) || 30;
+          const loanAmount = parseNumber(document.getElementById('loanAmount').value);
+          
+          if (numPayments > 0 && intervalDays > 0 && loanAmount > 0) {
+            const schedule = generateSimpleSchedule({
+              amount: loanAmount,
+              count: numPayments,
+              intervalDays: intervalDays,
+              type: "equal"
+            });
+            return schedule.principalRepayments;
           }
-        });
-        return repayments;
+          return [];
+        } else {
+          // Manual mode: collect from UI and format using generateSimpleSchedule
+          const manualDays = [];
+          const manualAmounts = [];
+          
+          document.querySelectorAll('[name="principalDay"]').forEach((dayInput, index) => {
+            const day = parseInt(toEnglish(dayInput.value));
+            const amount = parseNumber(document.querySelectorAll('[name="principalAmount"]')[index].value);
+            if (day > 0 && amount > 0) {
+              manualDays.push(day);
+              manualAmounts.push(amount);
+            }
+          });
+          
+          if (manualDays.length > 0) {
+            const schedule = generateSimpleSchedule({
+              amount: manualAmounts.reduce((sum, amt) => sum + amt, 0),
+              count: manualDays.length,
+              intervalDays: 0, // Not used in manual mode
+              type: "manual",
+              manualDays: manualDays,
+              manualAmounts: manualAmounts
+            });
+            return schedule.principalRepayments;
+          }
+          return [];
+        }
       },
 
       validate() {
@@ -1098,34 +1165,39 @@
         if (!document.getElementById('autoInterestMode').checked) return;
         
         const numPayments = parseInt(formatInteger(document.getElementById('numberOfInterestPayments').value)) || 0;
-        const interval = parseInt(formatInteger(document.getElementById('interestPaymentInterval').value)) || 90;
+        const intervalDays = parseInt(formatInteger(document.getElementById('interestPaymentInterval').value)) || 90;
         
         // Simple validation: interval > 0 and numPayments > 0
-        if (interval <= 0 || numPayments <= 0) {
+        if (intervalDays <= 0 || numPayments <= 0) {
           alert('Interval and number of payments must be greater than zero.');
           return;
         }
         
-        // Generate days: X, 2X, 3X, ..., N*X
+        // Generate schedule using simplified generator (amount not needed for interest)
+        const schedule = generateSimpleSchedule({
+          amount: 0, // Not used for interest
+          count: numPayments,
+          intervalDays: intervalDays,
+          type: "equal"
+        });
+        
+        // Render rows from generated schedule
         const rows = document.getElementById('interestDateRows');
         rows.innerHTML = '';
         
-        for (let i = 0; i < numPayments; i++) {
-          // Day calculation: (i + 1) * interval
-          const days = (i + 1) * interval;
-          
+        schedule.interestPaymentDates.forEach(day => {
           const div = document.createElement('div');
           div.className = 'row-item';
           div.innerHTML = `
             <div>
               <label class="label">روز</label>
-              <input type="text" name="interestDate" class="input-field" value="${days}" />
+              <input type="text" name="interestDate" class="input-field" value="${day}" />
               <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
             </div>
             <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
           `;
           rows.appendChild(div);
-        }
+        });
       },
 
       addRow() {
@@ -1145,12 +1217,45 @@
       },
 
       getConfig() {
-        const dates = [];
-        document.querySelectorAll('[name="interestDate"]').forEach(input => {
-          const day = parseInt(toEnglish(input.value));
-          if (day > 0) dates.push(day);
-        });
-        return dates;
+        const isAutoMode = document.getElementById('autoInterestMode').checked;
+        
+        if (isAutoMode) {
+          // Auto mode: regenerate using generateSimpleSchedule
+          const numPayments = parseInt(formatInteger(document.getElementById('numberOfInterestPayments').value)) || 0;
+          const intervalDays = parseInt(formatInteger(document.getElementById('interestPaymentInterval').value)) || 90;
+          
+          if (numPayments > 0 && intervalDays > 0) {
+            const schedule = generateSimpleSchedule({
+              amount: 0, // Not used for interest
+              count: numPayments,
+              intervalDays: intervalDays,
+              type: "equal"
+            });
+            return schedule.interestPaymentDates;
+          }
+          return [];
+        } else {
+          // Manual mode: collect from UI and format using generateSimpleSchedule
+          const manualDays = [];
+          
+          document.querySelectorAll('[name="interestDate"]').forEach(input => {
+            const day = parseInt(toEnglish(input.value));
+            if (day > 0) manualDays.push(day);
+          });
+          
+          if (manualDays.length > 0) {
+            const schedule = generateSimpleSchedule({
+              amount: 0, // Not used for interest
+              count: manualDays.length,
+              intervalDays: 0, // Not used in manual mode
+              type: "manual",
+              manualDays: manualDays,
+              manualAmounts: [] // Not used for interest
+            });
+            return schedule.interestPaymentDates;
+          }
+          return [];
+        }
       },
 
       validate() {
