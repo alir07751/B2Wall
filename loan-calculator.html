@@ -2205,150 +2205,6 @@
     };
 
     // ============================================================================
-    // FORM SUBMISSION
-    // ============================================================================
-
-    document.getElementById('calculatorForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-      
-      // Hide any previous error banner
-      ErrorBanner.hide();
-      
-      if (!LoanModule.validate()) return;
-      if (!PrincipalModule.validate()) return;
-      if (!InterestModule.validate()) return;
-      
-      const loanConfig = LoanModule.getConfig();
-      const principalRepayments = PrincipalModule.getConfig();
-      const interestPaymentDates = InterestModule.getConfig();
-      
-      const payload = {
-        Loan: {
-          amount: loanConfig.amount,
-          monthlyInterestRate: loanConfig.monthlyInterestRate,
-          principalRepayments: principalRepayments,
-          interestPaymentDates: interestPaymentDates
-        },
-        Modules: {}
-      };
-      
-      const feeConfig = FeeModule.getConfig();
-      if (feeConfig) {
-        payload.Modules.fee = feeConfig;
-      }
-      
-      const guaranteeConfig = GuaranteeModule.getConfig();
-      if (guaranteeConfig) {
-        payload.Modules.guarantee = guaranteeConfig;
-      }
-      
-      const taxConfig = TaxModule.getConfig();
-      if (taxConfig) {
-        payload.Modules.taxes = taxConfig;
-      }
-      
-      const costScheduleConfig = CostScheduleModule.getConfig();
-      if (costScheduleConfig) {
-        payload.Modules.costSchedule = costScheduleConfig;
-      }
-      
-      const submitBtn = document.getElementById('submitBtn');
-      const originalText = submitBtn.innerHTML;
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<span class="loading"></span> در حال محاسبه...';
-      
-      try {
-        // Fetch with timeout
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-        
-        let response;
-        try {
-          response = await fetch('https://n8nb2wall.darkube.app/webhook/calculate', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payload),
-            signal: controller.signal
-          });
-        } catch (fetchError) {
-          clearTimeout(timeoutId);
-          if (fetchError.name === 'AbortError') {
-            throw new Error('Timeout: درخواست بیش از حد طول کشید');
-          }
-          throw fetchError;
-        }
-        
-        clearTimeout(timeoutId);
-        
-        // Handle HTTP errors
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => '');
-          console.error('HTTP Error:', response.status, errorText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-        }
-        
-        // Parse JSON response safely
-        let data;
-        try {
-          const responseText = await response.text();
-          if (!responseText || responseText.trim() === '') {
-            throw new Error('پاسخ خالی از سرور دریافت شد');
-          }
-          data = JSON.parse(responseText);
-        } catch (parseError) {
-          console.error('JSON Parse Error:', parseError);
-          throw new Error('پاسخ نامعتبر از سرور دریافت شد');
-        }
-        
-        // Validate response structure
-        if (!data || typeof data !== 'object') {
-          console.error('Invalid response structure:', data);
-          throw new Error('ساختار پاسخ نامعتبر است');
-        }
-        
-        // Handle backend errors (success: false)
-        if (data.success === false) {
-          const errorMessage = data.message || data.error || 'خطا در محاسبه';
-          console.error('Backend Error:', errorMessage, data);
-          throw new Error(errorMessage);
-        }
-        
-        // Validate critical data exists (gracefully handle missing data)
-        if (!data.schedule || !Array.isArray(data.schedule)) {
-          console.warn('Missing or invalid schedule in response:', data);
-          // Continue - ResultsModule.display() will handle empty schedule
-        }
-        
-        if (!data.summary) {
-          console.warn('Missing summary in response:', data);
-          // Continue - ResultsModule.display() will handle null summary
-        }
-        
-        // Display results (ResultsModule.display() handles all edge cases)
-        ResultsModule.display(data);
-        
-      } catch (error) {
-        // Log technical details to console only
-        console.error('Calculation Error:', {
-          error: error,
-          message: error.message,
-          stack: error.stack,
-          payload: payload
-        });
-        
-        // Show user-friendly error message
-        const userMessage = 'در محاسبه مشکلی پیش آمده. لطفاً ورودی‌ها را بررسی کنید.';
-        ErrorBanner.show(userMessage);
-        
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.innerHTML = originalText;
-      }
-    });
-
-    // ============================================================================
     // APP CONTROLLER (Single Global - Orchestrates all components)
     // ============================================================================
 
@@ -2404,6 +2260,11 @@
 
       async handleSubmit(e) {
         e.preventDefault();
+        
+        // Hide any previous error banner
+        if (typeof ErrorBanner !== 'undefined') {
+          ErrorBanner.hide();
+        }
         
         // Validate using components
         if (!this.components.loanInput.validate()) return;
