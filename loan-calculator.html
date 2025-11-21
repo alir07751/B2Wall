@@ -1859,6 +1859,11 @@
       // ============================================================================
       display(data) {
         try {
+          // Handle array response from n8n - extract first item if it's an array
+          if (Array.isArray(data) && data.length > 0) {
+            data = data[0];
+          }
+
           // Defensive root logic - never throws
           if (!data || typeof data !== 'object') {
             console.warn('Invalid data structure in ResultsModule.display()', data);
@@ -1866,19 +1871,19 @@
             return;
           }
 
-          // Safe fallback structure
+          // Safe fallback structure - use summary.totalUpfrontFees directly
           const safeSummary = {
             totalInterestPaid: data.summary?.totalInterestPaid ?? 0,
             totalPrincipal: data.summary?.totalPrincipal ?? 0,
-            totalTaxes: data.modules?.taxes?.totalTaxes ?? 0,
-            totalUpfrontFees: (data.modules?.fee?.feeAmount ?? 0) + (data.modules?.guarantee?.guaranteeAmount ?? 0),
+            totalTaxes: data.summary?.totalTaxes ?? 0,
+            totalUpfrontFees: data.summary?.totalUpfrontFees ?? 0,
             finalDay: data.summary?.finalDay ?? 0
           };
 
           const safeModules = {
             fee: data.modules?.fee ?? { feeAmount: 0 },
             guarantee: data.modules?.guarantee ?? { guaranteeAmount: 0 },
-            taxes: data.modules?.taxes ?? { totalTaxes: 0, breakdown: [] },
+            taxes: data.modules?.taxes ?? {},
             costSchedule: Array.isArray(data.modules?.costSchedule) ? data.modules.costSchedule : []
           };
 
@@ -1949,11 +1954,15 @@
         summaryCards.innerHTML = `
           <div class="summary-card">
             <div class="summary-item">
+              <span class="summary-label">مبلغ کل وام</span>
+              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalPrincipal)}</span>
+            </div>
+            <div class="summary-item">
               <span class="summary-label">جمع کل سود پرداختی</span>
               <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalInterestPaid)}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">جمع کل کارمزدها</span>
+              <span class="summary-label">جمع کل هزینه‌های یک‌باره</span>
               <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalUpfrontFees)}</span>
             </div>
             <div class="summary-item">
@@ -1961,8 +1970,8 @@
               <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalTaxes)}</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">مجموع کل هزینه‌های یک‌باره</span>
-              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalUpfrontFees + summary.totalTaxes)}</span>
+              <span class="summary-label">مجموع کل پرداختی</span>
+              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalPrincipal + summary.totalInterestPaid + summary.totalUpfrontFees + summary.totalTaxes)}</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">روز نهایی تسویه</span>
@@ -2027,28 +2036,19 @@
           return;
         }
 
-        // Filter payment days safely
-        const paymentDays = schedule.filter(d => {
-          if (!d || typeof d !== 'object') return false;
-          const raw = d._raw || {};
-          const principalPayment = Number(raw.principalPayment || 0);
-          const interestPayment = Number(raw.interestPayment || 0);
-          const costPayment = Number(raw.costPayment || 0);
-          return (principalPayment > 0 || interestPayment > 0 || costPayment > 0);
+        // Sort schedule by day (already sorted from backend, but ensure it)
+        const sortedSchedule = [...schedule].sort((a, b) => {
+          const dayA = Number(a?.day ?? 0);
+          const dayB = Number(b?.day ?? 0);
+          return dayA - dayB;
         });
 
-        // Get first and last day safely
-        const firstDay = schedule[0] || null;
-        const lastDay = schedule[schedule.length - 1] || null;
-
-        // Build days to show with deduplication
-        const daysToShow = [firstDay, ...paymentDays, lastDay]
-          .filter(d => d !== null && d !== undefined && typeof d === 'object')
-          .filter((d, i, arr) => {
-            const dayNum = this.getDayNumber(d);
-            return arr.findIndex(x => this.getDayNumber(x) === dayNum) === i;
-          })
-          .sort((a, b) => this.getDayNumber(a) - this.getDayNumber(b));
+        // All schedule entries are payment days (already filtered by backend)
+        const daysToShow = sortedSchedule.filter(d => {
+          if (!d || typeof d !== 'object') return false;
+          const day = Number(d.day ?? 0);
+          return day > 0;
+        });
 
         // Render schedule rows
         tbody.innerHTML = daysToShow.map(day => this.renderScheduleRow(day)).join('');
@@ -2059,8 +2059,7 @@
        */
       getDayNumber(day) {
         if (!day || typeof day !== 'object') return 0;
-        const raw = day._raw || {};
-        return Number(raw.day || day.روز || 0);
+        return Number(day.day ?? 0);
       },
 
       /**
@@ -2069,14 +2068,18 @@
       renderScheduleRow(day) {
         if (!day || typeof day !== 'object') return '';
 
-        const raw = day._raw || {};
-        const dayNum = Number(raw.day || day.روز || 0);
-        const principalBefore = Number(raw.remainingPrincipalBefore || 0);
-        const principalPayment = Number(raw.principalPayment || 0);
-        const interestPayment = Number(raw.interestPayment || 0);
-        const costPayment = Number(raw.costPayment || 0);
-        const totalPayment = Number(raw.totalPayment || 0);
-        const description = (typeof day.توضیحات === 'string' && day.توضیحات.trim()) ? day.توضیحات : '—';
+        // Direct access to fields (no _raw wrapper)
+        const dayNum = Number(day.day ?? 0);
+        const principalBefore = Number(day.remainingPrincipalBefore ?? 0);
+        const principalPayment = Number(day.principalPayment ?? 0);
+        const interestPayment = Number(day.interestPayment ?? 0);
+        const costPayment = Number(day.costPayment ?? 0);
+        
+        // Calculate total payment from components
+        const totalPayment = principalPayment + interestPayment + costPayment;
+        
+        // Get description (handle both Persian and English keys)
+        const description = (day.description || day.توضیحات || '') || '—';
         const isPayment = principalPayment > 0 || interestPayment > 0 || costPayment > 0;
 
         return `
