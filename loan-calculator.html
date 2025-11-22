@@ -2098,6 +2098,51 @@
           };
 
           const safeSchedule = Array.isArray(data.schedule) ? data.schedule : [];
+          
+          // محاسبه مجدد میانگین اقساط با منطق صحیح
+          // اصل پول فقط زمانی در میانگین لحاظ می‌شود که به صورت اقساط برگردانده شود
+          if (safeSchedule.length > 0) {
+            // پیدا کردن اقساطی که پرداخت دارند
+            const paymentsWithAmount = safeSchedule.filter(row => {
+              const totalPayment = (row.principalPayment || 0) + (row.interestPayment || 0) + (row.costPayment || 0);
+              return totalPayment > 0;
+            });
+            
+            if (paymentsWithAmount.length > 0) {
+              // بررسی اینکه آیا اصل پول به صورت اقساط توزیع شده است یا یکجا
+              // اگر اصل پول در چند روز مختلف پرداخت شده باشد = اقساطی
+              // اگر فقط در آخرین روز پرداخت شده باشد = یکجا (در میانگین لحاظ نمی‌شود)
+              const principalPayments = paymentsWithAmount.filter(row => (row.principalPayment || 0) > 0);
+              
+              // تشخیص اینکه آیا اصل پول اقساطی است:
+              // اصل پول فقط زمانی در میانگین اقساط لحاظ می‌شود که به صورت اقساط (در چند روز مختلف) برگردانده شود
+              // اگر اصل پول در چند روز مختلف (2 یا بیشتر) پرداخت شده باشد = اقساطی → در میانگین لحاظ می‌شود
+              // اگر اصل پول فقط در یک روز پرداخت شده باشد = یکجا → در میانگین لحاظ نمی‌شود
+              const isPrincipalInInstallments = principalPayments.length > 1;
+              
+              // محاسبه میانگین: اگر اصل پول اقساطی است، همه چیز را لحاظ می‌کنیم
+              // اگر اصل پول یکجا است (یا وجود ندارد)، فقط سود و هزینه‌ها را لحاظ می‌کنیم
+              let totalPaymentsForAverage = 0;
+              
+              paymentsWithAmount.forEach(row => {
+                const principalPayment = row.principalPayment || 0;
+                const interestPayment = row.interestPayment || 0;
+                const costPayment = row.costPayment || 0;
+                
+                if (isPrincipalInInstallments) {
+                  // اصل پول اقساطی است: همه چیز را لحاظ می‌کنیم
+                  totalPaymentsForAverage += principalPayment + interestPayment + costPayment;
+                } else {
+                  // اصل پول یکجا است یا وجود ندارد: فقط سود و هزینه‌ها را لحاظ می‌کنیم
+                  totalPaymentsForAverage += interestPayment + costPayment;
+                }
+              });
+              
+              safeSummary.averagePayment = totalPaymentsForAverage / paymentsWithAmount.length;
+              safeSummary.numberOfPayments = paymentsWithAmount.length;
+              safeSummary.totalPaymentsSum = totalPaymentsForAverage;
+            }
+          }
 
           // Check for no-result state
           const hasAnyData = safeSummary.totalInterestPaid > 0 || 
