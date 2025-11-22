@@ -10,28 +10,51 @@
     * { box-sizing: border-box; }
     body { 
       font-family: 'Vazirmatn', 'IRANSans', system-ui, -apple-system, sans-serif; 
-      background: #f5f7fa; 
+      background: #f8fafc; 
       line-height: 1.6;
       direction: rtl;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
-    .container { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+    .container { 
+      max-width: 1200px; 
+      margin: 0 auto; 
+      padding: 1.5rem; 
+    }
+    @media (max-width: 640px) {
+      .container { padding: 1rem; }
+    }
     .card { 
       background: #fff; 
       border: 1px solid #e2e8f0; 
       border-radius: 1rem; 
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06); 
-      padding: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.1); 
+      padding: 1.75rem;
       margin-bottom: 1.5rem;
-      transition: box-shadow 0.2s;
+      transition: all 0.2s ease;
     }
-    .card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .card:hover { 
+      box-shadow: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+      border-color: #cbd5e1;
+    }
+    @media (max-width: 640px) {
+      .card { padding: 1.25rem; }
+    }
     .card-header {
-      font-size: 1.25rem;
+      font-size: 1.375rem;
       font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 1rem;
-      padding-bottom: 0.75rem;
+      color: #0f172a;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
       border-bottom: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    @media (max-width: 640px) {
+      .card-header { font-size: 1.125rem; margin-bottom: 1.25rem; }
     }
     .section-title {
       font-size: 1.1rem;
@@ -44,68 +67,101 @@
     }
     .input-field {
       width: 100%;
-      padding: 0.875rem 1rem;
+      padding: 0.875rem 1.125rem;
       border: 2px solid #cbd5e1;
       border-radius: 0.75rem;
       font-size: 1rem;
       font-weight: 500;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       background: #fff;
       font-family: 'Vazirmatn', system-ui;
       direction: ltr;
       text-align: left;
     }
+    .input-field:hover:not(:disabled) {
+      border-color: #94a3b8;
+    }
     .input-field:focus {
       outline: none;
       border-color: #3b82f6;
       box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      background: #fafbff;
     }
     .input-field.error {
       border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+    .input-field:disabled {
+      background: #f1f5f9;
+      cursor: not-allowed;
+      opacity: 0.6;
     }
     .btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      padding: 0.75rem 1.5rem;
+      padding: 0.875rem 1.75rem;
       border-radius: 0.75rem;
       font-weight: 600;
       font-size: 0.95rem;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
       cursor: pointer;
       border: none;
       font-family: 'Vazirmatn', system-ui;
+      position: relative;
+      overflow: hidden;
+    }
+    .btn:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
     }
     .btn-primary {
-      background: #3b82f6;
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
       color: #fff;
-      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.25);
     }
-    .btn-primary:hover {
-      background: #2563eb;
+    .btn-primary:hover:not(:disabled) {
+      background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.35);
+    }
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: 0 2px 6px rgba(59, 130, 246, 0.3);
     }
     .btn-primary:disabled {
       background: #94a3b8;
       cursor: not-allowed;
       transform: none;
+      box-shadow: none;
+      opacity: 0.6;
     }
     .btn-secondary {
-      background: #f1f5f9;
+      background: #f8fafc;
       color: #475569;
-      border: 1px solid #e2e8f0;
+      border: 2px solid #e2e8f0;
     }
-    .btn-secondary:hover {
+    .btn-secondary:hover:not(:disabled) {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #334155;
+    }
+    .btn-secondary:active:not(:disabled) {
       background: #e2e8f0;
     }
     .btn-success {
-      background: #10b981;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       color: #fff;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.25);
     }
-    .btn-success:hover {
-      background: #059669;
+    .btn-success:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+    }
+    .btn-success:active:not(:disabled) {
+      transform: translateY(0);
     }
     .btn-danger {
       background: #ef4444;
@@ -116,20 +172,22 @@
     }
     .label {
       display: block;
-      font-size: 0.9rem;
+      font-size: 0.9375rem;
       font-weight: 600;
-      color: #475569;
-      margin-bottom: 0.5rem;
+      color: #334155;
+      margin-bottom: 0.625rem;
+      letter-spacing: -0.01em;
     }
     .label-required::after {
       content: ' *';
       color: #ef4444;
+      font-weight: 700;
     }
     .help-text {
-      font-size: 0.8rem;
+      font-size: 0.8125rem;
       color: #64748b;
       margin-top: 0.5rem;
-      line-height: 1.5;
+      line-height: 1.6;
     }
     .error-text {
       font-size: 0.8rem;
@@ -145,15 +203,22 @@
       border-radius: 0.75rem;
       border: 1px solid #e2e8f0;
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      user-select: none;
     }
     .toggle-switch:hover {
       background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+    .toggle-switch:focus-within {
+      outline: 2px solid #3b82f6;
+      outline-offset: 2px;
     }
     .toggle-switch input[type="checkbox"] {
-      width: 2.5rem;
-      height: 1.5rem;
+      width: 2.75rem;
+      height: 1.625rem;
       cursor: pointer;
+      accent-color: #3b82f6;
     }
     .module-content {
       margin-top: 1rem;
@@ -169,12 +234,71 @@
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 0.75rem;
-      padding: 1rem;
+      padding: 1.25rem;
       margin-bottom: 1rem;
+      transition: all 0.2s ease;
+    }
+    .auto-split-section:hover {
+      border-color: #cbd5e1;
+    }
+    .auto-split-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      user-select: none;
+      padding: 0.25rem;
+      margin: -0.25rem;
+      border-radius: 0.5rem;
+      transition: background 0.2s ease;
+    }
+    .auto-split-header:hover {
+      background: rgba(148, 163, 184, 0.05);
+    }
+    .auto-split-header-content {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+    }
+    .auto-split-collapse-btn {
+      background: none;
+      border: none;
+      color: #64748b;
+      font-size: 1.25rem;
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 0.5rem;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .auto-split-collapse-btn:hover {
+      background: #e2e8f0;
+      color: #334155;
+    }
+    .auto-split-collapse-btn.collapsed {
+      transform: rotate(-90deg);
+    }
+    .auto-split-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+    }
+    .auto-split-content.hidden {
+      display: none;
+    }
+    .auto-split-content.expanded {
+      max-height: 1000px;
+      transition: max-height 0.3s ease-in;
+    }
+    .auto-split-content-inner {
+      padding-top: 1rem;
     }
     .auto-split-controls {
       display: grid;
-      grid-template-columns: 1fr 1fr auto;
+      grid-template-columns: 1fr 1fr;
       gap: 1rem;
       align-items: end;
       margin-top: 1rem;
@@ -188,52 +312,80 @@
       width: 100%;
       border-collapse: separate;
       border-spacing: 0;
-      font-size: 0.9rem;
+      font-size: 0.9375rem;
+      border-radius: 0.75rem;
+      overflow: hidden;
     }
     th {
-      background: #f1f5f9;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
       font-weight: 700;
-      padding: 1rem;
+      padding: 1.125rem 1rem;
       text-align: right;
       border-bottom: 2px solid #e2e8f0;
-      color: #334155;
+      color: #0f172a;
       white-space: nowrap;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.025em;
     }
     td {
-      padding: 0.875rem 1rem;
+      padding: 1rem;
       text-align: right;
-      border-bottom: 1px solid #e5e7eb;
-      color: #475569;
+      border-bottom: 1px solid #f1f5f9;
+      color: #334155;
+      vertical-align: middle;
     }
     tr:hover {
       background: #f8fafc;
     }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    @media (max-width: 768px) {
+      table { font-size: 0.8125rem; }
+      th, td { padding: 0.75rem 0.5rem; }
+    }
     .summary-card {
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #fff;
-      padding: 1.5rem;
+      padding: 2rem;
       border-radius: 1rem;
       margin-bottom: 1rem;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.25);
     }
     .summary-item {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid rgba(255,255,255,0.2);
+      padding: 1rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.15);
+      transition: background 0.2s ease;
+    }
+    .summary-item:hover {
+      background: rgba(255,255,255,0.05);
+      margin: 0 -1rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
+      border-radius: 0.5rem;
     }
     .summary-item:last-child {
       border-bottom: none;
     }
     .summary-label {
-      font-size: 0.9rem;
-      opacity: 0.9;
+      font-size: 0.9375rem;
+      opacity: 0.95;
+      font-weight: 500;
     }
     .summary-value {
-      font-size: 1.25rem;
+      font-size: 1.375rem;
       font-weight: 700;
       font-family: 'Vazirmatn', system-ui;
       font-feature-settings: 'tnum';
+      letter-spacing: -0.02em;
+    }
+    @media (max-width: 640px) {
+      .summary-card { padding: 1.5rem; }
+      .summary-value { font-size: 1.125rem; }
     }
     .loading {
       display: inline-block;
@@ -248,17 +400,42 @@
       to { transform: rotate(360deg); }
     }
     .row-item {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
       gap: 1rem;
-      align-items: flex-start;
-      margin-bottom: 1rem;
+      align-items: start;
+      margin-bottom: 0.75rem;
       padding: 1rem;
       background: #fafbfc;
       border-radius: 0.75rem;
       border: 1px solid #e2e8f0;
+      transition: all 0.2s ease;
+    }
+    .row-item:hover {
+      border-color: #cbd5e1;
+      background: #f8fafc;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
     }
     .row-item > div {
-      flex: 1;
+      min-width: 0;
+    }
+    .row-item .label {
+      font-size: 0.8125rem;
+      margin-bottom: 0.375rem;
+    }
+    .row-item .input-field {
+      padding: 0.625rem 0.875rem;
+      font-size: 0.9375rem;
+    }
+    .row-item .help-text {
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+    @media (max-width: 768px) {
+      .row-item {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+      }
     }
     .remove-btn {
       background: none;
@@ -267,16 +444,22 @@
       font-size: 1.5rem;
       cursor: pointer;
       padding: 0;
-      width: 2rem;
-      height: 2rem;
+      width: 2.25rem;
+      height: 2.25rem;
       display: flex;
       align-items: center;
       justify-content: center;
       border-radius: 0.5rem;
-      transition: all 0.2s;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
     }
     .remove-btn:hover {
       background: #fee2e2;
+      transform: scale(1.1);
+    }
+    .remove-btn:focus {
+      outline: 2px solid #ef4444;
+      outline-offset: 2px;
     }
     .persian-number {
       font-family: 'Vazirmatn', system-ui;
@@ -339,10 +522,10 @@
   </style>
 </head>
 <body>
-  <header class="bg-white border-b border-slate-200 shadow-sm">
+  <header class="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-50 backdrop-blur-sm bg-white/95">
     <div class="container">
-      <h1 class="text-2xl font-bold text-slate-900">محاسبه‌گر بازپرداخت وام</h1>
-      <p class="text-sm text-slate-600 mt-1">برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی روزانه</p>
+      <h1 class="text-2xl md:text-3xl font-bold text-slate-900 mb-1">محاسبه‌گر بازپرداخت وام</h1>
+      <p class="text-sm md:text-base text-slate-600">برنامه‌ریزی دقیق برای بازپرداخت وام با جدول تفصیلی روزانه</p>
     </div>
   </header>
 
@@ -374,42 +557,45 @@
         <div class="card-header">📅 برنامه بازپرداخت اصل پول</div>
         
         <div class="auto-split-section">
-          <label class="toggle-switch">
-            <input type="checkbox" id="autoPrincipalMode" onchange="PrincipalModule.toggleAuto()" />
-            <span class="font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
-          </label>
-          <div class="help-text mr-7 mt-2">با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند</div>
-          
-          <div id="autoPrincipalOptions" class="hidden mt-4">
-            <div class="auto-split-controls">
-            <div>
-                <label class="label">روش تقسیم</label>
-                <select id="principalSplitMethod" class="input-field">
-                  <option value="equal">تقسیم مساوی</option>
-                  <option value="interval">تقسیم بر اساس فاصله زمانی</option>
-                </select>
-                <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
-              </div>
-              <div id="principalIntervalContainer">
-                <label class="label">فاصله بین پرداخت‌ها (روز)</label>
-                <input type="text" id="principalPaymentInterval" class="input-field" value="30" placeholder="مثال: 30" 
-                       oninput="this.value = formatInteger(this.value)" />
-                <div class="help-text">فاصله زمانی بین هر پرداخت</div>
+          <div class="auto-split-header" onclick="PrincipalModule.toggleCollapse()">
+            <div class="auto-split-header-content">
+              <label class="toggle-switch" onclick="event.stopPropagation()">
+                <input type="checkbox" id="autoPrincipalMode" onchange="PrincipalModule.toggleAuto()" />
+                <span class="font-semibold text-slate-900">تقسیم خودکار اصل پول</span>
+              </label>
+              <div class="help-text">با فعال کردن این گزینه، سیستم به صورت خودکار اصل پول را تقسیم می‌کند</div>
             </div>
-            <div>
-                <label class="label">تعداد پرداخت‌ها</label>
-                <input type="text" id="numberOfPayments" class="input-field" placeholder="مثال: 4" 
-                       oninput="this.value = formatInteger(this.value)" />
-                <div class="help-text">تعداد کل پرداخت‌های اصل پول</div>
-              </div>
-            </div>
-            <button type="button" onclick="PrincipalModule.calculateAuto()" class="btn btn-primary mt-4">
-              🧮 محاسبه خودکار
+            <button type="button" class="auto-split-collapse-btn collapsed" id="principalCollapseBtn" onclick="event.stopPropagation()">
+              ▼
             </button>
+          </div>
+          
+          <div id="autoPrincipalOptions" class="auto-split-content hidden">
+            <div class="auto-split-content-inner">
+              <div class="auto-split-controls">
+                <div id="principalIntervalContainer">
+                  <label class="label">فاصله بین پرداخت‌ها (روز)</label>
+                  <input type="text" id="principalPaymentInterval" class="input-field" value="30" placeholder="مثال: 30" 
+                         oninput="this.value = formatInteger(this.value)" />
+                  <div class="help-text">فاصله زمانی بین هر پرداخت</div>
+              </div>
+              <div>
+                  <label class="label">تعداد پرداخت‌ها</label>
+                  <input type="text" id="numberOfPayments" class="input-field" placeholder="مثال: 4" 
+                         oninput="this.value = formatInteger(this.value)" />
+                  <div class="help-text">تعداد کل پرداخت‌های اصل پول</div>
+                </div>
+              </div>
+              <button type="button" onclick="PrincipalModule.calculateAuto()" class="btn btn-primary mt-4">
+                🧮 محاسبه خودکار
+              </button>
             </div>
           </div>
+        </div>
 
-        <div id="principalRows" class="space-y-3"></div>
+        <div id="principalRowsContainer" class="max-h-96 overflow-y-auto space-y-3 p-2 -m-2 mb-2">
+          <div id="principalRows" class="space-y-3"></div>
+        </div>
         
         <button type="button" onclick="PrincipalModule.addRow()" class="btn btn-secondary mt-3">
           ➕ افزودن ردیف پرداخت
@@ -423,42 +609,45 @@
         <div class="card-header">📆 تاریخ‌های پرداخت سود</div>
         
         <div class="auto-split-section">
-          <label class="toggle-switch">
-            <input type="checkbox" id="autoInterestMode" onchange="InterestModule.toggleAuto()" />
-            <span class="font-semibold text-slate-900">تقسیم خودکار تاریخ‌های پرداخت سود</span>
-          </label>
-          <div class="help-text mr-7 mt-2">با فعال کردن این گزینه، سیستم به صورت خودکار تاریخ‌های پرداخت سود را تقسیم می‌کند</div>
+          <div class="auto-split-header" onclick="InterestModule.toggleCollapse()">
+            <div class="auto-split-header-content">
+              <label class="toggle-switch" onclick="event.stopPropagation()">
+                <input type="checkbox" id="autoInterestMode" onchange="InterestModule.toggleAuto()" />
+                <span class="font-semibold text-slate-900">تقسیم خودکار تاریخ‌های پرداخت سود</span>
+              </label>
+              <div class="help-text">با فعال کردن این گزینه، سیستم به صورت خودکار تاریخ‌های پرداخت سود را تقسیم می‌کند</div>
+            </div>
+            <button type="button" class="auto-split-collapse-btn collapsed" id="interestCollapseBtn" onclick="event.stopPropagation()">
+              ▼
+            </button>
+          </div>
           
-          <div id="autoInterestOptions" class="hidden mt-4">
-            <div class="auto-split-controls">
-              <div>
-                <label class="label">روش تقسیم</label>
-                <select id="interestSplitMethod" class="input-field">
-                  <option value="equal">تقسیم مساوی</option>
-                  <option value="interval">تقسیم بر اساس فاصله زمانی</option>
-                </select>
-                <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
+          <div id="autoInterestOptions" class="auto-split-content hidden">
+            <div class="auto-split-content-inner">
+              <div class="auto-split-controls">
+                <div id="interestIntervalContainer">
+                  <label class="label">فاصله بین پرداخت‌ها (روز)</label>
+                  <input type="text" id="interestPaymentInterval" class="input-field" value="90" placeholder="مثال: 90" 
+                         oninput="this.value = formatInteger(this.value)" />
+                  <div class="help-text">فاصله زمانی بین هر پرداخت سود</div>
+              </div>
+                <div>
+                  <label class="label">تعداد پرداخت‌ها</label>
+                  <input type="text" id="numberOfInterestPayments" class="input-field" placeholder="مثال: 2" 
+                         oninput="this.value = formatInteger(this.value)" />
+                  <div class="help-text">تعداد کل پرداخت‌های سود</div>
             </div>
-              <div id="interestIntervalContainer">
-                <label class="label">فاصله بین پرداخت‌ها (روز)</label>
-                <input type="text" id="interestPaymentInterval" class="input-field" value="90" placeholder="مثال: 90" 
-                       oninput="this.value = formatInteger(this.value)" />
-                <div class="help-text">فاصله زمانی بین هر پرداخت سود</div>
+          </div>
+              <button type="button" onclick="InterestModule.calculateAuto()" class="btn btn-primary mt-4">
+                🧮 محاسبه خودکار
+              </button>
             </div>
-              <div>
-                <label class="label">تعداد پرداخت‌ها</label>
-                <input type="text" id="numberOfInterestPayments" class="input-field" placeholder="مثال: 2" 
-                       oninput="this.value = formatInteger(this.value)" />
-                <div class="help-text">تعداد کل پرداخت‌های سود</div>
           </div>
         </div>
-            <button type="button" onclick="InterestModule.calculateAuto()" class="btn btn-primary mt-4">
-              🧮 محاسبه خودکار
-            </button>
-        </div>
-      </div>
 
-        <div id="interestDateRows" class="space-y-3"></div>
+        <div id="interestDateRowsContainer" class="max-h-96 overflow-y-auto space-y-3 p-2 -m-2 mb-2">
+          <div id="interestDateRows" class="space-y-3"></div>
+        </div>
         
         <button type="button" onclick="InterestModule.addRow()" class="btn btn-secondary mt-3">
           ➕ افزودن تاریخ پرداخت
@@ -552,36 +741,50 @@
           </label>
           <div id="costScheduleModuleContent" class="module-content hidden">
             <div class="help-text mb-4">
-              هزینه‌های یک‌باره (کارمزد، ضمانت و مجموع مالیات‌ها) را می‌توانید در یک یا چند روز از دوره پرداخت کنید. مجموع درصدها باید ۱۰۰٪ باشد.
+              هزینه‌های یک‌باره (کارمزد و ضمانت) را می‌توانید در چند قسمت و با فاصله مشخص تقسیم کنید. سیستم به صورت خودکار هزینه‌ها را به طور مساوی تقسیم می‌کند.
         </div>
             
             <!-- Auto-Split Section for Cost Schedule -->
             <div class="auto-split-section">
-              <label class="toggle-switch">
-                <input type="checkbox" id="autoCostScheduleMode" onchange="CostScheduleModule.toggleAutoSplit()" />
-                <span class="font-semibold text-slate-900">تقسیم خودکار هزینه‌ها</span>
-              </label>
-              <div class="help-text mr-7 mt-2">با فعال کردن این گزینه، می‌توانید هزینه‌ها را به صورت خودکار تقسیم کنید</div>
-              
-              <div id="autoCostScheduleOptions" class="hidden mt-4">
-                <div class="auto-split-controls">
-            <div>
-                    <label class="label">روش تقسیم هزینه‌ها</label>
-                    <select id="costSplitMethod" class="input-field">
-                      <option value="equal">تقسیم مساوی</option>
-                      <option value="weighted">تقسیم متناسب با روز</option>
-                      <option value="normalize">تقسیم درصدی (پیشرفته)</option>
-              </select>
-                    <div class="help-text">روش تقسیم خودکار را انتخاب کنید</div>
-            </div>
-            </div>
-                <button type="button" onclick="CostScheduleModule.calculateAuto()" class="btn btn-primary mt-4">
-                  🧮 محاسبه خودکار
+              <div class="auto-split-header" onclick="CostScheduleModule.toggleCollapse()">
+                <div class="auto-split-header-content">
+                  <label class="toggle-switch" onclick="event.stopPropagation()">
+                    <input type="checkbox" id="autoCostScheduleMode" onchange="CostScheduleModule.toggleAutoSplit()" />
+                    <span class="font-semibold text-slate-900">تقسیم خودکار هزینه‌ها</span>
+                  </label>
+                  <div class="help-text">با فعال کردن این گزینه، می‌توانید هزینه‌ها را به صورت خودکار تقسیم کنید</div>
+                </div>
+                <button type="button" class="auto-split-collapse-btn collapsed" id="costScheduleCollapseBtn" onclick="event.stopPropagation()">
+                  ▼
                 </button>
+              </div>
+              
+              <div id="autoCostScheduleOptions" class="auto-split-content hidden">
+                <div class="auto-split-content-inner">
+                  <div class="auto-split-controls">
+                    <div id="costScheduleIntervalContainer">
+                      <label class="label">فاصله بین پرداخت‌ها (روز)</label>
+                      <input type="text" id="costSchedulePaymentInterval" class="input-field" value="30" placeholder="مثال: 30" 
+                             oninput="this.value = formatInteger(this.value)" />
+                      <div class="help-text">فاصله زمانی بین هر تقسیم هزینه</div>
+                    </div>
+                    <div>
+                      <label class="label">تعداد پرداخت‌ها</label>
+                      <input type="text" id="numberOfCostPayments" class="input-field" placeholder="مثال: 4" 
+                             oninput="this.value = formatInteger(this.value)" />
+                      <div class="help-text">تعداد کل تقسیم‌های هزینه</div>
+                    </div>
+                  </div>
+                  <button type="button" onclick="CostScheduleModule.calculateAuto()" class="btn btn-primary mt-4">
+                    🧮 محاسبه خودکار
+                  </button>
+                </div>
+              </div>
             </div>
-      </div>
 
-            <div id="costScheduleRows" class="space-y-3 mt-4"></div>
+            <div id="costScheduleRowsContainer" class="max-h-96 overflow-y-auto space-y-3 p-2 -m-2 mb-2 mt-4">
+              <div id="costScheduleRows" class="space-y-3"></div>
+            </div>
             <button type="button" onclick="CostScheduleModule.addRow()" class="btn btn-secondary mt-3">
               ➕ افزودن ردیف زمان‌بندی
             </button>
@@ -604,14 +807,14 @@
         <div class="card-header">📊 خلاصه نتایج</div>
         <div id="summaryCards" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         
-        <div class="mt-6 flex gap-3">
-          <button type="button" onclick="ResultsModule.copyJSON()" class="btn btn-success">
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button type="button" onclick="ResultsModule.copyJSON()" class="btn btn-success flex-1 min-w-[140px]">
             📋 کپی نتایج (JSON)
           </button>
-          <button type="button" onclick="ResultsModule.downloadJSON()" class="btn btn-success">
+          <button type="button" onclick="ResultsModule.downloadJSON()" class="btn btn-success flex-1 min-w-[140px]">
             💾 دانلود فایل JSON
           </button>
-          <button type="button" onclick="resetForm()" class="btn btn-secondary">
+          <button type="button" onclick="resetForm()" class="btn btn-secondary flex-1 min-w-[140px]">
             🔄 محاسبه مجدد
           </button>
         </div>
@@ -970,12 +1173,39 @@
       
       if (isChecked) {
         options.classList.remove('hidden');
+        this.expandCollapse(true); // Expand automatically when toggle is enabled
           rows.innerHTML = '';
       } else {
         options.classList.add('hidden');
+        this.expandCollapse(false);
           if (rows.children.length === 0) {
             this.addRow();
           }
+        }
+      },
+
+      toggleCollapse() {
+        const isChecked = document.getElementById('autoPrincipalMode').checked;
+        if (!isChecked) return; // Only allow collapse when auto mode is enabled
+        
+        const options = document.getElementById('autoPrincipalOptions');
+        const isExpanded = options.classList.contains('expanded');
+        this.expandCollapse(!isExpanded);
+      },
+
+      expandCollapse(expand) {
+        const options = document.getElementById('autoPrincipalOptions');
+        const btn = document.getElementById('principalCollapseBtn');
+        
+        if (!options || !btn) return;
+        
+        if (expand) {
+          options.classList.add('expanded');
+          options.classList.remove('hidden');
+          btn.classList.remove('collapsed');
+        } else {
+          options.classList.remove('expanded');
+          btn.classList.add('collapsed');
         }
       },
 
@@ -1152,12 +1382,39 @@
       
       if (isChecked) {
         options.classList.remove('hidden');
+        this.expandCollapse(true); // Expand automatically when toggle is enabled
           rows.innerHTML = '';
       } else {
         options.classList.add('hidden');
+        this.expandCollapse(false);
           if (rows.children.length === 0) {
             this.addRow();
           }
+        }
+      },
+
+      toggleCollapse() {
+        const isChecked = document.getElementById('autoInterestMode').checked;
+        if (!isChecked) return; // Only allow collapse when auto mode is enabled
+        
+        const options = document.getElementById('autoInterestOptions');
+        const isExpanded = options.classList.contains('expanded');
+        this.expandCollapse(!isExpanded);
+      },
+
+      expandCollapse(expand) {
+        const options = document.getElementById('autoInterestOptions');
+        const btn = document.getElementById('interestCollapseBtn');
+        
+        if (!options || !btn) return;
+        
+        if (expand) {
+          options.classList.add('expanded');
+          options.classList.remove('hidden');
+          btn.classList.remove('collapsed');
+        } else {
+          options.classList.remove('expanded');
+          btn.classList.add('collapsed');
         }
       },
 
@@ -1423,13 +1680,9 @@
         <div>
             <label class="label">نرخ مالیات (%)</label>
             <input type="text" name="taxRate" class="input-field" placeholder="مثال: 9" 
-                   oninput="this.value = formatDecimal(this.value); TaxModule.updateAll()" />
+                   oninput="this.value = formatDecimal(this.value)" />
         </div>
-        <div class="self-end">
-          <div class="text-xs text-slate-600 mb-1">مبلغ مالیات</div>
-            <div class="font-bold text-blue-700 tax-amount persian-number">۰ تومان</div>
-        </div>
-          <button type="button" onclick="this.parentElement.remove(); TaxModule.updateAll()" class="remove-btn">×</button>
+          <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
         `;
         container.appendChild(div);
         this.updateAll();
@@ -1526,104 +1779,11 @@
       },
 
       updateAll() {
-      const loanAmount = parseNumber(document.getElementById('loanAmount').value);
-        const feeConfig = FeeModule.getConfig();
-        const guaranteeConfig = GuaranteeModule.getConfig();
-        
-        let feeAmount = 0;
-        if (feeConfig) {
-          if (feeConfig.mode === 'percentage') {
-            feeAmount = loanAmount * (feeConfig.rate / 100);
-          } else if (feeConfig.mode === 'fixed') {
-            feeAmount = feeConfig.amount;
-          }
-        }
-        
-        let guaranteeAmount = 0;
-        if (guaranteeConfig) {
-          guaranteeAmount = loanAmount * (guaranteeConfig.rate / 100);
-        }
-        
-        // Get real interest if available, otherwise try to estimate
-        const realInterest = this.getRealInterest();
-        const estimatedInterest = realInterest === null ? this.estimateInterest() : null;
-        const interestAmount = realInterest !== null ? realInterest : (estimatedInterest !== null ? estimatedInterest : 0);
-        const isInterestEstimated = realInterest === null && estimatedInterest !== null;
-        const isInterestUnknown = realInterest === null && estimatedInterest === null;
-        
-        const baseValues = {
-          interest: interestAmount,
-          fees: feeAmount,
-          guarantee: guaranteeAmount
-        };
-        
-        let total = 0;
-        document.querySelectorAll('#taxRows .row-item').forEach(row => {
-      const baseSel = row.querySelector('[name="taxBase"]');
-      const rateInput = row.querySelector('[name="taxRate"]');
-      const amountEl = row.querySelector('.tax-amount');
-          
-      if (!baseSel || !rateInput || !amountEl) return;
-          
-      const base = baseSel.value;
-      const rate = parseNumber(rateInput.value);
-          
-          // Handle interest base specially
-          if (base === 'interest') {
-            if (isInterestUnknown) {
-              // Show placeholder when interest is completely unknown
-              amountEl.textContent = 'بسته به سود نهایی محاسبه می‌شود';
-              amountEl.className = 'font-bold text-slate-400 italic persian-number';
-              return; // Don't add to total
-            } else if (isInterestEstimated && rate > 0) {
-              // Show estimated value
-              const estimatedTax = estimatedInterest * (rate / 100);
-              amountEl.textContent = `حدودی: ${formatToman(estimatedTax)}`;
-              amountEl.className = 'font-bold text-amber-500 persian-number';
-              total += estimatedTax; // Add estimated to total
-              return;
-            } else if (realInterest !== null && rate > 0) {
-              // Show real value
-              const taxAmount = realInterest * (rate / 100);
-              amountEl.textContent = formatToman(taxAmount);
-              amountEl.className = 'font-bold text-blue-700 persian-number';
-              total += taxAmount;
-              return;
-            } else {
-              // Rate is 0 or invalid
-              amountEl.textContent = formatToman(0);
-              amountEl.className = 'font-bold text-blue-700 persian-number';
-              return;
-            }
-          }
-          
-          // Handle fees and guarantee (always known)
-          let baseAmount = baseValues[base] || 0;
-          const taxAmount = baseAmount * (rate / 100);
-          amountEl.textContent = formatToman(taxAmount || 0);
-          amountEl.className = 'font-bold text-blue-700 persian-number';
-          total += taxAmount;
-        });
-        
-      const totalBox = document.getElementById('totalTaxes');
-      if (totalBox) {
-          // Check if any tax is estimated
-          const hasEstimatedTax = Array.from(document.querySelectorAll('#taxRows .row-item')).some(row => {
-            const baseSel = row.querySelector('[name="taxBase"]');
-            return baseSel && baseSel.value === 'interest' && isInterestEstimated;
-          });
-          
-          if (total > 0 || hasEstimatedTax) {
-            const totalClass = hasEstimatedTax ? 'text-amber-500' : 'text-blue-700';
-        totalBox.innerHTML = `
-          <div class="flex items-center justify-between">
-                <span class="font-semibold">${hasEstimatedTax ? 'مجموع مالیات‌ها (حدودی):' : 'مجموع مالیات‌ها:'}</span>
-                <span class="text-lg font-bold ${totalClass} persian-number">${formatToman(total)}</span>
-          </div>
-        `;
-          } else {
-            totalBox.innerHTML = '';
-          }
+        // مالیات‌ها فقط بعد از محاسبه نهایی قابل نمایش هستند
+        // در اینجا چیزی نمایش نمی‌دهیم
+        const totalBox = document.getElementById('totalTaxes');
+        if (totalBox) {
+          totalBox.innerHTML = '';
         }
       },
 
@@ -1675,67 +1835,92 @@
         const options = document.getElementById('autoCostScheduleOptions');
         if (isEnabled) {
           options.classList.remove('hidden');
+          this.expandCollapse(true); // Expand automatically when toggle is enabled
         } else {
           options.classList.add('hidden');
+          this.expandCollapse(false);
+        }
+      },
+
+      toggleCollapse() {
+        const isEnabled = document.getElementById('autoCostScheduleMode').checked;
+        if (!isEnabled) return; // Only allow collapse when auto mode is enabled
+        
+        const options = document.getElementById('autoCostScheduleOptions');
+        const isExpanded = options.classList.contains('expanded');
+        this.expandCollapse(!isExpanded);
+      },
+
+      expandCollapse(expand) {
+        const options = document.getElementById('autoCostScheduleOptions');
+        const btn = document.getElementById('costScheduleCollapseBtn');
+        
+        if (!options || !btn) return;
+        
+        if (expand) {
+          options.classList.add('expanded');
+          options.classList.remove('hidden');
+          btn.classList.remove('collapsed');
+        } else {
+          options.classList.remove('expanded');
+          btn.classList.add('collapsed');
         }
       },
 
       calculateAuto() {
         if (!document.getElementById('autoCostScheduleMode').checked) return;
         
-        const method = document.getElementById('costSplitMethod').value;
-        const rows = document.querySelectorAll('#costScheduleRows .row-item');
+        const numPayments = parseInt(formatInteger(document.getElementById('numberOfCostPayments').value)) || 0;
+        const intervalDays = parseInt(formatInteger(document.getElementById('costSchedulePaymentInterval').value)) || 30;
         
-        if (rows.length === 0) {
-          alert('لطفاً ابتدا ردیف‌های زمان‌بندی را اضافه کنید');
-        return;
-      }
-
-        // Collect days and existing percentages
-        const entries = [];
-        let hasInvalidDay = false;
-        
-        rows.forEach(row => {
-          const dayInput = row.querySelector('[name="costDay"]');
-          const percentInput = row.querySelector('[name="costPercent"]');
-        const day = parseInt(toEnglish(dayInput.value));
-          const percent = parseNumber(percentInput.value);
-          
-          if (day <= 0) {
-            hasInvalidDay = true;
-            dayInput.classList.add('error');
-          } else {
-            dayInput.classList.remove('error');
-          }
-          
-          entries.push({ day, percent });
-        });
-        
-        if (hasInvalidDay) {
-          alert('روز باید بزرگ‌تر از صفر باشد');
+        // Validation
+        if (intervalDays <= 0 || numPayments <= 0) {
+          alert('فاصله بین پرداخت‌ها و تعداد پرداخت‌ها باید بزرگ‌تر از صفر باشد');
           return;
         }
         
-        // Calculate percentages based on method
-        let percentages = [];
-        const days = entries.map(e => e.day);
-        
-        if (method === 'equal') {
-          percentages = AutoSplit.equalSplit(days);
-        } else if (method === 'weighted') {
-          percentages = AutoSplit.weightedSplit(days);
-        } else if (method === 'normalize') {
-          percentages = AutoSplit.normalizeSplit(entries);
+        // Generate days based on interval
+        const days = [];
+        for (let i = 1; i <= numPayments; i++) {
+          days.push(i * intervalDays);
         }
         
-        // Apply to rows
-        AutoSplit.applyToRows('#costScheduleRows', percentages, 'costDay', 'costPercent');
+        // Clear existing rows
+        const rowsContainer = document.getElementById('costScheduleRows');
+        rowsContainer.innerHTML = '';
+        
+        // Calculate equal percentage for each day
+        const percentPerDay = 100 / numPayments;
+        
+        // Create rows for each day (بدون نمایش درصد - فقط روز)
+        days.forEach((day, index) => {
+          const div = document.createElement('div');
+          div.className = 'row-item';
+          div.innerHTML = `
+            <div>
+              <label class="label">روز پرداخت</label>
+              <input type="text" name="costDay" class="input-field" value="${day}" 
+                     oninput="this.value = formatInteger(this.value)" />
+              <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
+            </div>
+            <div style="display: none;">
+              <input type="hidden" name="costPercent" value="${percentPerDay.toFixed(2)}" />
+            </div>
+            <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+          `;
+          rowsContainer.appendChild(div);
+        });
         
         // Update total display
         this.updateTotal();
       },
 
       addRow() {
+        // فقط در حالت manual mode (وقتی auto mode فعال نیست)
+        if (document.getElementById('autoCostScheduleMode').checked) {
+          alert('برای افزودن ردیف دستی، ابتدا حالت تقسیم خودکار را غیرفعال کنید');
+          return;
+        }
         const container = document.getElementById('costScheduleRows');
         const div = document.createElement('div');
         div.className = 'row-item';
@@ -1743,40 +1928,53 @@
           <div>
             <label class="label">روز پرداخت</label>
             <input type="text" name="costDay" class="input-field" placeholder="مثال: 30" 
-                   oninput="this.value = formatInteger(this.value); CostScheduleModule.updateTotal()" />
+                   oninput="this.value = formatInteger(this.value)" />
             <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
           </div>
-          <div>
-            <label class="label">سهم از کل هزینه‌ها (%)</label>
-            <input type="text" name="costPercent" class="input-field" placeholder="مثال: 100" 
-                   oninput="this.value = formatDecimal(this.value); CostScheduleModule.updateTotal()" />
-            <div class="help-text">درصد سهم این روز از کل هزینه‌ها</div>
-          </div>
-          <button type="button" onclick="this.parentElement.remove(); CostScheduleModule.updateTotal()" class="remove-btn">×</button>
+          <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
         `;
         container.appendChild(div);
-        this.updateTotal();
       },
 
       updateTotal() {
-        const rows = document.querySelectorAll('[name="costPercent"]');
-        let total = 0;
-        rows.forEach(row => total += parseNumber(row.value));
-        
         const display = document.getElementById('costScheduleTotal');
-        const isValid = Math.abs(total - 100) < 0.01;
+        const rows = document.querySelectorAll('[name="costDay"]');
+        const numRows = rows.length;
         
-        display.innerHTML = `
-          <div class="flex items-center justify-between">
-            <span class="font-semibold">مجموع درصدها:</span>
-            <span class="text-lg font-bold ${isValid ? 'text-green-600' : 'text-red-600'} persian-number">
-              ${total.toFixed(2)}%
-            </span>
-          </div>
-          ${isValid ? 
-            '<p class="text-green-600 text-sm mt-2">✓ مجموع درصدها برابر ۱۰۰٪ است</p>' : 
-            '<p class="text-red-600 text-sm mt-2">⚠ مجموع درصدها باید برابر ۱۰۰٪ باشد</p>'}
-        `;
+        if (numRows === 0) {
+          display.innerHTML = '';
+          return;
+        }
+        
+        // در حالت auto mode، درصدها به طور مساوی تقسیم می‌شوند
+        const isAutoMode = document.getElementById('autoCostScheduleMode').checked;
+        if (isAutoMode) {
+          const percentPerDay = 100 / numRows;
+          display.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="font-semibold">تعداد تقسیم‌ها:</span>
+              <span class="text-lg font-bold text-green-600 persian-number">
+                ${toPersian(numRows.toString())}
+              </span>
+            </div>
+            <div class="mt-2 flex items-center justify-between">
+              <span class="text-sm text-slate-600">سهم هر قسمت:</span>
+              <span class="text-sm font-semibold persian-number">${percentPerDay.toFixed(2)}%</span>
+            </div>
+            <p class="text-green-600 text-sm mt-2">✓ هزینه‌ها به طور مساوی تقسیم می‌شوند</p>
+          `;
+        } else {
+          // در حالت manual، فقط تعداد را نمایش بده
+          display.innerHTML = `
+            <div class="flex items-center justify-between">
+              <span class="font-semibold">تعداد تقسیم‌ها:</span>
+              <span class="text-lg font-bold text-blue-600 persian-number">
+                ${toPersian(numRows.toString())}
+              </span>
+            </div>
+            <p class="text-blue-600 text-sm mt-2">💡 هزینه‌ها به طور مساوی بین ${toPersian(numRows.toString())} قسمت تقسیم می‌شوند</p>
+          `;
+        }
       },
 
       getConfig() {
@@ -1785,11 +1983,20 @@
         }
         
         const schedule = [];
-        document.querySelectorAll('[name="costDay"]').forEach((dayInput, index) => {
+        const dayInputs = document.querySelectorAll('[name="costDay"]');
+        const numDays = dayInputs.length;
+        
+        if (numDays === 0) {
+          return null;
+        }
+        
+        // محاسبه درصد مساوی برای هر روز
+        const percentPerDay = 100 / numDays;
+        
+        dayInputs.forEach((dayInput) => {
           const day = parseInt(toEnglish(dayInput.value));
-          const percent = parseNumber(document.querySelectorAll('[name="costPercent"]')[index].value);
-          if (day > 0 && percent >= 0) {
-            schedule.push({ day, percent });
+          if (day > 0) {
+            schedule.push({ day, percent: percentPerDay });
           }
         });
         
