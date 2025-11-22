@@ -2084,7 +2084,10 @@
             totalPrincipal: data.summary?.totalPrincipal ?? 0,
             totalTaxes: data.summary?.totalTaxes ?? 0,
             totalUpfrontFees: data.summary?.totalUpfrontFees ?? 0,
-            finalDay: data.summary?.finalDay ?? 0
+            finalDay: data.summary?.finalDay ?? 0,
+            averagePayment: data.summary?.averagePayment ?? 0,
+            totalPaymentsSum: data.summary?.totalPaymentsSum ?? 0,
+            numberOfPayments: data.summary?.numberOfPayments ?? 0
           };
 
           const safeModules = {
@@ -2180,6 +2183,16 @@
               <span class="summary-label">مجموع کل پرداختی</span>
               <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.totalPrincipal + summary.totalInterestPaid + summary.totalUpfrontFees + summary.totalTaxes)}</span>
             </div>
+            ${summary.averagePayment > 0 ? `
+            <div class="summary-item">
+              <span class="summary-label">میانگین اقساط</span>
+              <span class="summary-value persian-number">${this.helpers.formatCurrency(summary.averagePayment)}</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">تعداد اقساط</span>
+              <span class="summary-value persian-number">${this.helpers.persianNumber(summary.numberOfPayments || 0)} قسط</span>
+            </div>
+            ` : ''}
             <div class="summary-item">
               <span class="summary-label">روز نهایی تسویه</span>
               <span class="summary-value persian-number">${summary.finalDay > 0 ? this.helpers.formatDay(summary.finalDay) : '—'}</span>
