@@ -2406,7 +2406,186 @@
       // FeeModule and GuaranteeModule are implicitly enabled if values > 0
       if (typeof FeeModule !== 'undefined' && FeeModule.updateDisplay) FeeModule.updateDisplay();
       if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.updateDisplay) GuaranteeModule.updateDisplay();
+      
+      // Form Submit Handler - Send to n8n Webhook
+      const calculatorForm = document.getElementById('calculatorForm');
+      const submitBtn = document.getElementById('submitBtn');
+      
+      if (calculatorForm) {
+        calculatorForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          // Show loading state
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'در حال محاسبه...';
+          }
+          
+          try {
+            // Collect form data
+            const formData = collectFormData();
+            
+            // n8n Webhook URL
+            const N8N_WEBHOOK_URL = 'https://n8nb2wall.darkube.app/webhook/internal-calculator';
+            
+            // Send to n8n
+            const response = await fetch(N8N_WEBHOOK_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            
+            // Display results
+            if (result.success && result.schedule) {
+              displayResults(result);
+              const resultsEl = document.getElementById('results');
+              if (resultsEl) {
+                resultsEl.classList.remove('is-hidden');
+              }
+              showFormSection(5);
+              updateProgressTracker();
+            } else {
+              throw new Error(result.message || result.error || 'خطا در محاسبه');
+            }
+          } catch (error) {
+            console.error('Error calculating:', error);
+            alert('خطا در ارتباط با سرور: ' + error.message);
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'محاسبه جدول بازپرداخت';
+            }
+          }
+        });
+      }
     });
+    
+    // Function to collect form data
+    function collectFormData() {
+      const loanAmount = parseNumber(document.getElementById('loanAmount')?.value || '0');
+      const monthlyRate = parseNumber(document.getElementById('monthlyRate')?.value || '0');
+      
+      // Collect principal repayments
+      const principalRepayments = [];
+      const principalScheduleBody = document.getElementById('principalScheduleBody');
+      if (principalScheduleBody) {
+        const rows = principalScheduleBody.querySelectorAll('tr');
+        rows.forEach(row => {
+          const dayInput = row.querySelector('td:first-child');
+          const amountInput = row.querySelector('input.input-in-table');
+          if (dayInput && amountInput) {
+            const day = parseInt(dayInput.textContent.trim()) || 0;
+            const amount = parseNumber(amountInput.value || '0');
+            if (day > 0 && amount > 0) {
+              principalRepayments.push({ days: day, amount: amount });
+            }
+          }
+        });
+      }
+      
+      // Collect interest payment dates
+      const interestPaymentDates = [];
+      const interestScheduleBody = document.getElementById('interestScheduleBody');
+      if (interestScheduleBody) {
+        const rows = interestScheduleBody.querySelectorAll('tr');
+        rows.forEach(row => {
+          const dayInput = row.querySelector('.day-input');
+          if (dayInput && dayInput.value) {
+            const day = parseInt(formatInteger(dayInput.value)) || 0;
+            if (day > 0) {
+              interestPaymentDates.push(day);
+            }
+          }
+        });
+      }
+      
+      // Collect fee data
+      const feeMode = document.getElementById('feeMode')?.value || 'percentage';
+      const feeRate = parseNumber(document.getElementById('feeRate')?.value || '0');
+      const feeAmount = parseNumber(document.getElementById('feeAmount')?.value || '0');
+      
+      // Collect guarantee data
+      const guaranteeRate = parseNumber(document.getElementById('guaranteeRate')?.value || '0');
+      
+      // Collect tax data
+      const taxes = {};
+      if (document.getElementById('taxOnInterestEnabled')?.checked) {
+        taxes.interest = parseNumber(document.getElementById('taxOnInterestRate')?.value || '0');
+      }
+      if (document.getElementById('taxOnFeeEnabled')?.checked) {
+        taxes.fee = parseNumber(document.getElementById('taxOnFeeRate')?.value || '0');
+      }
+      if (document.getElementById('taxOnGuaranteeEnabled')?.checked) {
+        taxes.guarantee = parseNumber(document.getElementById('taxOnGuaranteeRate')?.value || '0');
+      }
+      
+      return {
+        LoanAmount: loanAmount,
+        MonthlyInterestRate: monthlyRate,
+        PrincipalRepayments: principalRepayments,
+        InterestPaymentDates: interestPaymentDates,
+        Fee: {
+          mode: feeMode,
+          rate: feeRate,
+          amount: feeAmount
+        },
+        Guarantee: {
+          rate: guaranteeRate
+        },
+        Taxes: taxes
+      };
+    }
+    
+    // Function to display results
+    function displayResults(result) {
+      // Display summary cards
+      const summaryCards = document.getElementById('summaryCards');
+      if (summaryCards && result.summary) {
+        summaryCards.innerHTML = `
+          <div class="results-summary__card">
+            <div class="results-summary__item">
+              <span class="results-summary__label">مبلغ کل وام</span>
+              <span class="results-summary__value">${formatPersianNumber(result.summary.totalLoan || 0)} تومان</span>
+            </div>
+            <div class="results-summary__item">
+              <span class="results-summary__label">کل پرداختی</span>
+              <span class="results-summary__value">${formatPersianNumber(result.summary.totalPaid || 0)} تومان</span>
+            </div>
+            <div class="results-summary__item">
+              <span class="results-summary__label">کل سود</span>
+              <span class="results-summary__value">${formatPersianNumber(result.summary.totalInterest || 0)} تومان</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      // Display schedule table
+      const scheduleBody = document.getElementById('scheduleBody');
+      if (scheduleBody && result.schedule) {
+        scheduleBody.innerHTML = '';
+        result.schedule.forEach(row => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${row.day || row.روز || ''}</td>
+            <td>${formatPersianNumber(row.remainingPrincipalBefore || row['اصل پول باقی‌مانده (قبل)'] || 0)}</td>
+            <td>${formatPersianNumber(row.principalPayment || row['پرداخت اصل پول'] || 0)}</td>
+            <td>${formatPersianNumber(row.interestPayment || row['پرداخت سود'] || 0)}</td>
+            <td>${formatPersianNumber(row.costs || row['هزینه‌ها'] || 0)}</td>
+            <td>${formatPersianNumber(row.totalPayment || row['کل پرداختی'] || 0)}</td>
+            <td>${row.description || row.توضیحات || ''}</td>
+          `;
+          scheduleBody.appendChild(tr);
+        });
+      }
+    }
 
     // Placeholder utility functions - these should be replaced with actual implementations
     function formatNumber(value) {
