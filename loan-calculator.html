@@ -1270,6 +1270,21 @@
           
           <div id="summaryCards" class="results-summary"></div>
           
+          <!-- Modules Information Section -->
+          <div id="modulesSection" class="form-container" style="background: var(--bg-primary); border: 2px solid var(--border-color); margin-top: var(--spacing-xl); display: none;">
+            <div class="form-container__heading">
+              <h2 class="form-container__title">
+                <span class="form-container__title-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </span>
+                جزئیات ماژول‌ها
+              </h2>
+            </div>
+            <div id="modulesContent"></div>
+          </div>
+          
           <div class="form-container" style="background: var(--bg-primary); border: 2px solid var(--border-color); margin-top: var(--spacing-xl);">
             <div class="form-container__heading">
               <h2 class="form-container__title">
@@ -1289,7 +1304,7 @@
                 <th>اصل پول باقی‌مانده (قبل)</th>
                 <th>پرداخت اصل پول</th>
                 <th>پرداخت سود</th>
-                <th>هزینه‌ها</th>
+                <th>پرداخت هزینه‌ها</th>
                 <th>کل پرداختی</th>
                 <th>توضیحات</th>
               </tr>
@@ -2441,10 +2456,13 @@
               throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const result = await response.json();
+            const responseData = await response.json();
+            
+            // Handle array response (n8n webhook format)
+            const result = Array.isArray(responseData) ? responseData[0] : responseData;
             
             // Display results
-            if (result.success && result.schedule) {
+            if (result && result.success && result.schedule) {
               displayResults(result);
               const resultsEl = document.getElementById('results');
               if (resultsEl) {
@@ -2453,7 +2471,7 @@
               showFormSection(5);
               updateProgressTracker();
             } else {
-              throw new Error(result.message || result.error || 'خطا در محاسبه');
+              throw new Error(result?.message || result?.error || 'خطا در محاسبه');
             }
           } catch (error) {
             console.error('Error calculating:', error);
@@ -2644,41 +2662,185 @@
     
     // Function to display results
     function displayResults(result) {
+      if (!result || !result.success) {
+        console.error('Invalid result format:', result);
+        return;
+      }
+      
       // Display summary cards
       const summaryCards = document.getElementById('summaryCards');
       if (summaryCards && result.summary) {
+        const summary = result.summary;
         summaryCards.innerHTML = `
           <div class="results-summary__card">
             <div class="results-summary__item">
               <span class="results-summary__label">مبلغ کل وام</span>
-              <span class="results-summary__value">${formatPersianNumber(result.summary.totalLoan || 0)} تومان</span>
+              <span class="results-summary__value">${formatPersianNumber(summary.totalPrincipal || 0)} تومان</span>
             </div>
             <div class="results-summary__item">
               <span class="results-summary__label">کل پرداختی</span>
-              <span class="results-summary__value">${formatPersianNumber(result.summary.totalPaid || 0)} تومان</span>
+              <span class="results-summary__value">${formatPersianNumber(summary.totalPaymentsSum || 0)} تومان</span>
             </div>
             <div class="results-summary__item">
-              <span class="results-summary__label">کل سود</span>
-              <span class="results-summary__value">${formatPersianNumber(result.summary.totalInterest || 0)} تومان</span>
+              <span class="results-summary__label">کل سود پرداختی</span>
+              <span class="results-summary__value">${formatPersianNumber(summary.totalInterestPaid || 0)} تومان</span>
+            </div>
+            <div class="results-summary__item">
+              <span class="results-summary__label">کل مالیات</span>
+              <span class="results-summary__value">${formatPersianNumber(summary.totalTaxes || 0)} تومان</span>
+            </div>
+            <div class="results-summary__item">
+              <span class="results-summary__label">هزینه‌های اولیه</span>
+              <span class="results-summary__value">${formatPersianNumber(summary.totalUpfrontFees || 0)} تومان</span>
+            </div>
+            <div class="results-summary__item">
+              <span class="results-summary__label">متوسط پرداخت</span>
+              <span class="results-summary__value">${formatPersianNumber(summary.averagePayment || 0)} تومان</span>
+            </div>
+            <div class="results-summary__item">
+              <span class="results-summary__label">تعداد اقساط</span>
+              <span class="results-summary__value">${formatPersianNumber(summary.numberOfPayments || 0)} قسط</span>
+            </div>
+            <div class="results-summary__item">
+              <span class="results-summary__label">روز نهایی</span>
+              <span class="results-summary__value">روز ${formatPersianNumber(summary.finalDay || 0)}</span>
             </div>
           </div>
         `;
       }
       
+      // Display modules information
+      const modulesSection = document.getElementById('modulesSection');
+      const modulesContent = document.getElementById('modulesContent');
+      if (modulesSection && modulesContent && result.modules) {
+        const modules = result.modules;
+        let modulesHTML = '';
+        
+        // Fee Module
+        if (modules.fee && modules.fee.feeAmount) {
+          modulesHTML += `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">کارمزد</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: var(--text-secondary);">مبلغ کارمزد:</span>
+                  <span style="font-weight: 600; color: var(--color-primary);" class="persian-number">${formatPersianNumber(modules.fee.feeAmount)} تومان</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Guarantee Module
+        if (modules.guarantee && modules.guarantee.guaranteeAmount) {
+          modulesHTML += `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">ضمانت</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: var(--text-secondary);">مبلغ ضمانت:</span>
+                  <span style="font-weight: 600; color: var(--color-primary);" class="persian-number">${formatPersianNumber(modules.guarantee.guaranteeAmount)} تومان</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Taxes Module
+        if (modules.taxes && modules.taxes.breakdown && modules.taxes.breakdown.length > 0) {
+          let taxesHTML = `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">مالیات‌ها</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+          `;
+          
+          modules.taxes.breakdown.forEach(tax => {
+            const baseLabel = tax.base === 'interest' ? 'مالیات بر سود' : 
+                            tax.base === 'fees' ? 'مالیات بر کارمزد' : 
+                            tax.base === 'guarantee' ? 'مالیات بر ضمانت' : tax.base;
+            taxesHTML += `
+              <div style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--bg-tertiary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
+                  <span style="color: var(--text-secondary); font-weight: 500;">${baseLabel}:</span>
+                  <span style="font-weight: 600; color: var(--color-primary);" class="persian-number">${formatPersianNumber(tax.taxAmount)} تومان</span>
+                </div>
+                <div style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                  مبلغ پایه: ${formatPersianNumber(tax.baseAmount)} تومان | نرخ: ${formatPersianNumber(tax.rate)}%
+                </div>
+              </div>
+            `;
+          });
+          
+          taxesHTML += `
+                <div style="padding-top: var(--spacing-sm); margin-top: var(--spacing-sm); border-top: 2px solid var(--color-primary);">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">کل مالیات:</span>
+                    <span style="font-weight: 700; color: var(--color-primary); font-size: var(--font-size-lg);" class="persian-number">${formatPersianNumber(modules.taxes.totalTaxes || 0)} تومان</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          modulesHTML += taxesHTML;
+        }
+        
+        // Cost Schedule Module
+        if (modules.costSchedule && modules.costSchedule.length > 0) {
+          modulesHTML += `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">برنامه تقسیم هزینه‌ها</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                <table class="data-table" style="margin: 0;">
+                  <thead>
+                    <tr>
+                      <th>روز</th>
+                      <th>درصد</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+          `;
+          
+          modules.costSchedule.forEach(item => {
+            modulesHTML += `
+              <tr>
+                <td class="persian-number">روز ${formatPersianNumber(item.day)}</td>
+                <td class="persian-number">${formatPersianNumber(item.percent.toFixed(2))}%</td>
+              </tr>
+            `;
+          });
+          
+          modulesHTML += `
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+        
+        if (modulesHTML) {
+          modulesContent.innerHTML = modulesHTML;
+          modulesSection.style.display = 'block';
+        } else {
+          modulesSection.style.display = 'none';
+        }
+      }
+      
       // Display schedule table
       const scheduleBody = document.getElementById('scheduleBody');
-      if (scheduleBody && result.schedule) {
+      if (scheduleBody && result.schedule && Array.isArray(result.schedule)) {
         scheduleBody.innerHTML = '';
         result.schedule.forEach(row => {
           const tr = document.createElement('tr');
+          const totalPayment = (row.principalPayment || 0) + (row.interestPayment || 0) + (row.costPayment || 0);
           tr.innerHTML = `
-            <td>${row.day || row.روز || ''}</td>
-            <td>${formatPersianNumber(row.remainingPrincipalBefore || row['اصل پول باقی‌مانده (قبل)'] || 0)}</td>
-            <td>${formatPersianNumber(row.principalPayment || row['پرداخت اصل پول'] || 0)}</td>
-            <td>${formatPersianNumber(row.interestPayment || row['پرداخت سود'] || 0)}</td>
-            <td>${formatPersianNumber(row.costs || row['هزینه‌ها'] || 0)}</td>
-            <td>${formatPersianNumber(row.totalPayment || row['کل پرداختی'] || 0)}</td>
-            <td>${row.description || row.توضیحات || ''}</td>
+            <td class="persian-number">${row.day || ''}</td>
+            <td class="persian-number">${formatPersianNumber(row.remainingPrincipalBefore || 0)}</td>
+            <td class="persian-number">${formatPersianNumber(row.principalPayment || 0)}</td>
+            <td class="persian-number">${formatPersianNumber(row.interestPayment || 0)}</td>
+            <td class="persian-number">${formatPersianNumber(row.costPayment || 0)}</td>
+            <td class="persian-number" style="font-weight: 600;">${formatPersianNumber(totalPayment)}</td>
+            <td>${row.description || ''}</td>
           `;
           scheduleBody.appendChild(tr);
         });
