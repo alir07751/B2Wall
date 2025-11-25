@@ -660,15 +660,12 @@
         
         <!-- ماژول کارمزد -->
         <div class="mb-4">
-          <label class="toggle-switch">
-            <input type="checkbox" id="feeModuleEnabled" onchange="FeeModule.toggle()" />
-            <span class="font-semibold text-slate-900">فعال‌سازی ماژول کارمزد</span>
-          </label>
+          <div class="font-semibold text-slate-900 mb-2">💼 ماژول کارمزد</div>
           <div id="feeModuleContent" class="module-content hidden">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
                 <label class="label">نوع کارمزد</label>
-                <select id="feeMode" class="input-field" onchange="FeeModule.updateDisplay()">
+                <select id="feeMode" class="input-field" onchange="FeeModule.updateDisplay(); FeeModule.toggle()">
                   <option value="percentage">درصدی از اصل وام</option>
                   <option value="fixed">مبلغ ثابت</option>
                 </select>
@@ -676,12 +673,12 @@
               <div id="feeRateContainer">
                 <label class="label">نرخ کارمزد (%)</label>
                 <input type="text" id="feeRate" class="input-field" placeholder="مثال: 2" 
-                       oninput="this.value = formatDecimal(this.value); FeeModule.updateDisplay()" />
+                       oninput="this.value = formatDecimal(this.value); FeeModule.updateDisplay(); FeeModule.toggle()" />
             </div>
               <div id="feeAmountContainer" class="hidden">
                 <label class="label">مبلغ کارمزد (تومان)</label>
                 <input type="text" id="feeAmount" class="input-field" placeholder="مثال: 1000000" 
-                       oninput="this.value = formatNumber(this.value); FeeModule.updateDisplay()" />
+                       oninput="this.value = formatNumber(this.value); FeeModule.updateDisplay(); FeeModule.toggle()" />
           </div>
         </div>
             <div id="feeDisplay" class="mt-4 p-3 bg-blue-50 rounded-lg hidden">
@@ -695,15 +692,12 @@
 
         <!-- ماژول ضمانت -->
         <div class="mb-4">
-          <label class="toggle-switch">
-            <input type="checkbox" id="guaranteeModuleEnabled" onchange="GuaranteeModule.toggle()" />
-            <span class="font-semibold text-slate-900">فعال‌سازی ماژول ضمانت</span>
-          </label>
+          <div class="font-semibold text-slate-900 mb-2">🛡️ ماژول ضمانت</div>
           <div id="guaranteeModuleContent" class="module-content hidden">
           <div>
               <label class="label">نرخ هزینه ضمانت از اصل وام (%)</label>
               <input type="text" id="guaranteeRate" class="input-field" placeholder="مثال: 1.5" 
-                     oninput="this.value = formatDecimal(this.value); GuaranteeModule.updateDisplay()" />
+                     oninput="this.value = formatDecimal(this.value); GuaranteeModule.updateDisplay(); GuaranteeModule.toggle()" />
               <div class="help-text">درصدی از مبلغ اصلی وام که به‌عنوان هزینه ضمانت لحاظ می‌شود</div>
             </div>
             <div id="guaranteeDisplay" class="mt-4 p-3 bg-green-50 rounded-lg hidden">
@@ -717,10 +711,7 @@
 
         <!-- ماژول مالیات -->
         <div class="mb-4">
-          <label class="toggle-switch">
-            <input type="checkbox" id="taxModuleEnabled" onchange="TaxModule.toggle()" />
-            <span class="font-semibold text-slate-900">فعال‌سازی ماژول مالیات</span>
-          </label>
+          <div class="font-semibold text-slate-900 mb-2">📊 ماژول مالیات</div>
           <div id="taxModuleContent" class="module-content hidden">
             <div class="help-text mb-4">می‌توانید مالیات‌هایی را که درصدی از «سود وام»، «هزینه کارمزد» یا «هزینه ضمانت» هستند اضافه کنید.</div>
             <div id="taxRows" class="space-y-3"></div>
@@ -735,10 +726,7 @@
 
         <!-- ماژول زمان‌بندی هزینه‌ها -->
         <div class="mb-4">
-          <label class="toggle-switch">
-            <input type="checkbox" id="costScheduleModuleEnabled" onchange="CostScheduleModule.toggle()" />
-            <span class="font-semibold text-slate-900">فعال‌سازی تقسیم هزینه‌ها</span>
-          </label>
+          <div class="font-semibold text-slate-900 mb-2">📅 تقسیم هزینه‌ها</div>
           <div id="costScheduleModuleContent" class="module-content hidden">
             <div class="help-text mb-4">
               هزینه‌های یک‌باره (کارمزد و ضمانت) را می‌توانید در چند قسمت و با فاصله مشخص تقسیم کنید. سیستم به صورت خودکار هزینه‌ها را به طور مساوی تقسیم می‌کند.
@@ -1531,9 +1519,10 @@
 
     const FeeModule = {
       toggle() {
-        const isEnabled = document.getElementById('feeModuleEnabled').checked;
+        // بررسی خودکار بر اساس وجود داده
+        const config = this.getConfig();
         const content = document.getElementById('feeModuleContent');
-        if (isEnabled) {
+        if (config) {
           content.classList.remove('hidden');
         } else {
           content.classList.add('hidden');
@@ -1549,6 +1538,9 @@
         
         const config = this.getConfig();
         const display = document.getElementById('feeDisplay');
+        
+        // بررسی خودکار نمایش/مخفی کردن ماژول
+        this.toggle();
         
         if (!config || loanAmount <= 0) {
           display.classList.add('hidden');
@@ -1568,10 +1560,7 @@
       },
 
       getConfig() {
-        if (!document.getElementById('feeModuleEnabled').checked) {
-          return null;
-        }
-        
+        // بررسی داده به جای checkbox
         const mode = document.getElementById('feeMode').value;
         if (mode === 'percentage') {
           const rate = parseNumber(document.getElementById('feeRate').value);
@@ -1588,7 +1577,6 @@
       },
 
       clear() {
-        document.getElementById('feeModuleEnabled').checked = false;
         document.getElementById('feeMode').value = 'percentage';
         document.getElementById('feeRate').value = '';
         document.getElementById('feeAmount').value = '';
@@ -1602,9 +1590,10 @@
 
     const GuaranteeModule = {
       toggle() {
-        const isEnabled = document.getElementById('guaranteeModuleEnabled').checked;
+        // بررسی خودکار بر اساس وجود داده
+        const config = this.getConfig();
         const content = document.getElementById('guaranteeModuleContent');
-        if (isEnabled) {
+        if (config) {
           content.classList.remove('hidden');
         } else {
           content.classList.add('hidden');
@@ -1615,6 +1604,9 @@
         const loanAmount = parseNumber(document.getElementById('loanAmount').value);
         const config = this.getConfig();
         const display = document.getElementById('guaranteeDisplay');
+        
+        // بررسی خودکار نمایش/مخفی کردن ماژول
+        this.toggle();
         
         if (!config || loanAmount <= 0) {
           display.classList.add('hidden');
@@ -1628,10 +1620,7 @@
       },
 
       getConfig() {
-        if (!document.getElementById('guaranteeModuleEnabled').checked) {
-          return null;
-        }
-        
+        // بررسی داده به جای checkbox
         const rate = parseNumber(document.getElementById('guaranteeRate').value);
         if (rate > 0) {
           return { rate };
@@ -1640,7 +1629,6 @@
       },
 
       clear() {
-        document.getElementById('guaranteeModuleEnabled').checked = false;
         document.getElementById('guaranteeRate').value = '';
         this.toggle();
       }
@@ -1652,13 +1640,11 @@
 
     const TaxModule = {
       toggle() {
-        const isEnabled = document.getElementById('taxModuleEnabled').checked;
+        // بررسی خودکار بر اساس وجود داده
+        const config = this.getConfig();
         const content = document.getElementById('taxModuleContent');
-        if (isEnabled) {
+        if (config && config.length > 0) {
           content.classList.remove('hidden');
-          if (document.getElementById('taxRows').children.length === 0) {
-            this.addRow();
-          }
         } else {
           content.classList.add('hidden');
         }
@@ -1671,7 +1657,7 @@
         div.innerHTML = `
         <div>
             <label class="label">پایه محاسبه</label>
-            <select name="taxBase" class="input-field" onchange="TaxModule.updateAll()">
+            <select name="taxBase" class="input-field" onchange="TaxModule.updateAll(); TaxModule.toggle()">
             <option value="interest">سود وام</option>
             <option value="fees">هزینه کارمزد</option>
             <option value="guarantee">هزینه ضمانت</option>
@@ -1680,12 +1666,13 @@
         <div>
             <label class="label">نرخ مالیات (%)</label>
             <input type="text" name="taxRate" class="input-field" placeholder="مثال: 9" 
-                   oninput="this.value = formatDecimal(this.value)" />
+                   oninput="this.value = formatDecimal(this.value); TaxModule.updateAll(); TaxModule.toggle()" />
         </div>
-          <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+          <button type="button" onclick="this.parentElement.remove(); TaxModule.updateAll(); TaxModule.toggle()" class="remove-btn">×</button>
         `;
         container.appendChild(div);
         this.updateAll();
+        this.toggle();
       },
 
       /**
@@ -1788,10 +1775,7 @@
       },
 
       getConfig() {
-        if (!document.getElementById('taxModuleEnabled').checked) {
-          return null;
-        }
-        
+        // بررسی داده به جای checkbox
         const taxes = [];
         document.querySelectorAll('#taxRows .row-item').forEach(row => {
           const base = row.querySelector('[name="taxBase"]').value;
@@ -1805,7 +1789,6 @@
       },
 
       clear() {
-        document.getElementById('taxModuleEnabled').checked = false;
         document.getElementById('taxRows').innerHTML = '';
         document.getElementById('totalTaxes').innerHTML = '';
         this.toggle();
@@ -1818,13 +1801,11 @@
 
     const CostScheduleModule = {
       toggle() {
-        const isEnabled = document.getElementById('costScheduleModuleEnabled').checked;
+        // بررسی خودکار بر اساس وجود داده
+        const config = this.getConfig();
         const content = document.getElementById('costScheduleModuleContent');
-        if (isEnabled) {
+        if (config && config.length > 0) {
           content.classList.remove('hidden');
-          if (document.getElementById('costScheduleRows').children.length === 0) {
-            this.addRow();
-          }
         } else {
           content.classList.add('hidden');
         }
@@ -1900,19 +1881,20 @@
             <div>
               <label class="label">روز پرداخت</label>
               <input type="text" name="costDay" class="input-field" value="${day}" 
-                     oninput="this.value = formatInteger(this.value)" />
+                     oninput="this.value = formatInteger(this.value); CostScheduleModule.updateTotal(); CostScheduleModule.toggle()" />
               <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
             </div>
             <div style="display: none;">
               <input type="hidden" name="costPercent" value="${percentPerDay.toFixed(2)}" />
             </div>
-            <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+            <button type="button" onclick="this.parentElement.remove(); CostScheduleModule.updateTotal(); CostScheduleModule.toggle()" class="remove-btn">×</button>
           `;
           rowsContainer.appendChild(div);
         });
         
         // Update total display
         this.updateTotal();
+        this.toggle();
       },
 
       addRow() {
@@ -1928,18 +1910,23 @@
           <div>
             <label class="label">روز پرداخت</label>
             <input type="text" name="costDay" class="input-field" placeholder="مثال: 30" 
-                   oninput="this.value = formatInteger(this.value)" />
+                   oninput="this.value = formatInteger(this.value); CostScheduleModule.updateTotal(); CostScheduleModule.toggle()" />
             <div class="help-text">روز پرداخت را بر اساس تعداد روز از شروع وام وارد کنید</div>
           </div>
-          <button type="button" onclick="this.parentElement.remove()" class="remove-btn">×</button>
+          <button type="button" onclick="this.parentElement.remove(); CostScheduleModule.updateTotal(); CostScheduleModule.toggle()" class="remove-btn">×</button>
         `;
         container.appendChild(div);
+        this.updateTotal();
+        this.toggle();
       },
 
       updateTotal() {
         const display = document.getElementById('costScheduleTotal');
         const rows = document.querySelectorAll('[name="costDay"]');
         const numRows = rows.length;
+        
+        // بررسی خودکار نمایش/مخفی کردن ماژول
+        this.toggle();
         
         if (numRows === 0) {
           display.innerHTML = '';
@@ -1978,10 +1965,7 @@
       },
 
       getConfig() {
-        if (!document.getElementById('costScheduleModuleEnabled').checked) {
-          return null;
-        }
-        
+        // بررسی داده به جای checkbox
         const schedule = [];
         const dayInputs = document.querySelectorAll('[name="costDay"]');
         const numDays = dayInputs.length;
@@ -2004,7 +1988,6 @@
       },
 
       clear() {
-        document.getElementById('costScheduleModuleEnabled').checked = false;
         document.getElementById('autoCostScheduleMode').checked = false;
         document.getElementById('costScheduleRows').innerHTML = '';
         document.getElementById('costScheduleTotal').innerHTML = '';
@@ -2514,6 +2497,20 @@
         if (typeof InterestModule !== 'undefined' && InterestModule.init) {
           InterestModule.init();
         }
+        
+        // بررسی خودکار ماژول‌های اختیاری بر اساس داده موجود
+        if (typeof FeeModule !== 'undefined' && FeeModule.toggle) {
+          FeeModule.toggle();
+        }
+        if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.toggle) {
+          GuaranteeModule.toggle();
+        }
+        if (typeof TaxModule !== 'undefined' && TaxModule.toggle) {
+          TaxModule.toggle();
+        }
+        if (typeof CostScheduleModule !== 'undefined' && CostScheduleModule.toggle) {
+          CostScheduleModule.toggle();
+        }
       }
 
       notifyLoanAmountChange() {
@@ -2523,6 +2520,13 @@
         }
         if (this.components.guaranteeModule && typeof this.components.guaranteeModule.updateDisplay === 'function') {
           this.components.guaranteeModule.updateDisplay();
+        }
+        // بررسی خودکار ماژول‌ها بر اساس داده
+        if (typeof FeeModule !== 'undefined' && FeeModule.toggle) {
+          FeeModule.toggle();
+        }
+        if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.toggle) {
+          GuaranteeModule.toggle();
         }
       }
 
