@@ -2479,10 +2479,13 @@
       if (principalScheduleBody) {
         const rows = principalScheduleBody.querySelectorAll('tr');
         rows.forEach(row => {
-          const dayInput = row.querySelector('td:first-child');
+          const dayCell = row.querySelector('td:first-child');
           const amountInput = row.querySelector('input.input-in-table');
-          if (dayInput && amountInput) {
-            const day = parseInt(dayInput.textContent.trim()) || 0;
+          if (dayCell && amountInput) {
+            // Extract day number from text like "روز 180"
+            const dayText = dayCell.textContent.trim();
+            const dayMatch = dayText.match(/\d+/);
+            const day = dayMatch ? parseInt(dayMatch[0], 10) : 0;
             const amount = parseNumber(amountInput.value || '0');
             if (day > 0 && amount > 0) {
               principalRepayments.push({ days: day, amount: amount });
@@ -2494,53 +2497,148 @@
       // Collect interest payment dates
       const interestPaymentDates = [];
       const interestScheduleBody = document.getElementById('interestScheduleBody');
-      if (interestScheduleBody) {
+      const interestModule = window.InterestModule;
+      
+      // Check if custom mode is active and has schedule data
+      if (interestScheduleBody && interestScheduleBody.querySelectorAll('tr').length > 0) {
+        // Custom mode: collect from table
         const rows = interestScheduleBody.querySelectorAll('tr');
         rows.forEach(row => {
           const dayInput = row.querySelector('.day-input');
           if (dayInput && dayInput.value) {
-            const day = parseInt(formatInteger(dayInput.value)) || 0;
+            const day = parseInt(formatInteger(dayInput.value), 10) || 0;
             if (day > 0) {
               interestPaymentDates.push(day);
             }
           }
         });
+      } else if (interestModule && interestModule.currentMode === 'regular') {
+        // Regular mode: calculate from interval and count
+        const interval = parseInt(document.getElementById('interestPaymentInterval')?.value || '0', 10);
+        const count = parseInt(document.getElementById('numberOfInterestPayments')?.value || '0', 10);
+        if (interval > 0 && count > 0) {
+          for (let i = 1; i <= count; i++) {
+            interestPaymentDates.push(i * interval);
+          }
+        }
       }
+      
+      // Sort interest payment dates
+      interestPaymentDates.sort((a, b) => a - b);
       
       // Collect fee data
       const feeMode = document.getElementById('feeMode')?.value || 'percentage';
       const feeRate = parseNumber(document.getElementById('feeRate')?.value || '0');
       const feeAmount = parseNumber(document.getElementById('feeAmount')?.value || '0');
       
+      // Calculate total fee amount
+      let totalFeeAmount = 0;
+      if (feeMode === 'percentage' && feeRate > 0) {
+        totalFeeAmount = (loanAmount * feeRate) / 100;
+      } else if (feeMode === 'fixed' && feeAmount > 0) {
+        totalFeeAmount = feeAmount;
+      }
+      
       // Collect guarantee data
       const guaranteeRate = parseNumber(document.getElementById('guaranteeRate')?.value || '0');
+      const totalGuaranteeAmount = guaranteeRate > 0 ? (loanAmount * guaranteeRate) / 100 : 0;
       
-      // Collect tax data
-      const taxes = {};
+      // Calculate total costs (fee + guarantee)
+      const totalCosts = totalFeeAmount + totalGuaranteeAmount;
+      
+      // Collect tax data as array
+      const taxes = [];
       if (document.getElementById('taxOnInterestEnabled')?.checked) {
-        taxes.interest = parseNumber(document.getElementById('taxOnInterestRate')?.value || '0');
+        const taxRate = parseNumber(document.getElementById('taxOnInterestRate')?.value || '0');
+        if (taxRate > 0) {
+          taxes.push({ base: 'interest', rate: taxRate });
+        }
       }
       if (document.getElementById('taxOnFeeEnabled')?.checked) {
-        taxes.fee = parseNumber(document.getElementById('taxOnFeeRate')?.value || '0');
+        const taxRate = parseNumber(document.getElementById('taxOnFeeRate')?.value || '0');
+        if (taxRate > 0) {
+          taxes.push({ base: 'fees', rate: taxRate });
+        }
       }
       if (document.getElementById('taxOnGuaranteeEnabled')?.checked) {
-        taxes.guarantee = parseNumber(document.getElementById('taxOnGuaranteeRate')?.value || '0');
+        const taxRate = parseNumber(document.getElementById('taxOnGuaranteeRate')?.value || '0');
+        if (taxRate > 0) {
+          taxes.push({ base: 'guarantee', rate: taxRate });
+        }
+      }
+      
+      // Collect cost schedule
+      const costSchedule = [];
+      const costScheduleModule = window.CostScheduleModule;
+      if (costScheduleModule && costScheduleModule.state && costScheduleModule.state.schedule) {
+        const schedule = costScheduleModule.state.schedule;
+        if (schedule.length > 0 && totalCosts > 0) {
+          schedule.forEach(item => {
+            if (item.day) {
+              let percent = 0;
+              if (costScheduleModule.currentMode === 'regular') {
+                // In regular mode, divide equally
+                percent = (1 / schedule.length) * 100;
+              } else {
+                // In custom mode, calculate percent from amount
+                const amount = parseNumber(String(item.amount || 0));
+                if (amount > 0) {
+                  percent = (amount / totalCosts) * 100;
+                }
+              }
+              if (percent > 0) {
+                costSchedule.push({
+                  day: item.day,
+                  percent: percent
+                });
+              }
+            }
+          });
+        }
+      }
+      
+      // Sort cost schedule by day
+      costSchedule.sort((a, b) => a.day - b.day);
+      
+      // Build fee object
+      const feeObj = {};
+      if (feeMode === 'percentage' && feeRate > 0) {
+        feeObj.mode = 'percentage';
+        feeObj.rate = feeRate;
+      } else if (feeMode === 'fixed' && feeAmount > 0) {
+        feeObj.mode = 'fixed';
+        feeObj.amount = feeAmount;
+      }
+      
+      // Build guarantee object
+      const guaranteeObj = {};
+      if (guaranteeRate > 0) {
+        guaranteeObj.rate = guaranteeRate;
+      }
+      
+      // Build modules object
+      const modules = {};
+      if (Object.keys(feeObj).length > 0) {
+        modules.fee = feeObj;
+      }
+      if (Object.keys(guaranteeObj).length > 0) {
+        modules.guarantee = guaranteeObj;
+      }
+      if (taxes.length > 0) {
+        modules.taxes = taxes;
+      }
+      if (costSchedule.length > 0) {
+        modules.costSchedule = costSchedule;
       }
       
       return {
-        LoanAmount: loanAmount,
-        MonthlyInterestRate: monthlyRate,
-        PrincipalRepayments: principalRepayments,
-        InterestPaymentDates: interestPaymentDates,
-        Fee: {
-          mode: feeMode,
-          rate: feeRate,
-          amount: feeAmount
+        Loan: {
+          amount: loanAmount,
+          monthlyInterestRate: monthlyRate,
+          principalRepayments: principalRepayments,
+          interestPaymentDates: interestPaymentDates
         },
-        Guarantee: {
-          rate: guaranteeRate
-        },
-        Taxes: taxes
+        Modules: modules
       };
     }
     
