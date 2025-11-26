@@ -868,6 +868,15 @@
 
     @media (max-width: 480px) {
     }
+    
+    @keyframes spin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
   </style>
 </head>
 <body>
@@ -1232,25 +1241,31 @@
             </div>
         </section>
 
-        <!-- Section 5: Calculate -->
+        <!-- Section 5: Loading/Results -->
         <section class="form-container is-hidden" data-step="5" aria-labelledby="section-5-title">
           <div class="form-container__heading">
             <h2 id="section-5-title" class="form-container__title">
               <span class="form-container__title-icon"></span>
               محاسبه و نمایش نتایج
             </h2>
+          </div>
+          
+          <!-- Loading State -->
+          <div id="loadingState" class="text-center" style="padding: var(--spacing-2xl) 0;">
+            <div style="margin-bottom: var(--spacing-xl);">
+              <div style="display: inline-block; width: 50px; height: 50px; border: 4px solid var(--bg-tertiary); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
             </div>
-          <div class="text-center" style="padding: var(--spacing-2xl) 0;">
-            <p style="color: var(--text-secondary); margin-bottom: var(--spacing-xl); line-height: 1.8;">
-              برای محاسبه جدول بازپرداخت، روی دکمه زیر کلیک کنید.
+            <p style="color: var(--text-secondary); font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">
+              در حال محاسبه...
             </p>
-            <button type="submit" id="submitBtn" class="action-button action-button--primary" style="padding: var(--spacing-lg) var(--spacing-2xl); font-size: var(--font-size-lg);">
-              محاسبه جدول بازپرداخت
-            </button>
-        </div>
+            <p style="color: var(--text-muted); font-size: var(--font-size-sm);">
+              لطفاً صبر کنید، محاسبه در حال انجام است.
+            </p>
+          </div>
+          
           <div class="action-group">
-            <button type="button" class="action-button action-button--secondary" id="step5PrevBtn">بازگشت</button>
-            </div>
+            <button type="button" class="action-button action-button--secondary" id="step5PrevBtn" style="display: none;">بازگشت</button>
+          </div>
         </section>
       </form>
 
@@ -2023,15 +2038,32 @@
       const step4PrevBtn = document.getElementById('step4PrevBtn');
       
       if (step4NextBtn) {
-        step4NextBtn.addEventListener('click', function() {
-          // Go to Step 5 first, then trigger calculation
+        step4NextBtn.addEventListener('click', async function() {
+          // Hide results section first
+          const resultsEl = document.getElementById('results');
+          if (resultsEl) {
+            resultsEl.classList.add('is-hidden');
+          }
+          
+          // Navigate to Step 5
           nextStep();
-          // Trigger the submit button click after a short delay to ensure Step 5 is visible
-          setTimeout(function() {
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) {
-              submitBtn.click();
-            }
+          
+          // Show loading state in Step 5
+          const loadingState = document.getElementById('loadingState');
+          if (loadingState) {
+            loadingState.style.display = 'block';
+          }
+          
+          // Ensure Step 5 form container is visible
+          const step5Section = document.querySelector('.form-container[data-step="5"]');
+          if (step5Section) {
+            step5Section.classList.remove('is-hidden');
+            step5Section.classList.add('is-visible');
+          }
+          
+          // Start calculation after a short delay to ensure Step 5 is visible
+          setTimeout(async function() {
+            await performCalculation();
           }, 100);
         });
       }
@@ -2396,7 +2428,7 @@
       const downloadResultsBtn = document.getElementById('downloadResultsBtn');
       const resetFormBtn = document.getElementById('resetFormBtn');
       
-      if (step5PrevBtn) step5PrevBtn.addEventListener('click', prevStep);
+      // Note: step5PrevBtn is hidden during calculation, only shown when needed
       
       if (copyResultsBtn) {
         copyResultsBtn.addEventListener('click', function() {
@@ -2444,90 +2476,99 @@
       if (typeof FeeModule !== 'undefined' && FeeModule.updateDisplay) FeeModule.updateDisplay();
       if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.updateDisplay) GuaranteeModule.updateDisplay();
       
-      // Form Submit Handler - Send to n8n Webhook
-      const calculatorForm = document.getElementById('calculatorForm');
-      const submitBtn = document.getElementById('submitBtn');
-      
-      if (calculatorForm) {
-        calculatorForm.addEventListener('submit', async function(e) {
-          e.preventDefault();
+      // Calculation function - called from Step 4 button
+      async function performCalculation() {
+        try {
+          // Collect form data
+          const formData = collectFormData();
           
-          // Show loading state
-          if (submitBtn) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'در حال محاسبه...';
+          // n8n Webhook URL
+          const N8N_WEBHOOK_URL = 'https://n8nb2wall.darkube.app/webhook/calculate';
+          
+          // Send to n8n
+          const response = await fetch(N8N_WEBHOOK_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
           
+          let responseData;
           try {
-            // Collect form data
-            const formData = collectFormData();
-            
-            // n8n Webhook URL
-            const N8N_WEBHOOK_URL = 'https://n8nb2wall.darkube.app/webhook/calculate';
-            
-            // Send to n8n
-            const response = await fetch(N8N_WEBHOOK_URL, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify(formData),
-            });
-            
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
+            const responseText = await response.text();
+            if (!responseText || responseText.trim() === '') {
+              throw new Error('پاسخ خالی از سرور دریافت شد');
             }
-            
-            let responseData;
-            try {
-              const responseText = await response.text();
-              if (!responseText || responseText.trim() === '') {
-                throw new Error('پاسخ خالی از سرور دریافت شد');
-              }
-              responseData = JSON.parse(responseText);
-            } catch (parseError) {
-              console.error('JSON Parse Error:', parseError);
-              throw new Error('پاسخ نامعتبر از سرور دریافت شد');
-            }
-            
-            // Handle array response (n8n webhook format)
-            let result = Array.isArray(responseData) ? responseData[0] : responseData;
-            
-            // Defensive check for response structure
-            if (!result || typeof result !== 'object') {
-              console.error('Invalid response structure:', result);
-              throw new Error('ساختار پاسخ نامعتبر است');
-            }
-            
-            // Check for error response
-            if (result.success === false) {
-              const errorMessage = result.message || result.error || 'خطا در محاسبه';
-              console.error('Backend Error:', errorMessage, result);
-              throw new Error(errorMessage);
-            }
-            
-            // Display results even if success is not explicitly true (handle legacy format)
-            displayResults(result);
-            
-            // Show results section
-            const resultsEl = document.getElementById('results');
-            if (resultsEl) {
-              resultsEl.classList.remove('is-hidden');
-              resultsEl.scrollIntoView({ behavior: 'smooth' });
-            }
-            
-            // Navigate to step 5
-            showFormSection(5);
-            updateProgressTracker();
-          } catch (error) {
-            console.error('Error calculating:', error);
-            alert('خطا در ارتباط با سرور: ' + error.message);
-          } finally {
-            if (submitBtn) {
-              submitBtn.disabled = false;
-              submitBtn.textContent = 'محاسبه جدول بازپرداخت';
-            }
+            responseData = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            throw new Error('پاسخ نامعتبر از سرور دریافت شد');
           }
+          
+          // Handle array response (n8n webhook format)
+          let result = Array.isArray(responseData) ? responseData[0] : responseData;
+          
+          // Defensive check for response structure
+          if (!result || typeof result !== 'object') {
+            console.error('Invalid response structure:', result);
+            throw new Error('ساختار پاسخ نامعتبر است');
+          }
+          
+          // Check for error response
+          if (result.success === false) {
+            const errorMessage = result.message || result.error || 'خطا در محاسبه';
+            console.error('Backend Error:', errorMessage, result);
+            throw new Error(errorMessage);
+          }
+          
+          // Hide loading state and Step 5 form container
+          const loadingState = document.getElementById('loadingState');
+          const step5Section = document.querySelector('.form-container[data-step="5"]');
+          if (loadingState) {
+            loadingState.style.display = 'none';
+          }
+          if (step5Section) {
+            step5Section.classList.add('is-hidden');
+            step5Section.classList.remove('is-visible');
+          }
+          
+          // Display results
+          displayResults(result);
+          
+          // Show results section
+          const resultsEl = document.getElementById('results');
+          if (resultsEl) {
+            resultsEl.classList.remove('is-hidden');
+            // Scroll to results after a short delay
+            setTimeout(() => {
+              resultsEl.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+          }
+          
+        } catch (error) {
+          console.error('Error calculating:', error);
+          
+          // Hide loading state on error
+          const loadingState = document.getElementById('loadingState');
+          if (loadingState) {
+            loadingState.style.display = 'none';
+          }
+          
+          // Show error message
+          alert('خطا در ارتباط با سرور: ' + error.message);
+        }
+      }
+      
+      // Prevent form submission (calculation is triggered from Step 4 button)
+      const calculatorForm = document.getElementById('calculatorForm');
+      if (calculatorForm) {
+        calculatorForm.addEventListener('submit', function(e) {
+          e.preventDefault();
         });
       }
     });
@@ -3044,8 +3085,21 @@
       currentStep = 1;
       showFormSection(1);
       updateProgressTracker();
+      
+      // Hide results section
       const resultsEl = document.getElementById('results');
       if (resultsEl) resultsEl.classList.add('is-hidden');
+      
+      // Reset Step 5 form container to initial state
+      const step5Section = document.querySelector('.form-container[data-step="5"]');
+      const loadingState = document.getElementById('loadingState');
+      if (step5Section) {
+        step5Section.classList.remove('is-hidden');
+        step5Section.classList.add('is-visible');
+      }
+      if (loadingState) {
+        loadingState.style.display = 'block';
+      }
       
       // Reset validation
       const loanAmountError = document.getElementById('loanAmountError');
@@ -3054,6 +3108,9 @@
       if (loanAmountError) loanAmountError.textContent = '';
       if (monthlyRateError) monthlyRateError.textContent = '';
       if (step1NextBtn) step1NextBtn.disabled = true;
+      
+      // Clear stored result
+      window.lastCalculationResult = null;
       
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
