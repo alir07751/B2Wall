@@ -2699,38 +2699,25 @@
         }
       }
       
-      // Collect cost schedule
+      // Collect cost schedule - Use principal repayment days
+      // Extract days from principal repayments to build CostScheduleConfig
       const costSchedule = [];
-      const costScheduleModule = window.CostScheduleModule;
-      if (costScheduleModule && costScheduleModule.state && costScheduleModule.state.schedule) {
-        const schedule = costScheduleModule.state.schedule;
-        if (schedule.length > 0 && totalCosts > 0) {
-          schedule.forEach(item => {
-            if (item.day) {
-              let percent = 0;
-              if (costScheduleModule.currentMode === 'regular') {
-                // In regular mode, divide equally
-                percent = (1 / schedule.length) * 100;
-              } else {
-                // In custom mode, calculate percent from amount
-                const amount = parseNumber(String(item.amount || 0));
-                if (amount > 0) {
-                  percent = (amount / totalCosts) * 100;
-                }
-              }
-              if (percent > 0) {
-                costSchedule.push({
-                  day: item.day,
-                  percent: percent
-                });
-              }
-            }
+      if (principalRepayments.length > 0 && totalCosts > 0) {
+        // Extract unique days from principal repayments
+        const principalDays = [...new Set(principalRepayments.map(pr => pr.days))].sort((a, b) => a - b);
+        
+        // Divide costs equally across principal payment days
+        const percentPerDay = (1 / principalDays.length) * 100;
+        
+        principalDays.forEach(day => {
+          costSchedule.push({
+            day: day,
+            percent: percentPerDay
           });
-        }
+        });
       }
       
-      // Sort cost schedule by day
-      costSchedule.sort((a, b) => a.day - b.day);
+      // Note: costSchedule is already sorted by day from the principalDays array
       
       // Build fee object
       const feeObj = {};
