@@ -1271,7 +1271,7 @@
 
       <!-- Results Section -->
       <div id="results" class="is-hidden">
-        <section class="form-container is-visible" data-step="5" id="resultsStep">
+        <section class="form-container is-visible" id="resultsStep">
           <div class="form-container__heading">
             <h2 class="form-container__title">
               <span class="form-container__title-icon">
@@ -1379,7 +1379,8 @@
     }
 
     function showFormSection(step) {
-      document.querySelectorAll('.form-container').forEach(section => {
+      // Only affect form containers with data-step attribute (exclude results section)
+      document.querySelectorAll('.form-container[data-step]').forEach(section => {
         section.classList.remove('is-visible');
         section.classList.add('is-hidden');
       });
