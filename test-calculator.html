@@ -2526,29 +2526,55 @@
             throw new Error(errorMessage);
           }
           
-          // Hide loading state and Step 5 form container
+          // --- START: FIX FOR DISPLAYING RESULTS ---
+          // Hide loading state
           const loadingState = document.getElementById('loadingState');
-          const step5Section = document.querySelector('.form-container[data-step="5"]');
           if (loadingState) {
             loadingState.style.display = 'none';
           }
+          
+          // Hide the tab navigation
+          const tabNav = document.querySelector('.tab-progress-nav');
+          if (tabNav) {
+            tabNav.classList.add('is-hidden');
+          }
+          
+          // Hide the entire form
+          const calculatorForm = document.getElementById('calculatorForm');
+          if (calculatorForm) {
+            calculatorForm.classList.add('is-hidden');
+          }
+          
+          // Hide Step 5 form container
+          const step5Section = document.querySelector('.form-container[data-step="5"]');
           if (step5Section) {
             step5Section.classList.add('is-hidden');
             step5Section.classList.remove('is-visible');
           }
           
-          // Display results
-          displayResults(result);
+          // Set the progress tracker to the final step (Step 5)
+          currentStep = 5;
+          updateProgressTracker();
           
-          // Show results section
+          // Show the results section
           const resultsEl = document.getElementById('results');
           if (resultsEl) {
             resultsEl.classList.remove('is-hidden');
-            // Scroll to results after a short delay
-            setTimeout(() => {
-              resultsEl.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
           }
+          
+          // Scroll to top for better UX
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          // --- END: FIX FOR DISPLAYING RESULTS ---
+          
+          // Display results (this will populate the summary cards and schedule table)
+          displayResults(result);
+          
+          // Scroll to results after rendering is complete
+          setTimeout(() => {
+            if (resultsEl) {
+              resultsEl.scrollIntoView({ behavior: 'smooth' });
+            }
+          }, 300);
           
         } catch (error) {
           console.error('Error calculating:', error);
@@ -3089,6 +3115,18 @@
       // Hide results section
       const resultsEl = document.getElementById('results');
       if (resultsEl) resultsEl.classList.add('is-hidden');
+      
+      // Show the tab navigation again
+      const tabNav = document.querySelector('.tab-progress-nav');
+      if (tabNav) {
+        tabNav.classList.remove('is-hidden');
+      }
+      
+      // Show the form again
+      const calculatorForm = document.getElementById('calculatorForm');
+      if (calculatorForm) {
+        calculatorForm.classList.remove('is-hidden');
+      }
       
       // Reset Step 5 form container to initial state
       const step5Section = document.querySelector('.form-container[data-step="5"]');
