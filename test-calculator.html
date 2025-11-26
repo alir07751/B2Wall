@@ -1,0 +1,3074 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>محاسبه‌گر بازپرداخت وام</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* Teal Color Palette */
+      --jungle-teal: #6b9080;
+      --muted-teal: #a4c3b2;
+      --frozen-water: #cce3de;
+      --azure-mist: #eaf4f4;
+      --mint-cream: #f6fff8;
+      
+      /* Semantic Color Variables */
+      --color-primary: var(--jungle-teal);
+      --color-primary-dark: #5a7a6d;
+      --color-primary-light: var(--muted-teal);
+      --color-accent: var(--frozen-water);
+      --color-success: #4a8b5c;
+      --color-warning: #e8a640;
+      --color-error: #c84c4c;
+      
+      /* Background Colors */
+      --bg-primary: var(--mint-cream);
+      --bg-secondary: #ffffff;
+      --bg-tertiary: var(--azure-mist);
+      --bg-accent: var(--frozen-water);
+      
+      /* Text Colors */
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --text-inverse: #ffffff;
+      
+      /* Border & Shadow */
+      --border-color: var(--frozen-water);
+      --border-radius: 12px;
+      --border-radius-lg: 16px;
+      --shadow-sm: 0 2px 8px rgba(107, 144, 128, 0.08);
+      --shadow-md: 0 4px 16px rgba(107, 144, 128, 0.12);
+      --shadow-lg: 0 8px 24px rgba(107, 144, 128, 0.16);
+      
+      /* Spacing */
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      /* Typography */
+      --font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      --font-size-3xl: 2rem;
+      
+      /* Transitions */
+      --transition-fast: 150ms ease;
+      --transition-base: 250ms ease;
+      --transition-slow: 350ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: #ffffff;
+      color: var(--text-primary);
+      line-height: 1.7;
+      direction: rtl;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Layout Container */
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .page-header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: var(--spacing-md) var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .page-header__inner {
+      max-width: 800px;
+      margin: 0 auto; 
+      text-align: center;
+    }
+
+    .page-header__title {
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: var(--spacing-xs);
+      letter-spacing: -0.02em;
+    }
+
+    .page-header__description {
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* Main Content */
+    .page-content {
+      flex: 1;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    /* Tab Navigation */
+    .tab-progress-nav {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--bg-tertiary);
+      margin-bottom: var(--spacing-xl);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+    }
+
+    .tab-progress-nav__container {
+      max-width: 800px;
+      margin: 0 auto;
+      display: flex;
+      position: relative;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .tab-progress-nav__item {
+      flex: 1;
+      min-width: 120px;
+      padding: var(--spacing-md) var(--spacing-lg);
+      text-align: center;
+      font-size: var(--font-size-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      position: relative;
+      border: none;
+      background: none;
+      font-family: var(--font-family);
+      white-space: nowrap;
+    }
+
+    .tab-progress-nav__item:hover {
+      color: var(--color-primary);
+      background: var(--bg-primary);
+    }
+
+    .tab-progress-nav__item.is-active {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+
+    .tab-progress-nav__item.is-complete {
+      color: var(--text-primary);
+    }
+
+    .tab-progress-nav__indicator {
+      position: absolute;
+      bottom: 0;
+      height: 4px;
+      background: var(--color-primary);
+      transition: all var(--transition-slow) cubic-bezier(0.4, 0, 0.2, 1);
+      border-radius: 2px 2px 0 0;
+    }
+
+    /* Form Container */
+    .form-container {
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-2xl);
+      margin-bottom: var(--spacing-xl);
+      border: 1px solid var(--bg-tertiary);
+      position: relative;
+    }
+
+    .form-container.is-hidden {
+      display: none;
+    }
+
+    .form-container.is-visible {
+      display: block;
+      animation: containerSlideIn var(--transition-base);
+    }
+
+    @keyframes containerSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .form-container__heading {
+      margin-bottom: var(--spacing-xl);
+      padding-bottom: var(--spacing-lg);
+      border-bottom: 2px solid var(--bg-tertiary);
+    }
+
+    .form-container__title {
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .form-container__title-icon {
+      width: 6px;
+      height: 2rem;
+      background: linear-gradient(180deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Input Fields */
+    .input-wrapper {
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .input-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .input-label.is-required::after {
+      content: ' *';
+      color: var(--color-error);
+      font-weight: 700;
+    }
+
+    .input-control {
+      width: 100%;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      transition: all var(--transition-fast);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .input-control:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: var(--bg-secondary);
+      box-shadow: 0 0 0 4px rgba(107, 144, 128, 0.12);
+    }
+
+    .input-control:disabled {
+      background: var(--bg-tertiary);
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .input-hint {
+      font-size: var(--font-size-xs);
+      color: var(--text-muted);
+      margin-top: var(--spacing-xs);
+      line-height: 1.6;
+    }
+
+    .input-error {
+      font-size: var(--font-size-xs);
+      color: var(--color-error);
+      margin-top: var(--spacing-xs);
+      font-weight: 500;
+    }
+
+    /* Action Buttons */
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md) var(--spacing-xl);
+      border: none;
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .action-button:hover::before {
+      left: 100%;
+    }
+
+    .action-button--primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: var(--text-inverse);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-button--primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+    }
+
+    .action-button--primary:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-button--secondary {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+
+    .action-button--secondary:hover:not(:disabled) {
+      background: var(--bg-secondary);
+      border-color: var(--color-primary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-button--secondary:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    .action-button--success {
+      background: linear-gradient(135deg, var(--color-success), #3d7a53);
+      color: var(--text-inverse);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-button--success:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      background: linear-gradient(135deg, #3d7a53, var(--color-success));
+    }
+
+    .action-button--success:active:not(:disabled) {
+      transform: translateY(0);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .action-group {
+      display: flex;
+      gap: var(--spacing-md);
+      margin-top: var(--spacing-2xl);
+      flex-wrap: wrap;
+    }
+
+    /* Toggle Control */
+    .toggle-control {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      user-select: none;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .toggle-control:hover {
+      border-color: var(--color-primary);
+      background: var(--bg-secondary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toggle-control input[type="checkbox"] {
+      width: 2.75rem;
+      height: 1.625rem;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .toggle-control__label {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .toggle-control--spaced {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    /* Functional Actions Group */
+    .functional-actions {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+      margin: var(--spacing-xl) 0;
+    }
+
+    .functional-actions__item {
+      width: 100%;
+    }
+
+    /* Repayment Mode Selector */
+    .repayment-mode-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .mode-card {
+      padding: var(--spacing-lg);
+      border-radius: var(--border-radius);
+      border: 2px solid var(--border-color);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      background: var(--bg-primary);
+    }
+
+    .mode-card:hover {
+      border-color: var(--color-primary-light);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .mode-card.is-selected {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-sm);
+      background: var(--bg-secondary);
+    }
+
+    .mode-card__title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .mode-card__description {
+      font-size: var(--font-size-sm);
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .repayment-mode-content {
+      margin-top: var(--spacing-xl);
+    }
+
+    .repayment-mode-content.is-hidden {
+      display: none;
+    }
+
+    .repayment-mode-content.is-visible {
+      display: block;
+    }
+
+    .principal-sub-phase,
+    .interest-sub-phase {
+      animation: containerSlideIn var(--transition-base);
+    }
+
+    .principal-sub-phase.is-hidden,
+    .interest-sub-phase.is-hidden {
+      display: none !important;
+    }
+
+    .schedule-scroll-wrapper {
+      max-height: 450px;
+      overflow-y: auto;
+      padding-right: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      background: var(--bg-primary);
+    }
+
+    .schedule-rows {
+      padding: var(--spacing-sm) 0;
+    }
+
+    .editable-schedule input.input-in-table {
+      width: 100%;
+      padding: var(--spacing-xs) var(--spacing-sm);
+      border: 1px solid var(--bg-tertiary);
+      border-radius: calc(var(--border-radius) / 2);
+      text-align: right;
+      direction: ltr;
+      background: var(--bg-secondary);
+      transition: border-color var(--transition-fast);
+    }
+
+    .editable-schedule input.input-in-table:focus {
+      border-color: var(--color-primary-light);
+      background: var(--bg-primary);
+      outline: none;
+    }
+
+    .editable-schedule thead th {
+      position: sticky;
+      top: 0;
+      background: var(--bg-tertiary);
+      z-index: 10;
+      box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .day-input-group {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    .day-input-group__label {
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .day-input-group input.input-in-table {
+      flex-grow: 1;
+      max-width: 110px;
+      text-align: center;
+    }
+
+    /* Expandable Content */
+    .expandable-content {
+      margin-top: var(--spacing-md);
+      padding: var(--spacing-lg);
+      background: var(--bg-primary);
+      border-radius: var(--border-radius);
+      border: 1px solid var(--border-color);
+      animation: contentExpand var(--transition-base);
+    }
+
+    .expandable-content.is-hidden {
+      display: none;
+    }
+
+    @keyframes contentExpand {
+      from {
+        opacity: 0;
+        max-height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+      }
+      to {
+        opacity: 1;
+        max-height: 1000px;
+      }
+    }
+
+    /* Dynamic Row Items */
+    .dynamic-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: var(--spacing-md);
+      align-items: start;
+      padding: var(--spacing-lg);
+      background: var(--bg-primary);
+      border-radius: var(--border-radius);
+      border: 2px solid var(--border-color);
+      margin-bottom: var(--spacing-md);
+      transition: all var(--transition-base);
+    }
+
+    .dynamic-row:hover {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .dynamic-row__remove {
+      background: none;
+      border: none;
+      color: var(--color-error);
+      font-size: var(--font-size-2xl);
+      cursor: pointer;
+      padding: 0;
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--border-radius);
+      transition: all var(--transition-fast);
+      flex-shrink: 0;
+    }
+
+    .dynamic-row__remove:hover {
+      background: rgba(200, 76, 76, 0.1);
+      transform: scale(1.15);
+    }
+
+    /* Results Summary */
+    .results-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .results-summary__card {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+      color: var(--text-inverse);
+      padding: var(--spacing-xl);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--shadow-md);
+    }
+
+    .results-summary__item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--spacing-md) 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+    }
+
+    .results-summary__item:last-child {
+      border-bottom: none;
+      font-size: var(--font-size-xl);
+      font-weight: 700;
+      margin-top: var(--spacing-sm);
+      padding-top: var(--spacing-lg);
+      border-top: 2px solid rgba(255, 255, 255, 0.35);
+    }
+
+    .results-summary__label {
+      font-size: var(--font-size-sm);
+      opacity: 0.95;
+      font-weight: 500;
+    }
+
+    .results-summary__value {
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      font-family: var(--font-family);
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: var(--font-size-sm);
+      border-radius: var(--border-radius);
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      margin-top: var(--spacing-lg);
+      background: var(--bg-secondary);
+    }
+
+    .data-table thead {
+      background: var(--bg-tertiary);
+    }
+
+    .data-table th {
+      padding: var(--spacing-md) var(--spacing-lg);
+      text-align: right;
+      font-weight: 600;
+      font-size: var(--font-size-xs);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-primary);
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    .data-table td {
+      padding: var(--spacing-md) var(--spacing-lg);
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--bg-primary);
+    }
+
+    .data-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Utility Classes */
+    .is-hidden {
+      display: none !important;
+    }
+
+    .is-visible {
+      display: block !important;
+    }
+
+    .text-center {
+      text-align: center;
+    }
+
+    .persian-number {
+      font-family: var(--font-family);
+      font-feature-settings: 'tnum';
+      direction: rtl;
+    }
+
+    .section-divider {
+      height: 1px;
+      background: var(--border-color);
+      margin: var(--spacing-xl) 0;
+    }
+
+    /* Module Section Styles */
+    .module-section {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .module-section__title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    /* Tax Module Styles */
+    .tax-option-row {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-bottom: var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tax-input-content {
+      margin-top: var(--spacing-md);
+      padding-top: var(--spacing-md);
+      border-top: 1px dashed var(--bg-tertiary);
+    }
+
+    /* Ensure toggle label doesn't trigger the input content display, only checkbox does */
+    .tax-option-row .toggle-control {
+      margin-bottom: 0;
+      border: none;
+      padding: 0;
+      background: none;
+      box-shadow: none;
+    }
+
+    /* Cost Schedule Phase Styles */
+    .cost-sub-phase {
+      animation: containerSlideIn var(--transition-base);
+    }
+
+    .cost-sub-phase.is-hidden {
+      display: none !important;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      .page-content {
+        padding: var(--spacing-md) var(--spacing-sm);
+      }
+
+      .page-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+      }
+
+      .page-header__title {
+        font-size: var(--font-size-2xl);
+      }
+
+      .tab-progress-nav__item {
+        min-width: 100px;
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-xs);
+      }
+
+      .form-container {
+        padding: var(--spacing-lg);
+      }
+
+      .progress-tracker__label {
+        font-size: 0.7rem;
+        max-width: 65px;
+      }
+
+      .action-group {
+        flex-direction: column;
+      }
+
+      .action-button {
+        width: 100%;
+      }
+
+      .repayment-mode-selector {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+      }
+
+      .repayment-mode-selector {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-md);
+      }
+
+      .dynamic-row {
+        grid-template-columns: 1fr;
+      }
+
+      .results-summary {
+        grid-template-columns: 1fr;
+      }
+
+      .data-table {
+        font-size: var(--font-size-xs);
+      }
+
+      .data-table th,
+      .data-table td {
+        padding: var(--spacing-sm);
+      }
+    }
+
+    @media (max-width: 480px) {
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="page-header">
+      <div class="page-header__inner">
+        <h1 class="page-header__title">محاسبه‌گر بازپرداخت وام</h1>
+        <p class="page-header__description">محاسبه دقیق و سریع برنامه بازپرداخت وام</p>
+    </div>
+  </header>
+
+    <main class="page-content">
+      <!-- Tab Navigation -->
+      <nav class="tab-progress-nav" aria-label="مراحل فرم">
+        <div class="tab-progress-nav__container">
+          <div class="tab-progress-nav__indicator" id="tabIndicator"></div>
+          <button type="button" class="tab-progress-nav__item is-active" data-step="1">اطلاعات وام</button>
+          <button type="button" class="tab-progress-nav__item" data-step="2">بازپرداخت اصل</button>
+          <button type="button" class="tab-progress-nav__item" data-step="3">زمان‌بندی پرداخت سود</button>
+          <button type="button" class="tab-progress-nav__item" data-step="4">تنظیمات پیشرفته</button>
+          <button type="button" class="tab-progress-nav__item" data-step="5">نتایج</button>
+        </div>
+      </nav>
+
+    <form id="calculatorForm">
+        <!-- Section 1: Loan Information -->
+        <section class="form-container is-visible" data-step="1" aria-labelledby="section-1-title">
+          <div class="form-container__heading">
+            <h2 id="section-1-title" class="form-container__title">
+              <span class="form-container__title-icon"></span>
+              اطلاعات وام
+            </h2>
+          </div>
+          
+          <div class="input-wrapper">
+            <label for="loanAmount" class="input-label is-required">مبلغ وام (تومان)</label>
+            <input type="number" id="loanAmount" class="input-control" placeholder="مثال: 330000000" min="0" step="1000" />
+            <div id="loanAmountDisplay" class="input-hint persian-number"></div>
+            <div id="loanAmountError" class="input-error"></div>
+            <div class="input-hint">
+              <svg class="icon-inline" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm.93 9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+              </svg>
+              مبلغ کل وام را به تومان وارد کنید. اعداد را به صورت انگلیسی وارد کنید.
+            </div>
+      </div>
+
+          <div class="input-wrapper">
+            <label for="monthlyRate" class="input-label is-required">نرخ سود ماهیانه (%)</label>
+            <input type="number" id="monthlyRate" class="input-control" placeholder="مثال: 4.5" min="0" step="0.01" />
+            <div id="monthlyRateError" class="input-error"></div>
+            <div class="input-hint">
+              <svg class="icon-inline" width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <path d="M8 0a8 8 0 1 0 0 16A8 8 0 0 0 8 0zm.93 9.412l-1 4.705c-.07.34.029.533.304.533.194 0 .487-.07.686-.246l-.088.416c-.287.346-.92.598-1.465.598-.703 0-1.002-.422-.808-1.319l.738-3.468c.064-.293.006-.399-.287-.47l-.451-.081.082-.381 2.29-.287zM8 5.5a1 1 0 1 1 0-2 1 1 0 0 1 0 2z"/>
+              </svg>
+              نرخ سود ماهیانه برحسب درصد وارد شود (مثلاً ۴.۵ برای ۴.۵٪)
+            </div>
+        </div>
+
+          <div class="action-group">
+            <button type="button" id="step1NextBtn" class="action-button action-button--primary" disabled>مرحله بعد</button>
+      </div>
+        </section>
+
+        <!-- Section 2: Principal Repayment -->
+        <section class="form-container is-hidden" data-step="2" aria-labelledby="section-2-title">
+          <div class="form-container__heading">
+            <h2 id="section-2-title" class="form-container__title">
+              <span class="form-container__title-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </span>
+              برنامه بازپرداخت اصل پول
+            </h2>
+          </div>
+
+          <div id="principalPhaseA" class="principal-sub-phase is-visible">
+            <div class="repayment-mode-selector">
+              <div class="mode-card is-selected" id="regularModeCard" data-mode="regular">
+                <h3 class="mode-card__title">۱. پرداخت منظم</h3>
+                <p class="mode-card__description">تعیین تعداد و فواصل اقساط.</p>
+              </div>
+              <div class="mode-card" id="customModeCard" data-mode="custom">
+                <h3 class="mode-card__title">۲. پرداخت سفارشی</h3>
+                <p class="mode-card__description">ورود مبلغ و تاریخ دقیق برای هر قسط.</p>
+              </div>
+            </div>
+
+            <div id="regularModeContent" class="repayment-mode-content is-visible">
+              <div class="input-wrapper">
+                <label class="input-label">فاصله بین اقساط (روز)</label>
+                <input type="number" id="principalPaymentInterval" class="input-control" value="30" min="1" step="1" />
+              </div>
+              <div class="input-wrapper">
+                <label class="input-label">تعداد اقساط</label>
+                <input type="number" id="numberOfPayments" class="input-control" placeholder="مثال: 12" min="1" step="1" />
+              </div>
+            </div>
+
+            <div id="customModeContent" class="repayment-mode-content is-hidden">
+              <div class="input-wrapper">
+                <label class="input-label">تعداد اقساط سفارشی</label>
+                <input type="number" id="numberOfCustomPayments" class="input-control" placeholder="مثال: 10" min="1" step="1" />
+              </div>
+            </div>
+
+            <div class="action-group">
+              <button type="button" class="action-button action-button--primary" id="principalPhaseNextBtn">مرحله بعد</button>
+              <button type="button" class="action-button action-button--secondary" id="principalPhasePrevBtn">بازگشت</button>
+            </div>
+          </div>
+
+          <div id="principalPhaseB" class="principal-sub-phase is-hidden">
+            <p class="input-hint" style="margin-bottom: var(--spacing-lg);">
+              لطفا مبالغ و تاریخ‌های اقساط را در صورت نیاز اصلاح کنید.
+            </p>
+
+            <div id="scheduleScrollWrapper" class="schedule-scroll-wrapper">
+              <table class="data-table editable-schedule" id="principalScheduleTable">
+                <thead>
+                  <tr>
+                    <th style="width: 15%;">روز پرداخت</th>
+                    <th style="width: 35%;">مبلغ قسط (تومان)</th>
+                    <th style="width: 40%;">اصل پول باقی‌مانده (بعد)</th>
+                  </tr>
+                </thead>
+                <tbody id="principalScheduleBody"></tbody>
+              </table>
+            </div>
+
+            <div class="action-group">
+              <button type="button" class="action-button action-button--primary" id="principalPhaseBNextBtn">ادامه به زمان‌بندی سود</button>
+              <button type="button" class="action-button action-button--secondary" id="principalPhaseBBackBtn">بازگشت به تنظیمات</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 3: Interest Payments -->
+        <section class="form-container is-hidden" data-step="3" aria-labelledby="section-3-title">
+          <div class="form-container__heading">
+            <h2 id="section-3-title" class="form-container__title">
+              <span class="form-container__title-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
+                </svg>
+              </span>
+              زمان‌بندی پرداخت سود (اختیاری)
+            </h2>
+          </div>
+
+          <div id="interestPhaseA" class="interest-sub-phase is-visible">
+            <div class="repayment-mode-selector">
+              <div class="mode-card is-selected" id="regularInterestCard" data-mode="regular">
+                <h3 class="mode-card__title">۱. پرداخت منظم سود</h3>
+                <p class="mode-card__description">تعیین فواصل زمانی منظم (مثلاً هر ۹۰ روز) و تعداد دفعات.</p>
+              </div>
+              <div class="mode-card" id="customInterestCard" data-mode="custom">
+                <h3 class="mode-card__title">۲. پرداخت سفارشی روزها</h3>
+                <p class="mode-card__description">ورود تعداد و تعیین دستی روزهای پرداخت سود (مثلاً روز ۱۵، روز ۴۵).</p>
+              </div>
+            </div>
+
+            <div id="regularInterestContent" class="repayment-mode-content is-visible">
+              <div class="input-wrapper">
+                <label class="input-label">فاصله بین پرداخت‌ها (روز)</label>
+                <input type="text" id="interestPaymentInterval" class="input-control" value="90" />
+              </div>
+              <div class="input-wrapper">
+                <label class="input-label">تعداد دفعات پرداخت سود</label>
+                <input type="text" id="numberOfInterestPayments" class="input-control" placeholder="مثال: 4" />
+              </div>
+            </div>
+
+            <div id="customInterestContent" class="repayment-mode-content is-hidden">
+              <div class="input-wrapper">
+                <label class="input-label">تعداد دفعات پرداخت سود سفارشی</label>
+                <input type="text" id="numberOfCustomInterestPayments" class="input-control" placeholder="مثال: 5" />
+              </div>
+            </div>
+
+            <div class="action-group">
+              <button type="button" class="action-button action-button--primary" id="interestPhaseNextBtn">مرحله بعد</button>
+              <button type="button" class="action-button action-button--secondary" id="interestPhasePrevBtn">بازگشت</button>
+            </div>
+          </div>
+
+          <div id="interestPhaseB" class="interest-sub-phase is-hidden">
+            <p class="input-hint" style="margin-bottom: var(--spacing-lg);">
+              روزهای پرداخت سود را برای هر ردیف وارد یا اصلاح کنید.
+            </p>
+
+            <div id="interestScrollWrapper" class="schedule-scroll-wrapper">
+              <table class="data-table editable-schedule" id="interestScheduleTable">
+                <thead>
+                  <tr>
+                    <th style="width: 10%;">ردیف</th>
+                    <th style="width: 30%;">روز پرداخت</th>
+                    <th style="width: 60%;">توضیحات/یادداشت (اختیاری)</th>
+                  </tr>
+                </thead>
+                <tbody id="interestScheduleBody"></tbody>
+              </table>
+            </div>
+
+            <div class="action-group">
+              <button type="button" class="action-button action-button--primary" id="interestPhaseBNextBtn">ادامه به ماژول‌ها</button>
+              <button type="button" class="action-button action-button--secondary" id="interestPhaseBBackBtn">بازگشت به تنظیمات</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 4: Optional Modules -->
+        <section class="form-container is-hidden" data-step="4" aria-labelledby="section-4-title">
+          <div class="form-container__heading">
+            <h2 id="section-4-title" class="form-container__title">
+              <span class="form-container__title-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                </svg>
+              </span>
+              تنظیمات پیشرفته
+            </h2>
+          </div>
+          
+          <!-- Fee Module -->
+          <div class="module-section">
+            <h3 class="module-section__title">تنظیمات کارمزد</h3>
+            <div id="feeModuleContent" class="expandable-content is-visible" style="padding: 0; border: none; background: none;">
+              <div class="input-wrapper">
+                <label class="input-label">نوع کارمزد</label>
+                <select id="feeMode" class="input-control">
+                  <option value="percentage">درصدی از اصل وام</option>
+                  <option value="fixed">مبلغ ثابت</option>
+                </select>
+              </div>
+              <div id="feeRateContainer" class="input-wrapper">
+                <label class="input-label">نرخ کارمزد (%)</label>
+                <input type="text" id="feeRate" class="input-control" placeholder="مثال: 2" />
+              </div>
+              <div id="feeAmountContainer" class="input-wrapper is-hidden">
+                <label class="input-label">مبلغ کارمزد (تومان)</label>
+                <input type="text" id="feeAmount" class="input-control" placeholder="مثال: 1000000" />
+              </div>
+              <div id="feeDisplay" class="input-hint is-hidden"></div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Guarantee Module -->
+          <div class="module-section">
+            <h3 class="module-section__title">تنظیمات ضمانت</h3>
+            <div id="guaranteeModuleContent" class="expandable-content is-visible" style="padding: 0; border: none; background: none;">
+              <div class="input-wrapper">
+                <label class="input-label">نرخ هزینه ضمانت از اصل وام (%)</label>
+                <input type="text" id="guaranteeRate" class="input-control" placeholder="مثال: 1.5" />
+                <div class="input-hint">درصدی از مبلغ اصلی وام که به‌عنوان هزینه ضمانت لحاظ می‌شود</div>
+              </div>
+              <div id="guaranteeDisplay" class="input-hint is-hidden"></div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Tax Module -->
+          <div class="module-section">
+            <h3 class="module-section__title">تنظیمات مالیات</h3>
+            <div id="taxModuleContent" class="expandable-content is-visible" style="padding: 0; border: none; background: none;">
+              <div class="input-hint" style="margin-bottom: var(--spacing-lg);">
+                مالیات‌هایی را که می‌خواهید اعمال شوند، انتخاب کرده و نرخ درصد آن‌ها را وارد کنید.
+              </div>
+              
+              <div id="taxOptionsContainer">
+                <div class="tax-option-row">
+                  <div class="toggle-control">
+                    <input type="checkbox" id="taxOnInterestEnabled" />
+                    <span class="toggle-control__label">مالیات بر سود وام</span>
+                  </div>
+                  <div id="taxOnInterestContent" class="tax-input-content is-hidden">
+                    <label class="input-label">نرخ مالیات (%)</label>
+                    <input type="text" id="taxOnInterestRate" class="input-control" placeholder="مثال: 9" />
+                  </div>
+                </div>
+                
+                <div class="tax-option-row">
+                  <div class="toggle-control">
+                    <input type="checkbox" id="taxOnFeeEnabled" />
+                    <span class="toggle-control__label">مالیات بر کارمزد</span>
+                  </div>
+                  <div id="taxOnFeeContent" class="tax-input-content is-hidden">
+                    <label class="input-label">نرخ مالیات (%)</label>
+                    <input type="text" id="taxOnFeeRate" class="input-control" placeholder="مثال: 9" />
+                  </div>
+                </div>
+                
+                <div class="tax-option-row">
+                  <div class="toggle-control">
+                    <input type="checkbox" id="taxOnGuaranteeEnabled" />
+                    <span class="toggle-control__label">مالیات بر هزینه ضمانت</span>
+                  </div>
+                  <div id="taxOnGuaranteeContent" class="tax-input-content is-hidden">
+                    <label class="input-label">نرخ مالیات (%)</label>
+                    <input type="text" id="taxOnGuaranteeRate" class="input-control" placeholder="مثال: 9" />
+                  </div>
+                </div>
+              </div>
+              <div id="totalTaxes" style="margin-top: var(--spacing-lg);"></div>
+            </div>
+          </div>
+
+          <div class="section-divider"></div>
+
+          <!-- Cost Schedule Module -->
+          <div class="section-divider"></div>
+          <div class="module-section">
+            <h3 class="module-section__title">تقسیم هزینه‌ها (کارمزد و ضمانت)</h3>
+            <div id="costScheduleModuleContent" class="expandable-content is-visible" style="padding: 0; border: none; background: none;">
+              <div class="input-hint" style="margin-bottom: var(--spacing-lg);">
+                هزینه‌های یک‌باره (کارمزد و ضمانت) را می‌توانید در چند قسمت و با فاصله مشخص تقسیم کنید.
+              </div>
+
+              <div id="costPhaseA" class="cost-sub-phase is-visible">
+                <div class="repayment-mode-selector">
+                  <div class="mode-card is-selected" id="regularCostCard" data-mode="regular" onclick="CostScheduleModule.setMode('regular')">
+                    <h3 class="mode-card__title">۱. تقسیم منظم (محاسبه خودکار)</h3>
+                    <p class="mode-card__description">تعیین تعداد و فواصل تقسیم. سیستم مبالغ را محاسبه می‌کند.</p>
+                  </div>
+                  <div class="mode-card" id="customCostCard" data-mode="custom" onclick="CostScheduleModule.setMode('custom')">
+                    <h3 class="mode-card__title">۲. تقسیم سفارشی (ورود دستی)</h3>
+                    <p class="mode-card__description">ورود مبالغ و تاریخ‌های دقیق برای هر بخش از هزینه.</p>
+                  </div>
+                </div>
+                
+                <div id="regularCostContent" class="repayment-mode-content is-visible">
+                  <div class="input-wrapper">
+                    <label class="input-label">فاصله بین پرداخت‌ها (روز)</label>
+                    <input type="text" id="costSchedulePaymentInterval" class="input-control" value="30" 
+                           oninput="this.value = formatInteger(this.value)" />
+                  </div>
+                  <div class="input-wrapper">
+                    <label class="input-label">تعداد پرداخت‌ها</label>
+                    <input type="text" id="numberOfCostPayments" class="input-control" placeholder="مثال: 4" 
+                           oninput="this.value = formatInteger(this.value)" />
+                  </div>
+                </div>
+
+                <div id="customCostContent" class="repayment-mode-content is-hidden">
+                  <div class="input-wrapper">
+                    <label class="input-label">تعداد دفعات تقسیم هزینه سفارشی</label>
+                    <input type="text" id="numberOfCustomCostPayments" class="input-control" placeholder="مثال: 5" 
+                           oninput="this.value = formatInteger(this.value)" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="action-group">
+            <button type="button" class="action-button action-button--primary" id="step4NextBtn">محاسبه و نمایش</button>
+            <button type="button" class="action-button action-button--secondary" id="step4PrevBtn">بازگشت</button>
+            </div>
+        </section>
+
+        <!-- Section 5: Calculate -->
+        <section class="form-container is-hidden" data-step="5" aria-labelledby="section-5-title">
+          <div class="form-container__heading">
+            <h2 id="section-5-title" class="form-container__title">
+              <span class="form-container__title-icon"></span>
+              محاسبه و نمایش نتایج
+            </h2>
+            </div>
+          <div class="text-center" style="padding: var(--spacing-2xl) 0;">
+            <p style="color: var(--text-secondary); margin-bottom: var(--spacing-xl); line-height: 1.8;">
+              برای محاسبه جدول بازپرداخت، روی دکمه زیر کلیک کنید.
+            </p>
+            <button type="submit" id="submitBtn" class="action-button action-button--primary" style="padding: var(--spacing-lg) var(--spacing-2xl); font-size: var(--font-size-lg);">
+              محاسبه جدول بازپرداخت
+            </button>
+        </div>
+          <div class="action-group">
+            <button type="button" class="action-button action-button--secondary" id="step5PrevBtn">بازگشت</button>
+            </div>
+        </section>
+      </form>
+
+      <!-- Results Section -->
+      <div id="results" class="is-hidden">
+        <section class="form-container is-visible" data-step="5" id="resultsStep">
+          <div class="form-container__heading">
+            <h2 class="form-container__title">
+              <span class="form-container__title-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+                </svg>
+              </span>
+              خلاصه نتایج
+            </h2>
+      </div>
+          
+          <div id="summaryCards" class="results-summary"></div>
+          
+          <!-- Modules Information Section -->
+          <div id="modulesSection" class="form-container" style="background: var(--bg-primary); border: 2px solid var(--border-color); margin-top: var(--spacing-xl); display: none;">
+            <div class="form-container__heading">
+              <h2 class="form-container__title">
+                <span class="form-container__title-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+                  </svg>
+                </span>
+                جزئیات ماژول‌ها
+              </h2>
+            </div>
+            <div id="modulesContent"></div>
+          </div>
+          
+          <div class="form-container" style="background: var(--bg-primary); border: 2px solid var(--border-color); margin-top: var(--spacing-xl);">
+            <div class="form-container__heading">
+              <h2 class="form-container__title">
+                <span class="form-container__title-icon">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 3h18v18H3zM3 9h18M9 3v18"/>
+                  </svg>
+                </span>
+                جدول تفصیلی برنامه بازپرداخت
+              </h2>
+        </div>
+            <div style="overflow-x: auto;">
+              <table class="data-table" id="scheduleTable">
+            <thead>
+              <tr>
+                <th>روز</th>
+                <th>اصل پول باقی‌مانده (قبل)</th>
+                <th>پرداخت اصل پول</th>
+                <th>پرداخت سود</th>
+                <th>پرداخت هزینه‌ها</th>
+                <th>کل پرداختی</th>
+                <th>توضیحات</th>
+              </tr>
+            </thead>
+            <tbody id="scheduleBody"></tbody>
+          </table>
+        </div>
+      </div>
+          
+          <div class="action-group">
+            <button type="button" class="action-button action-button--success" id="copyResultsBtn">کپی نتایج (JSON)</button>
+            <button type="button" class="action-button action-button--success" id="downloadResultsBtn">دانلود فایل JSON</button>
+            <button type="button" class="action-button action-button--secondary" id="resetFormBtn">محاسبه مجدد</button>
+            </div>
+        </section>
+            </div>
+    </main>
+          </div>
+
+  <script>
+    // Step Navigation System
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    function updateProgressTracker() {
+      const tabItems = document.querySelectorAll('.tab-progress-nav__item');
+      const indicator = document.getElementById('tabIndicator');
+      
+      if (!tabItems.length || !indicator) return;
+      
+      tabItems.forEach((item, index) => {
+        const stepNum = index + 1;
+        item.classList.remove('is-active', 'is-complete');
+        
+        if (stepNum < currentStep) {
+          item.classList.add('is-complete');
+        } else if (stepNum === currentStep) {
+          item.classList.add('is-active');
+        }
+      });
+
+      // Calculate indicator position and width for RTL
+      const activeTab = document.querySelector('.tab-progress-nav__item.is-active');
+      if (activeTab && indicator) {
+        const container = document.querySelector('.tab-progress-nav__container');
+        const containerRect = container.getBoundingClientRect();
+        const activeTabRect = activeTab.getBoundingClientRect();
+        
+        // For RTL: calculate from right side
+        const rightOffset = containerRect.right - activeTabRect.right;
+        const width = activeTabRect.width;
+        
+        indicator.style.width = `${width}px`;
+        indicator.style.right = `${rightOffset}px`;
+        indicator.style.left = 'auto';
+      }
+    }
+
+    function showFormSection(step) {
+      document.querySelectorAll('.form-container').forEach(section => {
+        section.classList.remove('is-visible');
+        section.classList.add('is-hidden');
+      });
+      
+      const targetSection = document.querySelector(`.form-container[data-step="${step}"]`);
+      if (targetSection) {
+        targetSection.classList.remove('is-hidden');
+        targetSection.classList.add('is-visible');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    // Persian Number Utilities
+    const persianDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    
+    function toPersianNumber(num) {
+      return num.toString().replace(/\d/g, (digit) => persianDigits[parseInt(digit)]);
+    }
+
+    function formatNumberWithCommas(value) {
+      if (!value) return '';
+      const num = parseFloat(value);
+      if (isNaN(num)) return '';
+      return num.toLocaleString('en-US');
+    }
+
+    function formatPersianNumber(value) {
+      if (value === null || value === undefined || value === '') return '۰';
+      const num = parseFloat(value);
+      if (isNaN(num)) return '۰';
+      const formatted = formatNumberWithCommas(num);
+      return toPersianNumber(formatted);
+    }
+
+    function nextStep() {
+      if (currentStep < totalSteps) {
+        currentStep++;
+        showFormSection(currentStep);
+        updateProgressTracker();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        showFormSection(currentStep);
+        updateProgressTracker();
+      }
+    }
+
+    // Step 1 Validation
+    function validateStep1() {
+      const loanAmount = parseFloat(document.getElementById('loanAmount').value) || 0;
+      const monthlyRate = parseFloat(document.getElementById('monthlyRate').value) || 0;
+      const nextBtn = document.getElementById('step1NextBtn');
+      const loanAmountError = document.getElementById('loanAmountError');
+      const monthlyRateError = document.getElementById('monthlyRateError');
+      
+      let isValid = true;
+      
+      // Validate loan amount
+      if (loanAmount <= 0 || isNaN(loanAmount)) {
+        loanAmountError.textContent = 'لطفاً مبلغ وام را به درستی وارد کنید (باید عددی مثبت باشد)';
+        isValid = false;
+      } else {
+        loanAmountError.textContent = '';
+      }
+      
+      // Validate monthly rate
+      if (monthlyRate <= 0 || isNaN(monthlyRate)) {
+        monthlyRateError.textContent = 'لطفاً نرخ سود ماهیانه را به درستی وارد کنید (باید عددی مثبت باشد)';
+        isValid = false;
+      } else {
+        monthlyRateError.textContent = '';
+      }
+      
+      if (nextBtn) {
+        nextBtn.disabled = !isValid;
+      }
+      
+      return isValid;
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      updateProgressTracker();
+      
+      // Add click handlers to tab items
+      document.querySelectorAll('.tab-progress-nav__item').forEach((tab, index) => {
+        tab.addEventListener('click', function() {
+          const targetStep = parseInt(this.getAttribute('data-step'));
+          if (targetStep <= currentStep || targetStep === 1) {
+            currentStep = targetStep;
+            showFormSection(currentStep);
+            updateProgressTracker();
+          }
+        });
+      });
+      
+      // Step 1: Loan Information
+      const loanAmountInput = document.getElementById('loanAmount');
+      const monthlyRateInput = document.getElementById('monthlyRate');
+      const loanAmountDisplay = document.getElementById('loanAmountDisplay');
+      const step1NextBtn = document.getElementById('step1NextBtn');
+      
+      if (loanAmountInput) {
+        loanAmountInput.addEventListener('input', function() {
+          const value = parseFloat(this.value);
+          if (value > 0) {
+            loanAmountDisplay.textContent = formatPersianNumber(value) + ' تومان';
+          } else {
+            loanAmountDisplay.textContent = '';
+          }
+          validateStep1();
+          
+          // Call LoanModule if exists
+          if (typeof LoanModule !== 'undefined' && LoanModule.updateAmountDisplay) {
+            LoanModule.updateAmountDisplay();
+          }
+        });
+      }
+      
+      if (monthlyRateInput) {
+        monthlyRateInput.addEventListener('input', function() {
+          validateStep1();
+          
+          // Call LoanModule if exists
+          if (typeof LoanModule !== 'undefined' && LoanModule.validateRate) {
+            LoanModule.validateRate();
+          }
+        });
+      }
+      
+      if (step1NextBtn) {
+        step1NextBtn.addEventListener('click', nextStep);
+        step1NextBtn.disabled = true; // Initially disabled
+      }
+      
+      // Step 2: Principal Repayment
+      const principalPhaseA = document.getElementById('principalPhaseA');
+      const principalPhaseB = document.getElementById('principalPhaseB');
+      const regularModeCard = document.getElementById('regularModeCard');
+      const customModeCard = document.getElementById('customModeCard');
+      const regularModeContent = document.getElementById('regularModeContent');
+      const customModeContent = document.getElementById('customModeContent');
+      const phaseANextBtn = document.getElementById('principalPhaseNextBtn');
+      const phaseAPrevBtn = document.getElementById('principalPhasePrevBtn');
+      const phaseBNextBtn = document.getElementById('principalPhaseBNextBtn');
+      const phaseBBackBtn = document.getElementById('principalPhaseBBackBtn');
+
+      const principalModuleRef = window.PrincipalModule || {};
+      const originalSetMode = principalModuleRef.setMode;
+      const originalGoToPhaseB = principalModuleRef.goToPhaseB;
+      const originalGoToPhaseA = principalModuleRef.goToPhaseA;
+      const originalFinalize = principalModuleRef.finalizeSchedule;
+
+      principalModuleRef.state = principalModuleRef.state || {
+        mode: 'regular',
+        schedule: [],
+        totalPrincipal: 0,
+      };
+
+      function getLoanPrincipalValue() {
+        return parseNumber(document.getElementById('loanAmount')?.value) || 0;
+      }
+
+      function getIntervalValue() {
+        return parseInt(document.getElementById('principalPaymentInterval')?.value, 10) || 0;
+      }
+
+      function getCountValue(mode) {
+        if (mode === 'custom') {
+          return parseInt(document.getElementById('numberOfCustomPayments')?.value, 10) || 0;
+        }
+        return parseInt(document.getElementById('numberOfPayments')?.value, 10) || 0;
+      }
+
+      function validatePhaseA() {
+        const interval = getIntervalValue();
+        const count = getCountValue(principalModuleRef.state.mode);
+        if (principalModuleRef.state.mode === 'regular' && (interval <= 0 || count <= 0)) {
+          alert('فاصله و تعداد اقساط باید مقدار معتبر داشته باشند.');
+          return false;
+        }
+        if (principalModuleRef.state.mode === 'custom' && count <= 0) {
+          alert('لطفاً تعداد اقساط سفارشی را مشخص کنید.');
+          return false;
+        }
+        return true;
+      }
+
+      function recalculateSchedule(shouldUpdateDom) {
+        const schedule = principalModuleRef.state.schedule || [];
+        let remaining = principalModuleRef.state.totalPrincipal;
+        const tbody = document.getElementById('principalScheduleBody');
+
+        schedule.forEach((item, idx) => {
+          remaining = Math.max(remaining - (item.amount || 0), 0);
+          item.remainingAfter = remaining;
+          if (shouldUpdateDom && tbody) {
+            const cell = tbody.querySelector(`[data-remaining-index="${idx}"]`);
+            if (cell) {
+              cell.textContent = formatNumber(item.remainingAfter);
+            }
+          }
+        });
+      }
+
+      function updatePrincipalModeUI(mode) {
+        principalModuleRef.state.mode = mode;
+        const isRegular = mode === 'regular';
+
+        if (regularModeCard) {
+          regularModeCard.classList.toggle('is-selected', isRegular);
+        }
+        if (customModeCard) {
+          customModeCard.classList.toggle('is-selected', !isRegular);
+        }
+
+        if (regularModeContent) {
+          regularModeContent.classList.toggle('is-hidden', !isRegular);
+          regularModeContent.classList.toggle('is-visible', isRegular);
+        }
+
+        if (customModeContent) {
+          customModeContent.classList.toggle('is-hidden', isRegular);
+          customModeContent.classList.toggle('is-visible', !isRegular);
+        }
+      }
+
+      function showPrincipalPhase(phase) {
+        const showPhaseA = phase === 'A';
+        if (principalPhaseA) {
+          principalPhaseA.classList.toggle('is-hidden', !showPhaseA);
+          principalPhaseA.classList.toggle('is-visible', showPhaseA);
+        }
+        if (principalPhaseB) {
+          principalPhaseB.classList.toggle('is-hidden', showPhaseA);
+          principalPhaseB.classList.toggle('is-visible', !showPhaseA);
+        }
+      }
+
+      principalModuleRef.generateScheduleData = function() {
+        const mode = principalModuleRef.state.mode;
+        const interval = getIntervalValue();
+        const count = getCountValue(mode);
+        const totalPrincipal = getLoanPrincipalValue();
+        principalModuleRef.state.totalPrincipal = totalPrincipal;
+
+        const schedule = [];
+        if (count <= 0) return schedule;
+
+        let remaining = totalPrincipal;
+        let defaultAmount =
+          mode === 'regular' && count > 0 ? Math.floor(totalPrincipal / count) : 0;
+        const effectiveInterval = interval || 30;
+
+        for (let i = 0; i < count; i++) {
+          const dayNumber = effectiveInterval * (i + 1);
+          const amount = mode === 'regular' ? defaultAmount : 0;
+          remaining = Math.max(remaining - amount, 0);
+
+          schedule.push({
+            index: i,
+            day: dayNumber,
+            amount,
+            remainingAfter: remaining,
+          });
+        }
+
+        if (mode === 'regular' && schedule.length > 0) {
+          const distributed = defaultAmount * count;
+          const diff = totalPrincipal - distributed;
+          schedule[schedule.length - 1].amount += diff;
+        }
+
+        recalculateSchedule(false);
+        principalModuleRef.state.schedule = schedule;
+        return schedule;
+      };
+
+      principalModuleRef.renderEditableSchedule = function(data) {
+        const tbody = document.getElementById('principalScheduleBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        data.forEach((item, idx) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="day-cell">روز ${item.day}</td>
+            <td>
+              <input type="text" class="input-in-table" data-field="amount" data-index="${idx}" value="${formatNumber(item.amount)}">
+            </td>
+            <td class="remaining-cell" data-remaining-index="${idx}">
+              ${formatNumber(item.remainingAfter)}
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('input.input-in-table').forEach(input => {
+          input.addEventListener('input', function() {
+            const index = parseInt(this.dataset.index, 10);
+            const field = this.dataset.field;
+            principalModuleRef.updateRow(index, field, this.value);
+          });
+        });
+      };
+
+      principalModuleRef.updateRow = function(index, field, value) {
+        const schedule = principalModuleRef.state.schedule || [];
+        if (!schedule[index]) return;
+
+        if (field === 'amount') {
+          schedule[index].amount = parseNumber(value);
+        } else if (field === 'date') {
+          schedule[index].date = value;
+        }
+
+        recalculateSchedule(true);
+      };
+
+      principalModuleRef.setMode = function(mode) {
+        updatePrincipalModeUI(mode);
+        if (typeof originalSetMode === 'function') {
+          originalSetMode(mode);
+        }
+      };
+
+      principalModuleRef.goToPhaseB = function() {
+        if (!validatePhaseA()) return;
+        const data = principalModuleRef.generateScheduleData();
+        principalModuleRef.renderEditableSchedule(data);
+        showPrincipalPhase('B');
+        if (typeof originalGoToPhaseB === 'function') {
+          originalGoToPhaseB();
+        }
+      };
+
+      principalModuleRef.goToPhaseA = function() {
+        showPrincipalPhase('A');
+        if (typeof originalGoToPhaseA === 'function') {
+          originalGoToPhaseA();
+        }
+      };
+
+      principalModuleRef.finalizeSchedule = function() {
+        const schedule = principalModuleRef.state.schedule || [];
+        if (!schedule.length) {
+          alert('ابتدا اقساط را تنظیم کنید.');
+          return;
+        }
+        if (typeof originalFinalize === 'function') {
+          originalFinalize();
+        }
+        nextStep();
+      };
+
+      window.PrincipalModule = principalModuleRef;
+
+      if (regularModeCard) {
+        regularModeCard.addEventListener('click', function() {
+          window.PrincipalModule.setMode('regular');
+        });
+      }
+
+      if (customModeCard) {
+        customModeCard.addEventListener('click', function() {
+          window.PrincipalModule.setMode('custom');
+        });
+      }
+
+      if (phaseANextBtn) {
+        phaseANextBtn.addEventListener('click', function() {
+          window.PrincipalModule.goToPhaseB();
+        });
+      }
+
+      if (phaseAPrevBtn) {
+        phaseAPrevBtn.addEventListener('click', function() {
+          prevStep();
+        });
+      }
+
+      if (phaseBNextBtn) {
+        phaseBNextBtn.addEventListener('click', function() {
+          window.PrincipalModule.finalizeSchedule();
+        });
+      }
+
+      if (phaseBBackBtn) {
+        phaseBBackBtn.addEventListener('click', function() {
+          window.PrincipalModule.goToPhaseA();
+        });
+      }
+
+      window.PrincipalModule.setMode('regular');
+      
+      // Step 3: Interest Payments (conditional workflow)
+      const interestPhaseA = document.getElementById('interestPhaseA');
+      const interestPhaseB = document.getElementById('interestPhaseB');
+      const regularInterestCard = document.getElementById('regularInterestCard');
+      const customInterestCard = document.getElementById('customInterestCard');
+      const regularInterestContent = document.getElementById('regularInterestContent');
+      const customInterestContent = document.getElementById('customInterestContent');
+      const interestPhaseNextBtn = document.getElementById('interestPhaseNextBtn');
+      const interestPhasePrevBtn = document.getElementById('interestPhasePrevBtn');
+      const interestPhaseBNextBtn = document.getElementById('interestPhaseBNextBtn');
+      const interestPhaseBBackBtn = document.getElementById('interestPhaseBBackBtn');
+
+      const interestModuleRef = window.InterestModule || {};
+      const interestOriginalSetMode = interestModuleRef.setMode;
+
+      interestModuleRef.currentMode = 'regular'; // Default mode
+      interestModuleRef.state = interestModuleRef.state || {
+        mode: 'regular',
+        schedule: [],
+      };
+
+      function getInterestIntervalValue() {
+        return parseInt(document.getElementById('interestPaymentInterval')?.value, 10) || 30;
+      }
+
+      function getInterestCountValue(mode) {
+        if (mode === 'custom') {
+          return parseInt(document.getElementById('numberOfCustomInterestPayments')?.value, 10) || 0;
+        }
+        return parseInt(document.getElementById('numberOfInterestPayments')?.value, 10) || 0;
+      }
+
+      function validateRegularInterest() {
+        const interval = getInterestIntervalValue();
+        const count = getInterestCountValue('regular');
+        if (interval <= 0) {
+          alert('لطفاً فاصله معتبر برای پرداخت سود وارد کنید.');
+          return false;
+        }
+        if (count <= 0) {
+          alert('لطفاً تعداد دفعات پرداخت سود را مشخص کنید.');
+          return false;
+        }
+        return true;
+      }
+
+      function validateCustomInterest() {
+        const count = getInterestCountValue('custom');
+        if (count <= 0) {
+          alert('لطفاً تعداد دفعات پرداخت سود سفارشی را مشخص کنید.');
+          return false;
+        }
+        return true;
+      }
+
+      function updateInterestModeUI(mode) {
+        interestModuleRef.state.mode = mode;
+        const isRegular = mode === 'regular';
+        if (regularInterestCard) regularInterestCard.classList.toggle('is-selected', isRegular);
+        if (customInterestCard) customInterestCard.classList.toggle('is-selected', !isRegular);
+        if (regularInterestContent) {
+          regularInterestContent.classList.toggle('is-hidden', !isRegular);
+          regularInterestContent.classList.toggle('is-visible', isRegular);
+        }
+        if (customInterestContent) {
+          customInterestContent.classList.toggle('is-hidden', isRegular);
+          customInterestContent.classList.toggle('is-visible', !isRegular);
+        }
+      }
+
+      function showInterestPhase(phase) {
+        const showPhaseA = phase === 'A';
+        if (interestPhaseA) {
+          interestPhaseA.classList.toggle('is-hidden', !showPhaseA);
+          interestPhaseA.classList.toggle('is-visible', showPhaseA);
+        }
+        if (interestPhaseB) {
+          interestPhaseB.classList.toggle('is-hidden', showPhaseA);
+          interestPhaseB.classList.toggle('is-visible', !showPhaseA);
+        }
+      }
+
+      interestModuleRef.setMode = function(mode) {
+        interestModuleRef.currentMode = mode;
+        updateInterestModeUI(mode);
+        if (typeof interestOriginalSetMode === 'function') {
+          interestOriginalSetMode(mode);
+        }
+      };
+
+      interestModuleRef.generateCustomSchedule = function() {
+        const count = getInterestCountValue('custom');
+        const schedule = [];
+        // Generate initial day values using a simple interval (e.g., 30, 60, 90) for initial display
+        const defaultInterval = 30;
+        for (let i = 0; i < count; i++) {
+          const initialDay = (i + 1) * defaultInterval;
+          schedule.push({
+            index: i,
+            day: initialDay,
+            note: '',
+          });
+        }
+        interestModuleRef.state.schedule = schedule;
+        return schedule;
+      };
+
+      interestModuleRef.renderCustomSchedule = function(data) {
+        const tbody = document.getElementById('interestScheduleBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+
+        data.forEach((item, idx) => {
+          const tr = document.createElement('tr');
+          const dayValue = item.day ? formatInteger(String(item.day)) : '';
+          tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td dir="rtl">
+              <div class="day-input-group">
+                <span class="day-input-group__label">روز</span>
+                <input
+                  type="text"
+                  class="input-control input-in-table day-input"
+                  data-index="${idx}"
+                  placeholder="مثلاً ۳۰"
+                  value="${dayValue}"
+                />
+              </div>
+            </td>
+            <td>
+              <input type="text" class="input-control input-in-table note-input" data-index="${idx}" value="${item.note || ''}">
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('.day-input').forEach(input => {
+          input.addEventListener('input', function() {
+            this.value = formatInteger(this.value);
+            InterestModule.updateDay(this.dataset.index, this.value);
+          });
+        });
+
+        tbody.querySelectorAll('.note-input').forEach(input => {
+          input.addEventListener('input', function() {
+            const index = parseInt(this.dataset.index, 10);
+            if (!isNaN(index)) {
+              interestModuleRef.state.schedule[index].note = this.value;
+            }
+          });
+        });
+      };
+
+      interestModuleRef.updateDay = function(index, value) {
+        const schedule = interestModuleRef.state.schedule || [];
+        const item = schedule[Number(index)];
+        if (!item) return;
+        const numericValue = parseNumber(value);
+        // Store as number, or empty string if invalid
+        item.day = (numericValue !== null && numericValue !== undefined && !isNaN(numericValue)) ? numericValue : '';
+      };
+
+      interestModuleRef.goToPhaseB = function() {
+        if (interestModuleRef.currentMode === 'custom') {
+          // 1. Validate #numberOfCustomInterestPayments
+          const count = parseNumber(document.getElementById('numberOfCustomInterestPayments').value);
+          if (count <= 0) {
+            alert('لطفاً تعداد دفعات پرداخت سود سفارشی را وارد کنید.');
+            return;
+          }
+
+          // 2. Generate a base schedule array with initial day values
+          const schedule = interestModuleRef.generateCustomSchedule();
+          
+          // 3. Render the editable table in #interestScheduleBody
+          interestModuleRef.renderCustomSchedule(schedule);
+          
+          // 4. Switch visibility from Phase A to Phase B
+          document.getElementById('interestPhaseA').classList.add('is-hidden');
+          document.getElementById('interestPhaseB').classList.remove('is-hidden');
+        } else {
+          // Regular Mode: Skip schedule view and proceed to the next major step (Step 4)
+          if (validateRegularInterest()) {
+            window.nextStep();
+          }
+        }
+      };
+
+      interestModuleRef.goToPhaseA = function() {
+        showInterestPhase('A');
+      };
+
+      window.InterestModule = interestModuleRef;
+
+      if (regularInterestCard) {
+        regularInterestCard.addEventListener('click', function() {
+          window.InterestModule.setMode('regular');
+        });
+      }
+
+      if (customInterestCard) {
+        customInterestCard.addEventListener('click', function() {
+          window.InterestModule.setMode('custom');
+        });
+      }
+
+      if (interestPhaseNextBtn) {
+        interestPhaseNextBtn.addEventListener('click', function() {
+          window.InterestModule.goToPhaseB();
+        });
+      }
+
+      if (interestPhasePrevBtn) {
+        interestPhasePrevBtn.addEventListener('click', function() {
+          prevStep();
+        });
+      }
+
+      if (interestPhaseBNextBtn) {
+        interestPhaseBNextBtn.addEventListener('click', function() {
+          nextStep();
+        });
+      }
+
+      if (interestPhaseBBackBtn) {
+        interestPhaseBBackBtn.addEventListener('click', function() {
+          window.InterestModule.goToPhaseA();
+        });
+      }
+
+      window.InterestModule.setMode('regular');
+
+      // Add event listeners for input formatting
+      const interestPaymentIntervalInput = document.getElementById('interestPaymentInterval');
+      const numberOfInterestPaymentsInput = document.getElementById('numberOfInterestPayments');
+      const numberOfCustomInterestPaymentsInput = document.getElementById('numberOfCustomInterestPayments');
+
+      if (interestPaymentIntervalInput) {
+        interestPaymentIntervalInput.addEventListener('input', function() {
+          this.value = formatInteger(this.value);
+        });
+      }
+
+      if (numberOfInterestPaymentsInput) {
+        numberOfInterestPaymentsInput.addEventListener('input', function() {
+          this.value = formatInteger(this.value);
+        });
+      }
+
+      if (numberOfCustomInterestPaymentsInput) {
+        numberOfCustomInterestPaymentsInput.addEventListener('input', function() {
+          this.value = formatInteger(this.value);
+        });
+      }
+      
+      // Step 4: Advanced Settings
+      const step4NextBtn = document.getElementById('step4NextBtn');
+      const step4PrevBtn = document.getElementById('step4PrevBtn');
+      
+      if (step4NextBtn) {
+        step4NextBtn.addEventListener('click', function() {
+          // Go to Step 5 first, then trigger calculation
+          nextStep();
+          // Trigger the submit button click after a short delay to ensure Step 5 is visible
+          setTimeout(function() {
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+              submitBtn.click();
+            }
+          }, 100);
+        });
+      }
+      if (step4PrevBtn) step4PrevBtn.addEventListener('click', prevStep);
+      
+      // Fee Module (Always Visible/Data-Driven)
+      const feeMode = document.getElementById('feeMode');
+      const feeRate = document.getElementById('feeRate');
+      const feeAmount = document.getElementById('feeAmount');
+      
+      if (feeMode) {
+        feeMode.addEventListener('change', function() {
+          const rateContainer = document.getElementById('feeRateContainer');
+          const amountContainer = document.getElementById('feeAmountContainer');
+          if (rateContainer && amountContainer) {
+            if (this.value === 'percentage') {
+              rateContainer.classList.remove('is-hidden');
+              amountContainer.classList.add('is-hidden');
+            } else {
+              rateContainer.classList.add('is-hidden');
+              amountContainer.classList.remove('is-hidden');
+            }
+          }
+          if (typeof FeeModule !== 'undefined' && FeeModule.updateDisplay) {
+            FeeModule.updateDisplay();
+          }
+        });
+      }
+      
+      if (feeRate) {
+        feeRate.addEventListener('input', function() {
+          this.value = formatDecimal(this.value);
+          if (typeof FeeModule !== 'undefined' && FeeModule.updateDisplay) {
+            FeeModule.updateDisplay();
+          }
+        });
+      }
+      
+      if (feeAmount) {
+        feeAmount.addEventListener('input', function() {
+          this.value = formatNumber(this.value);
+          if (typeof FeeModule !== 'undefined' && FeeModule.updateDisplay) {
+            FeeModule.updateDisplay();
+          }
+        });
+      }
+      
+      // Guarantee Module (Always Visible/Data-Driven)
+      const guaranteeRate = document.getElementById('guaranteeRate');
+      
+      if (guaranteeRate) {
+        guaranteeRate.addEventListener('input', function() {
+          this.value = formatDecimal(this.value);
+          if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.updateDisplay) {
+            GuaranteeModule.updateDisplay();
+          }
+        });
+      }
+      
+      // Tax Module (Checkbox List)
+      const taxOnInterestEnabled = document.getElementById('taxOnInterestEnabled');
+      const taxOnInterestRate = document.getElementById('taxOnInterestRate');
+      const taxOnFeeEnabled = document.getElementById('taxOnFeeEnabled');
+      const taxOnFeeRate = document.getElementById('taxOnFeeRate');
+      const taxOnGuaranteeEnabled = document.getElementById('taxOnGuaranteeEnabled');
+      const taxOnGuaranteeRate = document.getElementById('taxOnGuaranteeRate');
+      
+      // Initialize TaxModule before setting up event listeners
+      if (typeof window.TaxModule === 'undefined') {
+        window.TaxModule = {};
+      }
+      
+      const taxModuleRef = window.TaxModule;
+      
+      taxModuleRef.toggleTax = function(type) {
+        const typeCapitalized = type.charAt(0).toUpperCase() + type.slice(1);
+        const checkboxId = `taxOn${typeCapitalized}Enabled`;
+        const contentId = `taxOn${typeCapitalized}Content`;
+        const checkbox = document.getElementById(checkboxId);
+        const content = document.getElementById(contentId);
+        
+        if (checkbox && content) {
+          if (checkbox.checked) {
+            content.classList.remove('is-hidden');
+          } else {
+            content.classList.add('is-hidden');
+            // Clear the input when unchecked
+            const rateInput = document.getElementById(`taxOn${typeCapitalized}Rate`);
+            if (rateInput) {
+              rateInput.value = '';
+            }
+          }
+        }
+      };
+      
+      taxModuleRef.updateTax = function(type) {
+        // This function can be extended to calculate and display total taxes
+        // For now, it just saves the rate
+        if (typeof taxModuleRef.calculateTotalTaxes === 'function') {
+          taxModuleRef.calculateTotalTaxes();
+        }
+      };
+      
+      if (taxOnInterestEnabled) {
+        taxOnInterestEnabled.addEventListener('change', function() {
+          taxModuleRef.toggleTax('interest');
+        });
+      }
+      
+      if (taxOnInterestRate) {
+        taxOnInterestRate.addEventListener('input', function() {
+          this.value = formatDecimal(this.value);
+          taxModuleRef.updateTax('interest');
+        });
+      }
+      
+      if (taxOnFeeEnabled) {
+        taxOnFeeEnabled.addEventListener('change', function() {
+          taxModuleRef.toggleTax('fee');
+        });
+      }
+      
+      if (taxOnFeeRate) {
+        taxOnFeeRate.addEventListener('input', function() {
+          this.value = formatDecimal(this.value);
+          taxModuleRef.updateTax('fee');
+        });
+      }
+      
+      if (taxOnGuaranteeEnabled) {
+        taxOnGuaranteeEnabled.addEventListener('change', function() {
+          taxModuleRef.toggleTax('guarantee');
+        });
+      }
+      
+      if (taxOnGuaranteeRate) {
+        taxOnGuaranteeRate.addEventListener('input', function() {
+          this.value = formatDecimal(this.value);
+          taxModuleRef.updateTax('guarantee');
+        });
+      }
+      
+      // Initialize tax checkboxes visibility
+      if (taxOnInterestEnabled) {
+        taxModuleRef.toggleTax('interest');
+      }
+      if (taxOnFeeEnabled) {
+        taxModuleRef.toggleTax('fee');
+      }
+      if (taxOnGuaranteeEnabled) {
+        taxModuleRef.toggleTax('guarantee');
+      }
+      
+      // Cost Schedule Module (Two-Phase System)
+      const regularCostCard = document.getElementById('regularCostCard');
+      const customCostCard = document.getElementById('customCostCard');
+      const regularCostContent = document.getElementById('regularCostContent');
+      const customCostContent = document.getElementById('customCostContent');
+      const costPhaseA = document.getElementById('costPhaseA');
+      const costPhaseB = document.getElementById('costPhaseB');
+      const costPhaseNextBtn = document.getElementById('costPhaseNextBtn');
+      const costPhaseBackBtn = document.getElementById('costPhaseBackBtn');
+      const costSchedulePaymentInterval = document.getElementById('costSchedulePaymentInterval');
+      const numberOfCostPayments = document.getElementById('numberOfCostPayments');
+      const numberOfCustomCostPayments = document.getElementById('numberOfCustomCostPayments');
+      
+      const costScheduleModuleRef = window.CostScheduleModule || {};
+      costScheduleModuleRef.currentMode = 'regular';
+      costScheduleModuleRef.state = costScheduleModuleRef.state || {
+        mode: 'regular',
+        schedule: [],
+      };
+      
+      function updateCostModeUI(mode) {
+        costScheduleModuleRef.state.mode = mode;
+        const isRegular = mode === 'regular';
+        if (regularCostCard) regularCostCard.classList.toggle('is-selected', isRegular);
+        if (customCostCard) customCostCard.classList.toggle('is-selected', !isRegular);
+        if (regularCostContent) {
+          regularCostContent.classList.toggle('is-hidden', !isRegular);
+          regularCostContent.classList.toggle('is-visible', isRegular);
+        }
+        if (customCostContent) {
+          customCostContent.classList.toggle('is-hidden', isRegular);
+          customCostContent.classList.toggle('is-visible', !isRegular);
+        }
+      }
+      
+      function showCostPhase(phase) {
+        const showPhaseA = phase === 'A';
+        if (costPhaseA) {
+          costPhaseA.classList.toggle('is-hidden', !showPhaseA);
+          costPhaseA.classList.toggle('is-visible', showPhaseA);
+        }
+        if (costPhaseB) {
+          costPhaseB.classList.toggle('is-hidden', showPhaseA);
+          costPhaseB.classList.toggle('is-visible', !showPhaseA);
+        }
+      }
+      
+      costScheduleModuleRef.setMode = function(mode) {
+        costScheduleModuleRef.currentMode = mode;
+        updateCostModeUI(mode);
+      };
+      
+      costScheduleModuleRef.generateSchedule = function() {
+        const isRegular = costScheduleModuleRef.currentMode === 'regular';
+        let schedule = [];
+        
+        if (isRegular) {
+          const interval = parseInt(costSchedulePaymentInterval?.value || '30', 10);
+          const count = parseInt(numberOfCostPayments?.value || '0', 10);
+          if (count <= 0) return [];
+          
+          // Calculate total costs (fee + guarantee) - this would need to be calculated from FeeModule and GuaranteeModule
+          const totalCost = 0; // Placeholder - should be calculated from actual fee/guarantee values
+          const amountPerPayment = totalCost / count;
+          
+          for (let i = 0; i < count; i++) {
+            schedule.push({
+              day: (i + 1) * interval,
+              amount: amountPerPayment,
+              note: '',
+            });
+          }
+        } else {
+          const count = parseInt(numberOfCustomCostPayments?.value || '0', 10);
+          if (count <= 0) return [];
+          
+          const defaultInterval = 30;
+          for (let i = 0; i < count; i++) {
+            schedule.push({
+              day: (i + 1) * defaultInterval,
+              amount: '',
+              note: '',
+            });
+          }
+        }
+        
+        costScheduleModuleRef.state.schedule = schedule;
+        return schedule;
+      };
+      
+      costScheduleModuleRef.renderSchedule = function(data) {
+        const tbody = document.getElementById('costScheduleBody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        
+        data.forEach((item, idx) => {
+          const tr = document.createElement('tr');
+          const dayValue = item.day ? formatInteger(String(item.day)) : '';
+          const amountValue = item.amount ? formatNumber(String(item.amount)) : '';
+          tr.innerHTML = `
+            <td>${dayValue}</td>
+            <td>
+              <input type="text" class="input-control input-in-table cost-amount-input" data-index="${idx}" value="${amountValue}" />
+            </td>
+            <td>
+              <input type="text" class="input-control input-in-table cost-note-input" data-index="${idx}" value="${item.note || ''}" />
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        
+        tbody.querySelectorAll('.cost-amount-input').forEach(input => {
+          input.addEventListener('input', function() {
+            this.value = formatNumber(this.value);
+            const index = parseInt(this.dataset.index, 10);
+            if (!isNaN(index) && costScheduleModuleRef.state.schedule[index]) {
+              costScheduleModuleRef.state.schedule[index].amount = parseNumber(this.value);
+            }
+            updateCostScheduleTotal();
+          });
+        });
+        
+        tbody.querySelectorAll('.cost-note-input').forEach(input => {
+          input.addEventListener('input', function() {
+            const index = parseInt(this.dataset.index, 10);
+            if (!isNaN(index) && costScheduleModuleRef.state.schedule[index]) {
+              costScheduleModuleRef.state.schedule[index].note = this.value;
+            }
+          });
+        });
+        
+        updateCostScheduleTotal();
+      };
+      
+      function updateCostScheduleTotal() {
+        const totalEl = document.getElementById('costScheduleTotal');
+        if (!totalEl) return;
+        const schedule = costScheduleModuleRef.state.schedule || [];
+        const total = schedule.reduce((sum, item) => {
+          const amount = parseNumber(String(item.amount || 0));
+          return sum + (isNaN(amount) ? 0 : amount);
+        }, 0);
+        totalEl.textContent = `مجموع: ${formatNumber(String(total))} تومان`;
+      }
+      
+      costScheduleModuleRef.goToPhaseB = function() {
+        const schedule = costScheduleModuleRef.generateSchedule();
+        if (schedule.length === 0) {
+          alert('لطفاً تعداد پرداخت‌ها را وارد کنید.');
+          return;
+        }
+        costScheduleModuleRef.renderSchedule(schedule);
+        showCostPhase('B');
+      };
+      
+      costScheduleModuleRef.goToPhaseA = function() {
+        showCostPhase('A');
+      };
+      
+      window.CostScheduleModule = costScheduleModuleRef;
+      
+      if (regularCostCard) {
+        regularCostCard.addEventListener('click', function() {
+          window.CostScheduleModule.setMode('regular');
+        });
+      }
+      
+      if (customCostCard) {
+        customCostCard.addEventListener('click', function() {
+          window.CostScheduleModule.setMode('custom');
+        });
+      }
+      
+      if (costPhaseNextBtn) {
+        costPhaseNextBtn.addEventListener('click', function() {
+          window.CostScheduleModule.goToPhaseB();
+        });
+      }
+      
+      if (costPhaseBackBtn) {
+        costPhaseBackBtn.addEventListener('click', function() {
+          window.CostScheduleModule.goToPhaseA();
+        });
+      }
+      
+      if (costSchedulePaymentInterval) {
+        costSchedulePaymentInterval.addEventListener('input', function() {
+          this.value = formatInteger(this.value);
+        });
+      }
+      
+      if (numberOfCostPayments) {
+        numberOfCostPayments.addEventListener('input', function() {
+          this.value = formatInteger(this.value);
+        });
+      }
+      
+      if (numberOfCustomCostPayments) {
+        numberOfCustomCostPayments.addEventListener('input', function() {
+          this.value = formatInteger(this.value);
+        });
+      }
+      
+      window.CostScheduleModule.setMode('regular');
+      
+      // Step 5: Results
+      const step5PrevBtn = document.getElementById('step5PrevBtn');
+      const copyResultsBtn = document.getElementById('copyResultsBtn');
+      const downloadResultsBtn = document.getElementById('downloadResultsBtn');
+      const resetFormBtn = document.getElementById('resetFormBtn');
+      
+      if (step5PrevBtn) step5PrevBtn.addEventListener('click', prevStep);
+      
+      if (copyResultsBtn) {
+        copyResultsBtn.addEventListener('click', function() {
+          if (!window.lastCalculationResult) {
+            alert('هیچ نتیجه‌ای برای کپی وجود ندارد');
+            return;
+          }
+          
+          const json = JSON.stringify(window.lastCalculationResult, null, 2);
+          navigator.clipboard.writeText(json).then(() => {
+            alert('نتایج با موفقیت کپی شد');
+          }).catch(() => {
+            alert('خطا در کپی کردن نتایج');
+          });
+        });
+      }
+      
+      if (downloadResultsBtn) {
+        downloadResultsBtn.addEventListener('click', function() {
+          if (!window.lastCalculationResult) {
+            alert('هیچ نتیجه‌ای برای دانلود وجود ندارد');
+            return;
+          }
+          
+          const json = JSON.stringify(window.lastCalculationResult, null, 2);
+          const blob = new Blob([json], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `loan-calculation-${new Date().toISOString().split('T')[0]}.json`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        });
+      }
+      
+      if (resetFormBtn) {
+        resetFormBtn.addEventListener('click', resetForm);
+      }
+      
+      // Initialize modules if they exist
+      // Modules are now data-driven (no auto-enable needed)
+      // FeeModule and GuaranteeModule are implicitly enabled if values > 0
+      if (typeof FeeModule !== 'undefined' && FeeModule.updateDisplay) FeeModule.updateDisplay();
+      if (typeof GuaranteeModule !== 'undefined' && GuaranteeModule.updateDisplay) GuaranteeModule.updateDisplay();
+      
+      // Form Submit Handler - Send to n8n Webhook
+      const calculatorForm = document.getElementById('calculatorForm');
+      const submitBtn = document.getElementById('submitBtn');
+      
+      if (calculatorForm) {
+        calculatorForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          // Show loading state
+          if (submitBtn) {
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'در حال محاسبه...';
+          }
+          
+          try {
+            // Collect form data
+            const formData = collectFormData();
+            
+            // n8n Webhook URL
+            const N8N_WEBHOOK_URL = 'https://n8nb2wall.darkube.app/webhook/calculate';
+            
+            // Send to n8n
+            const response = await fetch(N8N_WEBHOOK_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(formData),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            let responseData;
+            try {
+              const responseText = await response.text();
+              if (!responseText || responseText.trim() === '') {
+                throw new Error('پاسخ خالی از سرور دریافت شد');
+              }
+              responseData = JSON.parse(responseText);
+            } catch (parseError) {
+              console.error('JSON Parse Error:', parseError);
+              throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+            }
+            
+            // Handle array response (n8n webhook format)
+            let result = Array.isArray(responseData) ? responseData[0] : responseData;
+            
+            // Defensive check for response structure
+            if (!result || typeof result !== 'object') {
+              console.error('Invalid response structure:', result);
+              throw new Error('ساختار پاسخ نامعتبر است');
+            }
+            
+            // Check for error response
+            if (result.success === false) {
+              const errorMessage = result.message || result.error || 'خطا در محاسبه';
+              console.error('Backend Error:', errorMessage, result);
+              throw new Error(errorMessage);
+            }
+            
+            // Display results even if success is not explicitly true (handle legacy format)
+            displayResults(result);
+            
+            // Show results section
+            const resultsEl = document.getElementById('results');
+            if (resultsEl) {
+              resultsEl.classList.remove('is-hidden');
+              resultsEl.scrollIntoView({ behavior: 'smooth' });
+            }
+            
+            // Navigate to step 5
+            showFormSection(5);
+            updateProgressTracker();
+          } catch (error) {
+            console.error('Error calculating:', error);
+            alert('خطا در ارتباط با سرور: ' + error.message);
+          } finally {
+            if (submitBtn) {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'محاسبه جدول بازپرداخت';
+            }
+          }
+        });
+      }
+    });
+    
+    // Function to collect form data
+    function collectFormData() {
+      const loanAmount = parseNumber(document.getElementById('loanAmount')?.value || '0');
+      const monthlyRate = parseNumber(document.getElementById('monthlyRate')?.value || '0');
+      
+      // Collect principal repayments
+      const principalRepayments = [];
+      const principalScheduleBody = document.getElementById('principalScheduleBody');
+      if (principalScheduleBody) {
+        const rows = principalScheduleBody.querySelectorAll('tr');
+        rows.forEach(row => {
+          const dayCell = row.querySelector('td:first-child');
+          const amountInput = row.querySelector('input.input-in-table');
+          if (dayCell && amountInput) {
+            // Extract day number from text like "روز 180"
+            const dayText = dayCell.textContent.trim();
+            const dayMatch = dayText.match(/\d+/);
+            const day = dayMatch ? parseInt(dayMatch[0], 10) : 0;
+            const amount = parseNumber(amountInput.value || '0');
+            if (day > 0 && amount > 0) {
+              principalRepayments.push({ days: day, amount: amount });
+            }
+          }
+        });
+      }
+      
+      // Collect interest payment dates
+      const interestPaymentDates = [];
+      const interestScheduleBody = document.getElementById('interestScheduleBody');
+      const interestModule = window.InterestModule;
+      
+      // Check if custom mode is active and has schedule data
+      if (interestScheduleBody && interestScheduleBody.querySelectorAll('tr').length > 0) {
+        // Custom mode: collect from table
+        const rows = interestScheduleBody.querySelectorAll('tr');
+        rows.forEach(row => {
+          const dayInput = row.querySelector('.day-input');
+          if (dayInput && dayInput.value) {
+            const day = parseInt(formatInteger(dayInput.value), 10) || 0;
+            if (day > 0) {
+              interestPaymentDates.push(day);
+            }
+          }
+        });
+      } else if (interestModule && interestModule.currentMode === 'regular') {
+        // Regular mode: calculate from interval and count
+        const interval = parseInt(document.getElementById('interestPaymentInterval')?.value || '0', 10);
+        const count = parseInt(document.getElementById('numberOfInterestPayments')?.value || '0', 10);
+        if (interval > 0 && count > 0) {
+          for (let i = 1; i <= count; i++) {
+            interestPaymentDates.push(i * interval);
+          }
+        }
+      }
+      
+      // Sort interest payment dates
+      interestPaymentDates.sort((a, b) => a - b);
+      
+      // Collect fee data
+      const feeMode = document.getElementById('feeMode')?.value || 'percentage';
+      const feeRate = parseNumber(document.getElementById('feeRate')?.value || '0');
+      const feeAmount = parseNumber(document.getElementById('feeAmount')?.value || '0');
+      
+      // Calculate total fee amount
+      let totalFeeAmount = 0;
+      if (feeMode === 'percentage' && feeRate > 0) {
+        totalFeeAmount = (loanAmount * feeRate) / 100;
+      } else if (feeMode === 'fixed' && feeAmount > 0) {
+        totalFeeAmount = feeAmount;
+      }
+      
+      // Collect guarantee data
+      const guaranteeRate = parseNumber(document.getElementById('guaranteeRate')?.value || '0');
+      const totalGuaranteeAmount = guaranteeRate > 0 ? (loanAmount * guaranteeRate) / 100 : 0;
+      
+      // Calculate total costs (fee + guarantee)
+      const totalCosts = totalFeeAmount + totalGuaranteeAmount;
+      
+      // Collect tax data as array
+      const taxes = [];
+      if (document.getElementById('taxOnInterestEnabled')?.checked) {
+        const taxRate = parseNumber(document.getElementById('taxOnInterestRate')?.value || '0');
+        if (taxRate > 0) {
+          taxes.push({ base: 'interest', rate: taxRate });
+        }
+      }
+      if (document.getElementById('taxOnFeeEnabled')?.checked) {
+        const taxRate = parseNumber(document.getElementById('taxOnFeeRate')?.value || '0');
+        if (taxRate > 0) {
+          taxes.push({ base: 'fees', rate: taxRate });
+        }
+      }
+      if (document.getElementById('taxOnGuaranteeEnabled')?.checked) {
+        const taxRate = parseNumber(document.getElementById('taxOnGuaranteeRate')?.value || '0');
+        if (taxRate > 0) {
+          taxes.push({ base: 'guarantee', rate: taxRate });
+        }
+      }
+      
+      // Collect cost schedule
+      const costSchedule = [];
+      const costScheduleModule = window.CostScheduleModule;
+      if (costScheduleModule && costScheduleModule.state && costScheduleModule.state.schedule) {
+        const schedule = costScheduleModule.state.schedule;
+        if (schedule.length > 0 && totalCosts > 0) {
+          schedule.forEach(item => {
+            if (item.day) {
+              let percent = 0;
+              if (costScheduleModule.currentMode === 'regular') {
+                // In regular mode, divide equally
+                percent = (1 / schedule.length) * 100;
+              } else {
+                // In custom mode, calculate percent from amount
+                const amount = parseNumber(String(item.amount || 0));
+                if (amount > 0) {
+                  percent = (amount / totalCosts) * 100;
+                }
+              }
+              if (percent > 0) {
+                costSchedule.push({
+                  day: item.day,
+                  percent: percent
+                });
+              }
+            }
+          });
+        }
+      }
+      
+      // Sort cost schedule by day
+      costSchedule.sort((a, b) => a.day - b.day);
+      
+      // Build fee object
+      const feeObj = {};
+      if (feeMode === 'percentage' && feeRate > 0) {
+        feeObj.mode = 'percentage';
+        feeObj.rate = feeRate;
+      } else if (feeMode === 'fixed' && feeAmount > 0) {
+        feeObj.mode = 'fixed';
+        feeObj.amount = feeAmount;
+      }
+      
+      // Build guarantee object
+      const guaranteeObj = {};
+      if (guaranteeRate > 0) {
+        guaranteeObj.rate = guaranteeRate;
+      }
+      
+      // Build modules object
+      const modules = {};
+      if (Object.keys(feeObj).length > 0) {
+        modules.fee = feeObj;
+      }
+      if (Object.keys(guaranteeObj).length > 0) {
+        modules.guarantee = guaranteeObj;
+      }
+      if (taxes.length > 0) {
+        modules.taxes = taxes;
+      }
+      if (costSchedule.length > 0) {
+        modules.costSchedule = costSchedule;
+      }
+      
+      return {
+        Loan: {
+          amount: loanAmount,
+          monthlyInterestRate: monthlyRate,
+          principalRepayments: principalRepayments,
+          interestPaymentDates: interestPaymentDates
+        },
+        Modules: modules
+      };
+    }
+    
+    // Function to display results
+    function displayResults(result) {
+      try {
+        // Handle array response from n8n - extract first item if it's an array
+        if (Array.isArray(result) && result.length > 0) {
+          result = result[0];
+        }
+        
+        // Defensive check - never throw
+        if (!result || typeof result !== 'object') {
+          console.warn('Invalid data structure in displayResults()', result);
+          showNoResult();
+          return;
+        }
+        
+        // Store result for copy/download
+        window.lastCalculationResult = result;
+        
+        // Safe fallback structure
+        const safeSummary = {
+          totalInterestPaid: result.summary?.totalInterestPaid ?? 0,
+          totalPrincipal: result.summary?.totalPrincipal ?? 0,
+          totalTaxes: result.summary?.totalTaxes ?? 0,
+          totalUpfrontFees: result.summary?.totalUpfrontFees ?? 0,
+          finalDay: result.summary?.finalDay ?? 0,
+          averagePayment: result.summary?.averagePayment ?? 0,
+          totalPaymentsSum: result.summary?.totalPaymentsSum ?? 0,
+          numberOfPayments: result.summary?.numberOfPayments ?? 0
+        };
+        
+        const safeModules = {
+          fee: result.modules?.fee ?? { feeAmount: 0 },
+          guarantee: result.modules?.guarantee ?? { guaranteeAmount: 0 },
+          taxes: result.modules?.taxes ?? {},
+          costSchedule: Array.isArray(result.modules?.costSchedule) ? result.modules.costSchedule : []
+        };
+        
+        const safeSchedule = Array.isArray(result.schedule) ? result.schedule : [];
+        
+        // Check for no-result state
+        const hasAnyData = safeSummary.totalInterestPaid > 0 || 
+                         safeSummary.totalPrincipal > 0 || 
+                         safeSummary.totalTaxes > 0 || 
+                         safeSummary.totalUpfrontFees > 0 ||
+                         safeSchedule.length > 0;
+        
+        if (!hasAnyData && !result.summary) {
+          showNoResult();
+          return;
+        }
+        
+        // Display summary cards
+        const summaryCards = document.getElementById('summaryCards');
+        if (summaryCards) {
+          if (!result.summary || typeof result.summary !== 'object') {
+            summaryCards.innerHTML = `
+              <div class="results-summary__card">
+                <div class="results-summary__item" style="border-bottom: none;">
+                  <span class="results-summary__label">اطلاعات خلاصه هنوز محاسبه نشده است</span>
+                </div>
+              </div>
+            `;
+          } else {
+            summaryCards.innerHTML = `
+              <div class="results-summary__card">
+                <div class="results-summary__item">
+                  <span class="results-summary__label">مبلغ کل وام</span>
+                  <span class="results-summary__value">${formatPersianNumber(safeSummary.totalPrincipal)} تومان</span>
+                </div>
+                <div class="results-summary__item">
+                  <span class="results-summary__label">جمع کل سود پرداختی</span>
+                  <span class="results-summary__value">${formatPersianNumber(safeSummary.totalInterestPaid)} تومان</span>
+                </div>
+                <div class="results-summary__item">
+                  <span class="results-summary__label">جمع کل هزینه‌های یک‌باره</span>
+                  <span class="results-summary__value">${formatPersianNumber(safeSummary.totalUpfrontFees)} تومان</span>
+                </div>
+                <div class="results-summary__item">
+                  <span class="results-summary__label">جمع کل مالیات‌ها</span>
+                  <span class="results-summary__value">${formatPersianNumber(safeSummary.totalTaxes)} تومان</span>
+                </div>
+                <div class="results-summary__item">
+                  <span class="results-summary__label">مجموع کل پرداختی</span>
+                  <span class="results-summary__value">${formatPersianNumber(safeSummary.totalPrincipal + safeSummary.totalInterestPaid + safeSummary.totalUpfrontFees + safeSummary.totalTaxes)} تومان</span>
+                </div>
+                ${safeSummary.averagePayment > 0 ? `
+                <div class="results-summary__item">
+                  <span class="results-summary__label">میانگین اقساط</span>
+                  <span class="results-summary__value">${formatPersianNumber(safeSummary.averagePayment)} تومان</span>
+                </div>
+                <div class="results-summary__item">
+                  <span class="results-summary__label">تعداد اقساط</span>
+                  <span class="results-summary__value">${formatPersianNumber(safeSummary.numberOfPayments)} قسط</span>
+                </div>
+                ` : ''}
+                <div class="results-summary__item">
+                  <span class="results-summary__label">روز نهایی تسویه</span>
+                  <span class="results-summary__value">${safeSummary.finalDay > 0 ? 'روز ' + formatPersianNumber(safeSummary.finalDay) : '—'}</span>
+                </div>
+              </div>
+            `;
+          }
+        }
+      
+        // Display modules information
+        const modulesSection = document.getElementById('modulesSection');
+        const modulesContent = document.getElementById('modulesContent');
+        if (modulesSection && modulesContent) {
+          const modules = safeModules;
+        let modulesHTML = '';
+        
+        // Fee Module
+        if (modules.fee && modules.fee.feeAmount) {
+          modulesHTML += `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">کارمزد</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: var(--text-secondary);">مبلغ کارمزد:</span>
+                  <span style="font-weight: 600; color: var(--color-primary);" class="persian-number">${formatPersianNumber(modules.fee.feeAmount)} تومان</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Guarantee Module
+        if (modules.guarantee && modules.guarantee.guaranteeAmount) {
+          modulesHTML += `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">ضمانت</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span style="color: var(--text-secondary);">مبلغ ضمانت:</span>
+                  <span style="font-weight: 600; color: var(--color-primary);" class="persian-number">${formatPersianNumber(modules.guarantee.guaranteeAmount)} تومان</span>
+                </div>
+              </div>
+            </div>
+          `;
+        }
+        
+        // Taxes Module
+        if (modules.taxes && modules.taxes.breakdown && modules.taxes.breakdown.length > 0) {
+          let taxesHTML = `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">مالیات‌ها</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+          `;
+          
+          modules.taxes.breakdown.forEach(tax => {
+            const baseLabel = tax.base === 'interest' ? 'مالیات بر سود' : 
+                            tax.base === 'fees' ? 'مالیات بر کارمزد' : 
+                            tax.base === 'guarantee' ? 'مالیات بر ضمانت' : tax.base;
+            taxesHTML += `
+              <div style="padding: var(--spacing-sm) 0; border-bottom: 1px solid var(--bg-tertiary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-xs);">
+                  <span style="color: var(--text-secondary); font-weight: 500;">${baseLabel}:</span>
+                  <span style="font-weight: 600; color: var(--color-primary);" class="persian-number">${formatPersianNumber(tax.taxAmount)} تومان</span>
+                </div>
+                <div style="font-size: var(--font-size-xs); color: var(--text-muted);">
+                  مبلغ پایه: ${formatPersianNumber(tax.baseAmount)} تومان | نرخ: ${formatPersianNumber(tax.rate)}%
+                </div>
+              </div>
+            `;
+          });
+          
+          taxesHTML += `
+                <div style="padding-top: var(--spacing-sm); margin-top: var(--spacing-sm); border-top: 2px solid var(--color-primary);">
+                  <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-primary); font-weight: 600;">کل مالیات:</span>
+                    <span style="font-weight: 700; color: var(--color-primary); font-size: var(--font-size-lg);" class="persian-number">${formatPersianNumber(modules.taxes.totalTaxes || 0)} تومان</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          modulesHTML += taxesHTML;
+        }
+        
+        // Cost Schedule Module
+        if (modules.costSchedule && modules.costSchedule.length > 0) {
+          modulesHTML += `
+            <div class="module-section" style="margin-bottom: var(--spacing-lg);">
+              <h3 class="module-section__title" style="font-size: var(--font-size-lg); margin-bottom: var(--spacing-md);">برنامه تقسیم هزینه‌ها</h3>
+              <div style="background: var(--bg-secondary); padding: var(--spacing-md); border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                <table class="data-table" style="margin: 0;">
+                  <thead>
+                    <tr>
+                      <th>روز</th>
+                      <th>درصد</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+          `;
+          
+          modules.costSchedule.forEach(item => {
+            modulesHTML += `
+              <tr>
+                <td class="persian-number">روز ${formatPersianNumber(item.day)}</td>
+                <td class="persian-number">${formatPersianNumber(item.percent.toFixed(2))}%</td>
+              </tr>
+            `;
+          });
+          
+          modulesHTML += `
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }
+        
+        if (modulesHTML) {
+          modulesContent.innerHTML = modulesHTML;
+          modulesSection.style.display = 'block';
+        } else {
+          modulesSection.style.display = 'none';
+        }
+      }
+      
+        // Display schedule table
+        const scheduleBody = document.getElementById('scheduleBody');
+        if (scheduleBody) {
+          if (!safeSchedule || safeSchedule.length === 0) {
+            scheduleBody.innerHTML = `
+              <tr>
+                <td colspan="7" class="text-center" style="padding: var(--spacing-2xl) 0; color: var(--text-muted);">
+                  <div style="font-size: var(--font-size-xl); font-weight: 600; margin-bottom: var(--spacing-md);">هنوز برنامه بازپرداختی وجود ندارد</div>
+                  <div style="font-size: var(--font-size-base);">ابتدا محاسبه را انجام دهید</div>
+                </td>
+              </tr>
+            `;
+          } else {
+            scheduleBody.innerHTML = '';
+            // Sort schedule by day
+            const sortedSchedule = [...safeSchedule].sort((a, b) => {
+              const dayA = Number(a?.day ?? 0);
+              const dayB = Number(b?.day ?? 0);
+              return dayA - dayB;
+            });
+            
+            sortedSchedule.forEach(row => {
+              if (!row || typeof row !== 'object') return;
+              
+              const dayNum = Number(row.day ?? 0);
+              const principalBefore = Number(row.remainingPrincipalBefore ?? 0);
+              const principalPayment = Number(row.principalPayment ?? 0);
+              const interestPayment = Number(row.interestPayment ?? 0);
+              const costPayment = Number(row.costPayment ?? 0);
+              const totalPayment = principalPayment + interestPayment + costPayment;
+              const description = row.description || row.توضیحات || '';
+              
+              if (dayNum <= 0) return; // Skip invalid rows
+              
+              const tr = document.createElement('tr');
+              tr.innerHTML = `
+                <td class="persian-number">${formatPersianNumber(dayNum)}</td>
+                <td class="persian-number">${formatPersianNumber(principalBefore)}</td>
+                <td class="persian-number">${principalPayment > 0 ? formatPersianNumber(principalPayment) : '—'}</td>
+                <td class="persian-number">${interestPayment > 0 ? formatPersianNumber(interestPayment) : '—'}</td>
+                <td class="persian-number">${costPayment > 0 ? formatPersianNumber(costPayment) : '—'}</td>
+                <td class="persian-number" style="font-weight: 600;">${totalPayment > 0 ? formatPersianNumber(totalPayment) : '—'}</td>
+                <td style="font-size: var(--font-size-sm); color: var(--text-secondary);">${description || '—'}</td>
+              `;
+              scheduleBody.appendChild(tr);
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error in displayResults():', error);
+        showNoResult();
+      }
+    }
+    
+    // Function to show no-result state
+    function showNoResult() {
+      const summaryCards = document.getElementById('summaryCards');
+      const scheduleBody = document.getElementById('scheduleBody');
+      
+      if (summaryCards) {
+        summaryCards.innerHTML = `
+          <div class="results-summary__card">
+            <div class="results-summary__item" style="border-bottom: none;">
+              <span class="results-summary__label">نتیجه‌ای برای نمایش وجود ندارد</span>
+            </div>
+          </div>
+        `;
+      }
+      
+      if (scheduleBody) {
+        scheduleBody.innerHTML = `
+          <tr>
+            <td colspan="7" class="text-center" style="padding: var(--spacing-2xl) 0; color: var(--text-muted);">
+              <div style="font-size: var(--font-size-xl); font-weight: 600; margin-bottom: var(--spacing-md);">هنوز برنامه بازپرداختی وجود ندارد</div>
+              <div style="font-size: var(--font-size-base);">لطفاً محاسبه را انجام دهید</div>
+            </td>
+          </tr>
+        `;
+      }
+      
+      const resultsEl = document.getElementById('results');
+      if (resultsEl) {
+        resultsEl.classList.remove('is-hidden');
+      }
+    }
+
+    // Placeholder utility functions - these should be replaced with actual implementations
+    function formatNumber(value) {
+      if (!value) return '';
+      const num = value.toString().replace(/[^\d]/g, '');
+      return num.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+
+    function formatDecimal(value) {
+      if (!value) return '';
+      const cleaned = value.toString().replace(/[^\d.]/g, '');
+      const parts = cleaned.split('.');
+      if (parts.length > 2) return parts[0] + '.' + parts.slice(1).join('');
+      return cleaned;
+    }
+
+    function formatInteger(value) {
+      if (!value) return '';
+      return value.toString().replace(/[^\d]/g, '');
+    }
+
+    function parseNumber(value) {
+      if (!value) return 0;
+      const cleaned = value.toString().replace(/[^\d.]/g, '');
+      return parseFloat(cleaned) || 0;
+    }
+
+    function resetForm() {
+      document.getElementById('calculatorForm').reset();
+      currentStep = 1;
+      showFormSection(1);
+      updateProgressTracker();
+      const resultsEl = document.getElementById('results');
+      if (resultsEl) resultsEl.classList.add('is-hidden');
+      
+      // Reset validation
+      const loanAmountError = document.getElementById('loanAmountError');
+      const monthlyRateError = document.getElementById('monthlyRateError');
+      const step1NextBtn = document.getElementById('step1NextBtn');
+      if (loanAmountError) loanAmountError.textContent = '';
+      if (monthlyRateError) monthlyRateError.textContent = '';
+      if (step1NextBtn) step1NextBtn.disabled = true;
+      
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Expose functions globally for backward compatibility
+    window.nextStep = nextStep;
+    window.prevStep = prevStep;
+    window.resetForm = resetForm;
+  </script>
+
+  <!-- 
+    NOTE: All existing JavaScript modules (LoanModule, PrincipalModule, InterestModule, 
+    FeeModule, GuaranteeModule, TaxModule, CostScheduleModule, ResultsModule, AppController)
+    should be included here to maintain full functionality.
+    These modules handle the business logic and API interactions.
+  -->
+</body>
+</html>
