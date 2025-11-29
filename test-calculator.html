@@ -877,6 +877,116 @@
         transform: rotate(360deg);
       }
     }
+    
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-base), visibility var(--transition-base);
+    }
+    
+    .modal-overlay.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal {
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-2xl);
+      max-width: 500px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow-lg);
+      transform: scale(0.9);
+      transition: transform var(--transition-base);
+      position: relative;
+    }
+    
+    .modal-overlay.is-visible .modal {
+      transform: scale(1);
+    }
+    
+    .modal__close {
+      position: absolute;
+      top: var(--spacing-md);
+      left: var(--spacing-md);
+      background: none;
+      border: none;
+      font-size: var(--font-size-2xl);
+      color: var(--text-muted);
+      cursor: pointer;
+      width: 2.5rem;
+      height: 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--border-radius);
+      transition: all var(--transition-fast);
+    }
+    
+    .modal__close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    
+    .modal__title {
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--color-primary);
+      margin-bottom: var(--spacing-lg);
+      text-align: center;
+    }
+    
+    .share-link-display {
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+    
+    .share-link-display input {
+      flex: 1;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border: 1px solid var(--border-color);
+      border-radius: calc(var(--border-radius) / 2);
+      font-family: var(--font-family);
+      font-size: var(--font-size-sm);
+      direction: ltr;
+      text-align: left;
+    }
+    
+    .share-link-display button {
+      background: var(--color-primary);
+      color: var(--text-inverse);
+      border: none;
+      padding: var(--spacing-sm) var(--spacing-md);
+      border-radius: calc(var(--border-radius) / 2);
+      cursor: pointer;
+      font-family: var(--font-family);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      transition: all var(--transition-fast);
+    }
+    
+    .share-link-display button:hover {
+      background: var(--color-primary-dark);
+    }
   </style>
 </head>
 <body>
@@ -1311,7 +1421,7 @@
                 جدول تفصیلی برنامه بازپرداخت
               </h2>
         </div>
-            <div style="overflow-x: auto;">
+            <div>
               <table class="data-table" id="scheduleTable">
             <thead>
               <tr>
@@ -1321,7 +1431,6 @@
                 <th>پرداخت سود</th>
                 <th>پرداخت هزینه‌ها</th>
                 <th>کل پرداختی</th>
-                <th>توضیحات</th>
               </tr>
             </thead>
             <tbody id="scheduleBody"></tbody>
@@ -1330,8 +1439,24 @@
       </div>
           
           <div class="action-group">
-            <button type="button" class="action-button action-button--success" id="copyResultsBtn">کپی نتایج (JSON)</button>
-            <button type="button" class="action-button action-button--success" id="downloadResultsBtn">دانلود فایل JSON</button>
+            <button type="button" class="action-button action-button--primary" id="saveAndShareBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-left: 8px;">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              ذخیره و اشتراک‌گذاری
+            </button>
+            <button type="button" class="action-button action-button--success" id="shareResultsBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display: inline-block; vertical-align: middle; margin-left: 8px;">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+              اشتراک‌گذاری نتایج
+            </button>
             <button type="button" class="action-button action-button--secondary" id="resetFormBtn">محاسبه مجدد</button>
             </div>
         </section>
@@ -1339,10 +1464,204 @@
     </main>
           </div>
 
+  <!-- Share Modal -->
+  <div id="shareModal" class="modal-overlay">
+    <div class="modal">
+      <button type="button" class="modal__close" id="closeShareModal">×</button>
+      <h2 class="modal__title">اشتراک‌گذاری نتایج</h2>
+      
+      <form id="shareForm">
+        <div class="input-wrapper">
+          <label for="shareFirstName" class="input-label is-required">نام</label>
+          <input type="text" id="shareFirstName" class="input-control" placeholder="نام" required />
+        </div>
+        
+        <div class="input-wrapper">
+          <label for="shareLastName" class="input-label is-required">نام خانوادگی</label>
+          <input type="text" id="shareLastName" class="input-control" placeholder="نام خانوادگی" required />
+        </div>
+        
+        <div class="input-wrapper">
+          <label for="sharePhone" class="input-label is-required">شماره تماس</label>
+          <input type="tel" id="sharePhone" class="input-control" placeholder="09xxxxxxxxx" required />
+          <div class="input-hint">شماره تماس را به صورت انگلیسی وارد کنید</div>
+        </div>
+        
+        <div id="shareLinkContainer" class="share-link-display is-hidden" style="margin-top: var(--spacing-lg);">
+          <input type="text" id="shareLinkInput" readonly />
+          <button type="button" id="copyShareLinkBtn">کپی</button>
+        </div>
+        
+        <div class="action-group" style="margin-top: var(--spacing-xl);">
+          <button type="submit" class="action-button action-button--primary" id="submitShareBtn">ایجاد لینک اشتراک</button>
+          <button type="button" class="action-button action-button--secondary" id="cancelShareBtn">انصراف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Save & Share Modal -->
+  <div id="saveAndShareModal" class="modal-overlay">
+    <div class="modal">
+      <button type="button" class="modal__close" id="closeSaveAndShareModal">×</button>
+      <h2 class="modal__title">ذخیره و اشتراک‌گذاری محاسبه</h2>
+      
+      <form id="saveAndShareForm">
+        <div class="input-wrapper">
+          <label for="saveCustomerName" class="input-label is-required">نام مشتری</label>
+          <input type="text" id="saveCustomerName" class="input-control" placeholder="نام مشتری را وارد کنید" required />
+        </div>
+        
+        <div class="input-wrapper">
+          <label for="saveCustomerPhone" class="input-label is-required">شماره تماس</label>
+          <input type="tel" id="saveCustomerPhone" class="input-control" placeholder="شماره تماس را وارد کنید" required />
+          <div class="input-hint">شماره تماس را به صورت انگلیسی وارد کنید</div>
+        </div>
+        
+        <div id="saveLoadingState" class="is-hidden" style="text-align: center; padding: var(--spacing-lg) 0;">
+          <div style="display: inline-block; width: 40px; height: 40px; border: 4px solid var(--bg-tertiary); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: var(--spacing-md);"></div>
+          <p style="color: var(--text-secondary); font-size: var(--font-size-base);">در حال ذخیره…</p>
+        </div>
+        
+        <div id="saveSuccessState" class="is-hidden" style="background: rgba(74, 139, 92, 0.1); border: 2px solid var(--color-success); border-radius: var(--border-radius); padding: var(--spacing-lg); margin: var(--spacing-lg) 0;">
+          <p style="color: var(--color-success); font-weight: 600; margin-bottom: var(--spacing-md); text-align: center;">محاسبه با موفقیت ذخیره شد.</p>
+          <div id="saveShareLinkContainer" class="is-hidden">
+            <p style="color: var(--text-secondary); font-size: var(--font-size-sm); margin-bottom: var(--spacing-sm);">لینک اشتراک‌گذاری آماده است</p>
+            <div class="share-link-display">
+              <input type="text" id="saveShareLinkInput" readonly />
+              <button type="button" id="copySaveShareLinkBtn" class="action-button action-button--primary" style="padding: var(--spacing-sm) var(--spacing-md);">کپی</button>
+            </div>
+          </div>
+        </div>
+        
+        <div id="saveErrorState" class="is-hidden" style="background: rgba(200, 76, 76, 0.1); border: 2px solid var(--color-error); border-radius: var(--border-radius); padding: var(--spacing-lg); margin: var(--spacing-lg) 0;">
+          <p style="color: var(--color-error); font-weight: 600; text-align: center;" id="saveErrorMessage"></p>
+        </div>
+        
+        <div class="action-group" style="margin-top: var(--spacing-xl);">
+          <button type="button" class="action-button action-button--primary" id="saveOnlyBtn">ذخیره</button>
+          <button type="button" class="action-button action-button--success" id="saveAndGetLinkBtn">ذخیره و دریافت لینک اشتراک</button>
+          <button type="button" class="action-button action-button--secondary" id="cancelSaveBtn">انصراف</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     // Step Navigation System
     let currentStep = 1;
     const totalSteps = 5;
+
+    // Load shared results function
+    async function loadSharedResults(shareId) {
+      try {
+        // Hide form and navigation
+        const calculatorForm = document.getElementById('calculatorForm');
+        const tabNav = document.querySelector('.tab-progress-nav');
+        if (calculatorForm) calculatorForm.classList.add('is-hidden');
+        if (tabNav) tabNav.classList.add('is-hidden');
+        
+        // Show loading state
+        const resultsEl = document.getElementById('results');
+        if (resultsEl) {
+          resultsEl.classList.remove('is-hidden');
+          const loadingHTML = `
+            <section class="form-container is-visible" id="resultsStep">
+              <div class="form-container__heading">
+                <h2 class="form-container__title">
+                  <span class="form-container__title-icon"></span>
+                  در حال بارگذاری نتایج...
+                </h2>
+              </div>
+              <div class="text-center" style="padding: var(--spacing-2xl) 0;">
+                <div style="display: inline-block; width: 50px; height: 50px; border: 4px solid var(--bg-tertiary); border-top-color: var(--color-primary); border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <p style="color: var(--text-secondary); margin-top: var(--spacing-lg);">در حال دریافت نتایج...</p>
+              </div>
+            </section>
+          `;
+          resultsEl.innerHTML = loadingHTML;
+        }
+        
+        // Get data from n8n
+        const N8N_GET_SHARE_URL = `https://n8nb2wall.darkube.app/webhook/get-share/${shareId}`;
+        
+        const response = await fetch(N8N_GET_SHARE_URL);
+        
+        if (!response.ok) {
+          throw new Error('نتایج پیدا نشد');
+        }
+        
+        let responseData;
+        try {
+          const responseText = await response.text();
+          if (!responseText || responseText.trim() === '') {
+            throw new Error('پاسخ خالی از سرور دریافت شد');
+          }
+          responseData = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error('JSON Parse Error:', parseError);
+          throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+        }
+        
+        // Handle array response (n8n webhook format)
+        let data = Array.isArray(responseData) ? responseData[0] : responseData;
+        
+        if (!data || !data.calculationResult) {
+          throw new Error('داده‌های نتایج یافت نشد');
+        }
+        
+        // Store result
+        window.lastCalculationResult = data.calculationResult;
+        
+        // Restore results HTML structure
+        if (resultsEl) {
+          resultsEl.innerHTML = '';
+          // Results will be populated by displayResults
+        }
+        
+        // Display results
+        displayResults(data.calculationResult);
+        
+        // Show results section
+        if (resultsEl) {
+          resultsEl.classList.remove('is-hidden');
+        }
+        
+        // Hide share button (since it's a shared view)
+        const shareBtn = document.getElementById('shareResultsBtn');
+        if (shareBtn) {
+          shareBtn.style.display = 'none';
+        }
+        
+        // Hide reset button or change its behavior
+        const resetBtn = document.getElementById('resetFormBtn');
+        if (resetBtn) {
+          resetBtn.textContent = 'محاسبه جدید';
+          resetBtn.onclick = function() {
+            window.location.href = window.location.pathname;
+          };
+        }
+        
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        
+      } catch (error) {
+        console.error('Error loading shared results:', error);
+        const resultsEl = document.getElementById('results');
+        if (resultsEl) {
+          resultsEl.innerHTML = `
+            <section class="form-container is-visible" id="resultsStep">
+              <div class="form-container__heading">
+                <h2 class="form-container__title">خطا در بارگذاری</h2>
+              </div>
+              <div class="text-center" style="padding: var(--spacing-2xl) 0;">
+                <p style="color: var(--color-error); margin-bottom: var(--spacing-lg);">${error.message || 'خطا در بارگذاری نتایج'}</p>
+                <button type="button" class="action-button action-button--secondary" onclick="window.location.href = window.location.pathname">بازگشت به محاسبه</button>
+              </div>
+            </section>
+          `;
+        }
+      }
+    }
 
     function updateProgressTracker() {
       const tabItems = document.querySelectorAll('.tab-progress-nav__item');
@@ -1466,6 +1785,16 @@
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
+      // Check if we should load shared results
+      const urlParams = new URLSearchParams(window.location.search);
+      const shareId = urlParams.get('share');
+      
+      if (shareId) {
+        // Load shared results instead of showing form
+        loadSharedResults(shareId);
+        return; // Don't initialize form if loading shared results
+      }
+      
       updateProgressTracker();
       
       // Add click handlers to tab items
@@ -2425,46 +2754,405 @@
       
       // Step 5: Results
       const step5PrevBtn = document.getElementById('step5PrevBtn');
-      const copyResultsBtn = document.getElementById('copyResultsBtn');
-      const downloadResultsBtn = document.getElementById('downloadResultsBtn');
+      const shareResultsBtn = document.getElementById('shareResultsBtn');
       const resetFormBtn = document.getElementById('resetFormBtn');
       
       // Note: step5PrevBtn is hidden during calculation, only shown when needed
       
-      if (copyResultsBtn) {
-        copyResultsBtn.addEventListener('click', function() {
-          if (!window.lastCalculationResult) {
-            alert('هیچ نتیجه‌ای برای کپی وجود ندارد');
-            return;
+      // Share Modal Management
+      const shareModal = document.getElementById('shareModal');
+      const shareForm = document.getElementById('shareForm');
+      const closeShareModal = document.getElementById('closeShareModal');
+      const cancelShareBtn = document.getElementById('cancelShareBtn');
+      const shareLinkContainer = document.getElementById('shareLinkContainer');
+      const shareLinkInput = document.getElementById('shareLinkInput');
+      const copyShareLinkBtn = document.getElementById('copyShareLinkBtn');
+      const submitShareBtn = document.getElementById('submitShareBtn');
+      
+      function showShareModal() {
+        if (shareModal) {
+          shareModal.classList.add('is-visible');
+          document.body.style.overflow = 'hidden';
+          // Reset form
+          if (shareForm) {
+            shareForm.reset();
           }
-          
-          const json = JSON.stringify(window.lastCalculationResult, null, 2);
-          navigator.clipboard.writeText(json).then(() => {
-            alert('نتایج با موفقیت کپی شد');
-          }).catch(() => {
-            alert('خطا در کپی کردن نتایج');
-          });
+          if (shareLinkContainer) {
+            shareLinkContainer.classList.add('is-hidden');
+          }
+        }
+      }
+      
+      function hideShareModal() {
+        if (shareModal) {
+          shareModal.classList.remove('is-visible');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      if (closeShareModal) {
+        closeShareModal.addEventListener('click', hideShareModal);
+      }
+      
+      if (cancelShareBtn) {
+        cancelShareBtn.addEventListener('click', hideShareModal);
+      }
+      
+      // Close modal when clicking outside
+      if (shareModal) {
+        shareModal.addEventListener('click', function(e) {
+          if (e.target === shareModal) {
+            hideShareModal();
+          }
         });
       }
       
-      if (downloadResultsBtn) {
-        downloadResultsBtn.addEventListener('click', function() {
+      if (shareResultsBtn) {
+        shareResultsBtn.addEventListener('click', function() {
           if (!window.lastCalculationResult) {
-            alert('هیچ نتیجه‌ای برای دانلود وجود ندارد');
+            alert('هیچ نتیجه‌ای برای اشتراک‌گذاری وجود ندارد');
+            return;
+          }
+          showShareModal();
+        });
+      }
+      
+      // Handle share form submission
+      if (shareForm) {
+        shareForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          const firstName = document.getElementById('shareFirstName').value.trim();
+          const lastName = document.getElementById('shareLastName').value.trim();
+          const phone = document.getElementById('sharePhone').value.trim();
+          
+          if (!firstName || !lastName || !phone) {
+            alert('لطفاً تمام فیلدها را پر کنید');
             return;
           }
           
-          const json = JSON.stringify(window.lastCalculationResult, null, 2);
-          const blob = new Blob([json], { type: 'application/json' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `loan-calculation-${new Date().toISOString().split('T')[0]}.json`;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
+          // Disable submit button
+          if (submitShareBtn) {
+            submitShareBtn.disabled = true;
+            submitShareBtn.textContent = 'در حال ایجاد لینک...';
+          }
+          
+          try {
+            // Prepare data to send to n8n
+            const shareData = {
+              firstName: firstName,
+              lastName: lastName,
+              phone: phone,
+              calculationResult: window.lastCalculationResult,
+              createdAt: new Date().toISOString()
+            };
+            
+            // Send to n8n webhook
+            const N8N_SAVE_SHARE_URL = 'https://n8nb2wall.darkube.app/webhook/save-share';
+            
+            const response = await fetch(N8N_SAVE_SHARE_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(shareData),
+            });
+            
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            let responseData;
+            try {
+              const responseText = await response.text();
+              if (!responseText || responseText.trim() === '') {
+                throw new Error('پاسخ خالی از سرور دریافت شد');
+              }
+              responseData = JSON.parse(responseText);
+            } catch (parseError) {
+              console.error('JSON Parse Error:', parseError);
+              throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+            }
+            
+            // Handle array response (n8n webhook format)
+            let result = Array.isArray(responseData) ? responseData[0] : responseData;
+            
+            if (!result || !result.shareId || !result.shareUrl) {
+              throw new Error('لینک اشتراک ایجاد نشد');
+            }
+            
+            // Display share link
+            const shareUrl = result.shareUrl;
+            if (shareLinkInput) {
+              shareLinkInput.value = shareUrl;
+            }
+            if (shareLinkContainer) {
+              shareLinkContainer.classList.remove('is-hidden');
+            }
+            
+            // Copy to clipboard automatically
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(shareUrl).then(() => {
+                alert('لینک اشتراک ایجاد و کپی شد!');
+              }).catch(() => {
+                // If copy fails, just show the link
+              });
+            }
+            
+          } catch (error) {
+            console.error('Error saving share:', error);
+            alert('خطا در ایجاد لینک اشتراک: ' + error.message);
+          } finally {
+            if (submitShareBtn) {
+              submitShareBtn.disabled = false;
+              submitShareBtn.textContent = 'ایجاد لینک اشتراک';
+            }
+          }
         });
+      }
+      
+      // Copy share link button
+      if (copyShareLinkBtn) {
+        copyShareLinkBtn.addEventListener('click', function() {
+          if (shareLinkInput && shareLinkInput.value) {
+            shareLinkInput.select();
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(shareLinkInput.value).then(() => {
+                copyShareLinkBtn.textContent = 'کپی شد!';
+                setTimeout(() => {
+                  copyShareLinkBtn.textContent = 'کپی';
+                }, 2000);
+              });
+            } else {
+              document.execCommand('copy');
+              copyShareLinkBtn.textContent = 'کپی شد!';
+              setTimeout(() => {
+                copyShareLinkBtn.textContent = 'کپی';
+              }, 2000);
+            }
+          }
+        });
+      }
+      
+      // Save & Share Modal Management
+      const saveAndShareModal = document.getElementById('saveAndShareModal');
+      const saveAndShareForm = document.getElementById('saveAndShareForm');
+      const closeSaveAndShareModal = document.getElementById('closeSaveAndShareModal');
+      const cancelSaveBtn = document.getElementById('cancelSaveBtn');
+      const saveOnlyBtn = document.getElementById('saveOnlyBtn');
+      const saveAndGetLinkBtn = document.getElementById('saveAndGetLinkBtn');
+      const saveLoadingState = document.getElementById('saveLoadingState');
+      const saveSuccessState = document.getElementById('saveSuccessState');
+      const saveErrorState = document.getElementById('saveErrorState');
+      const saveErrorMessage = document.getElementById('saveErrorMessage');
+      const saveShareLinkContainer = document.getElementById('saveShareLinkContainer');
+      const saveShareLinkInput = document.getElementById('saveShareLinkInput');
+      const copySaveShareLinkBtn = document.getElementById('copySaveShareLinkBtn');
+      
+      function showSaveAndShareModal() {
+        if (saveAndShareModal) {
+          saveAndShareModal.classList.add('is-visible');
+          document.body.style.overflow = 'hidden';
+          // Reset form and states
+          if (saveAndShareForm) {
+            saveAndShareForm.reset();
+          }
+          if (saveLoadingState) saveLoadingState.classList.add('is-hidden');
+          if (saveSuccessState) saveSuccessState.classList.add('is-hidden');
+          if (saveErrorState) saveErrorState.classList.add('is-hidden');
+          if (saveShareLinkContainer) saveShareLinkContainer.classList.add('is-hidden');
+          // Enable buttons
+          if (saveOnlyBtn) saveOnlyBtn.disabled = false;
+          if (saveAndGetLinkBtn) saveAndGetLinkBtn.disabled = false;
+        }
+      }
+      
+      function hideSaveAndShareModal() {
+        if (saveAndShareModal) {
+          saveAndShareModal.classList.remove('is-visible');
+          document.body.style.overflow = '';
+        }
+      }
+      
+      if (closeSaveAndShareModal) {
+        closeSaveAndShareModal.addEventListener('click', hideSaveAndShareModal);
+      }
+      
+      if (cancelSaveBtn) {
+        cancelSaveBtn.addEventListener('click', hideSaveAndShareModal);
+      }
+      
+      // Close modal when clicking outside
+      if (saveAndShareModal) {
+        saveAndShareModal.addEventListener('click', function(e) {
+          if (e.target === saveAndShareModal) {
+            hideSaveAndShareModal();
+          }
+        });
+      }
+      
+      if (saveAndShareBtn) {
+        saveAndShareBtn.addEventListener('click', function() {
+          if (!window.lastCalculationResult) {
+            alert('هیچ نتیجه‌ای برای ذخیره وجود ندارد');
+            return;
+          }
+          showSaveAndShareModal();
+        });
+      }
+      
+      // Handle save only button
+      if (saveOnlyBtn) {
+        saveOnlyBtn.addEventListener('click', async function() {
+          await handleSave(false);
+        });
+      }
+      
+      // Handle save and get link button
+      if (saveAndGetLinkBtn) {
+        saveAndGetLinkBtn.addEventListener('click', async function() {
+          await handleSave(true);
+        });
+      }
+      
+      // Copy save share link button
+      if (copySaveShareLinkBtn) {
+        copySaveShareLinkBtn.addEventListener('click', function() {
+          if (saveShareLinkInput && saveShareLinkInput.value) {
+            saveShareLinkInput.select();
+            if (navigator.clipboard) {
+              navigator.clipboard.writeText(saveShareLinkInput.value).then(() => {
+                copySaveShareLinkBtn.textContent = 'کپی شد!';
+                setTimeout(() => {
+                  copySaveShareLinkBtn.textContent = 'کپی';
+                }, 2000);
+              });
+            } else {
+              document.execCommand('copy');
+              copySaveShareLinkBtn.textContent = 'کپی شد!';
+              setTimeout(() => {
+                copySaveShareLinkBtn.textContent = 'کپی';
+              }, 2000);
+            }
+          }
+        });
+      }
+      
+      // Handle save function
+      async function handleSave(requestShareLink) {
+        const customerName = document.getElementById('saveCustomerName')?.value.trim();
+        const customerPhone = document.getElementById('saveCustomerPhone')?.value.trim();
+        
+        if (!customerName || !customerPhone) {
+          alert('لطفاً تمام فیلدها را پر کنید');
+          return;
+        }
+        
+        // Disable buttons and show loading
+        if (saveOnlyBtn) saveOnlyBtn.disabled = true;
+        if (saveAndGetLinkBtn) saveAndGetLinkBtn.disabled = true;
+        if (cancelSaveBtn) cancelSaveBtn.disabled = true;
+        if (saveLoadingState) saveLoadingState.classList.remove('is-hidden');
+        if (saveSuccessState) saveSuccessState.classList.add('is-hidden');
+        if (saveErrorState) saveErrorState.classList.add('is-hidden');
+        
+        try {
+          // Collect input data
+          const inputPayload = collectFormData();
+          
+          // Get result data
+          const resultPayload = window.lastCalculationResult;
+          
+          if (!inputPayload || !resultPayload) {
+            throw new Error('داده‌های محاسبه یافت نشد');
+          }
+          
+          // Prepare request body
+          const requestBody = {
+            customer_name: customerName,
+            customer_phone: customerPhone,
+            input_payload: inputPayload,
+            result_payload: resultPayload,
+            request_share_link: requestShareLink
+          };
+          
+          // Send to n8n webhook
+          const N8N_SAVE_CALCULATION_URL = 'https://n8nb2wall.darkube.app/webhook/save-calculation';
+          
+          const response = await fetch(N8N_SAVE_CALCULATION_URL, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(requestBody),
+          });
+          
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          
+          let responseData;
+          try {
+            const responseText = await response.text();
+            if (!responseText || responseText.trim() === '') {
+              throw new Error('پاسخ خالی از سرور دریافت شد');
+            }
+            responseData = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+          }
+          
+          // Handle array response (n8n webhook format)
+          let result = Array.isArray(responseData) ? responseData[0] : responseData;
+          
+          if (!result || result.saved !== true) {
+            throw new Error(result?.message || 'ذخیره انجام نشد');
+          }
+          
+          // Hide loading, show success
+          if (saveLoadingState) saveLoadingState.classList.add('is-hidden');
+          if (saveSuccessState) saveSuccessState.classList.remove('is-hidden');
+          
+          // If share link is available and requested, show it
+          if (requestShareLink && result.share_url) {
+            if (saveShareLinkInput) {
+              saveShareLinkInput.value = result.share_url;
+            }
+            if (saveShareLinkContainer) {
+              saveShareLinkContainer.classList.remove('is-hidden');
+            }
+            // Auto-copy to clipboard
+            if (navigator.clipboard && saveShareLinkInput) {
+              navigator.clipboard.writeText(result.share_url).catch(() => {
+                // If copy fails, just show the link
+              });
+            }
+          } else {
+            if (saveShareLinkContainer) {
+              saveShareLinkContainer.classList.add('is-hidden');
+            }
+          }
+          
+          // Re-enable cancel button
+          if (cancelSaveBtn) cancelSaveBtn.disabled = false;
+          
+        } catch (error) {
+          console.error('Error saving calculation:', error);
+          
+          // Hide loading, show error
+          if (saveLoadingState) saveLoadingState.classList.add('is-hidden');
+          if (saveSuccessState) saveSuccessState.classList.add('is-hidden');
+          if (saveErrorState) saveErrorState.classList.remove('is-hidden');
+          if (saveErrorMessage) {
+            saveErrorMessage.textContent = 'خطا در ذخیره: ' + (error.message || 'خطای نامشخص');
+          }
+          
+          // Re-enable buttons
+          if (saveOnlyBtn) saveOnlyBtn.disabled = false;
+          if (saveAndGetLinkBtn) saveAndGetLinkBtn.disabled = false;
+          if (cancelSaveBtn) cancelSaveBtn.disabled = false;
+        }
       }
       
       if (resetFormBtn) {
@@ -2988,7 +3676,7 @@
           if (!safeSchedule || safeSchedule.length === 0) {
             scheduleBody.innerHTML = `
               <tr>
-                <td colspan="7" class="text-center" style="padding: var(--spacing-2xl) 0; color: var(--text-muted);">
+                <td colspan="6" class="text-center" style="padding: var(--spacing-2xl) 0; color: var(--text-muted);">
                   <div style="font-size: var(--font-size-xl); font-weight: 600; margin-bottom: var(--spacing-md);">هنوز برنامه بازپرداختی وجود ندارد</div>
                   <div style="font-size: var(--font-size-base);">ابتدا محاسبه را انجام دهید</div>
                 </td>
@@ -3012,7 +3700,6 @@
               const interestPayment = Number(row.interestPayment ?? 0);
               const costPayment = Number(row.costPayment ?? 0);
               const totalPayment = principalPayment + interestPayment + costPayment;
-              const description = row.description || row.توضیحات || '';
               
               if (dayNum <= 0) return; // Skip invalid rows
               
@@ -3024,7 +3711,6 @@
                 <td class="persian-number">${interestPayment > 0 ? formatPersianNumber(interestPayment) : '—'}</td>
                 <td class="persian-number">${costPayment > 0 ? formatPersianNumber(costPayment) : '—'}</td>
                 <td class="persian-number" style="font-weight: 600;">${totalPayment > 0 ? formatPersianNumber(totalPayment) : '—'}</td>
-                <td style="font-size: var(--font-size-sm); color: var(--text-secondary);">${description || '—'}</td>
               `;
               scheduleBody.appendChild(tr);
             });
@@ -3054,7 +3740,7 @@
       if (scheduleBody) {
         scheduleBody.innerHTML = `
           <tr>
-            <td colspan="7" class="text-center" style="padding: var(--spacing-2xl) 0; color: var(--text-muted);">
+            <td colspan="6" class="text-center" style="padding: var(--spacing-2xl) 0; color: var(--text-muted);">
               <div style="font-size: var(--font-size-xl); font-weight: 600; margin-bottom: var(--spacing-md);">هنوز برنامه بازپرداختی وجود ندارد</div>
               <div style="font-size: var(--font-size-base);">لطفاً محاسبه را انجام دهید</div>
             </td>
