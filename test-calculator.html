@@ -2043,67 +2043,77 @@
     
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-      // Extract recordId from URL path: /calc/share/<recordId>
-      const recordId = window.location.pathname.split("/").pop();
+      // Check if this is a share URL: /calc/share/<recordId>
+      const pathname = window.location.pathname;
+      const isShareUrl = pathname.includes('/calc/share/') || pathname.includes('/share/');
       
-      // Check if recordId is missing or invalid
-      if (!recordId || recordId === '' || recordId === 'calc' || recordId === 'share') {
-        // Hide results section and show error
-        const resultsEl = document.getElementById('results');
-        if (resultsEl) {
-          resultsEl.classList.add('is-hidden');
-        }
-        showError('خطا در نمایش محاسبه');
-        return;
-      }
-      
-      // Show loading overlay immediately
-      showLoader();
-      
-      // Fetch saved calculation from n8n
-      const apiUrl = `https://n8nb2wall.darkube.app/webhook/get-calculation/${recordId}`;
-      
-      fetch(apiUrl)
-        .then(res => res.json())
-        .then(response => {
-          // Hide loading animation
-          hideLoader();
-          
-          // Check if request was successful
-          if (!response.success) {
-            const resultsEl = document.getElementById('results');
-            if (resultsEl) {
-              resultsEl.classList.add('is-hidden');
-            }
-            showError('خطا در نمایش محاسبه');
-            return;
-          }
-          
-          // Extract data from response
-          const input = response.data.input_payload;
-          const result = response.data.result_payload;
-          
-          // Render calculation with customer info
-          renderCalculation({
-            input_payload: input,
-            result_payload: result,
-            customer_name: response.data.customer_name || '',
-            customer_phone: response.data.customer_phone || ''
-          });
-        })
-        .catch(err => {
-          console.error('Error loading saved calculation:', err);
-          hideLoader();
+      if (!isShareUrl) {
+        // This is not a share URL, continue with normal form initialization
+        // The rest of the initialization code will run below
+      } else {
+        // Extract recordId from URL path: /calc/share/<recordId>
+        const recordId = pathname.split("/").pop();
+        
+        // Check if recordId is missing or invalid
+        if (!recordId || recordId === '' || recordId === 'calc' || recordId === 'share') {
+          // Hide results section and show error
           const resultsEl = document.getElementById('results');
           if (resultsEl) {
             resultsEl.classList.add('is-hidden');
           }
           showError('خطا در نمایش محاسبه');
-        });
-      
-      return; // Don't initialize form if loading saved calculation
+          return;
+        }
+        
+        // Show loading overlay immediately
+        showLoader();
+        
+        // Fetch saved calculation from n8n
+        const apiUrl = `https://n8nb2wall.darkube.app/webhook/get-calculation/${recordId}`;
+        
+        fetch(apiUrl)
+          .then(res => res.json())
+          .then(response => {
+            // Hide loading animation
+            hideLoader();
+            
+            // Check if request was successful
+            if (!response.success) {
+              const resultsEl = document.getElementById('results');
+              if (resultsEl) {
+                resultsEl.classList.add('is-hidden');
+              }
+              showError('خطا در نمایش محاسبه');
+              return;
+            }
+            
+            // Extract data from response
+            const input = response.data.input_payload;
+            const result = response.data.result_payload;
+            
+            // Render calculation with customer info
+            renderCalculation({
+              input_payload: input,
+              result_payload: result,
+              customer_name: response.data.customer_name || '',
+              customer_phone: response.data.customer_phone || ''
+            });
+          })
+          .catch(err => {
+            console.error('Error loading saved calculation:', err);
+            hideLoader();
+            const resultsEl = document.getElementById('results');
+            if (resultsEl) {
+              resultsEl.classList.add('is-hidden');
+            }
+            showError('خطا در نمایش محاسبه');
+          });
+        
+        return; // Don't initialize form if loading saved calculation
+      }
       
       // Check if we should load shared results (existing functionality)
+      const urlParams = new URLSearchParams(window.location.search);
       const shareParam = urlParams.get('share');
       
       if (shareParam) {
