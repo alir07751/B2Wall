@@ -893,6 +893,7 @@
       opacity: 0;
       visibility: hidden;
       transition: opacity var(--transition-base), visibility var(--transition-base);
+      padding: var(--spacing-md);
     }
     
     .modal-overlay.is-visible {
@@ -986,6 +987,93 @@
     
     .share-link-display button:hover {
       background: var(--color-primary-dark);
+    }
+    
+    /* Loading Overlay */
+    .loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20000;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-base), visibility var(--transition-base);
+    }
+    
+    .loading-overlay.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .loading-overlay__content {
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-2xl);
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .loading-overlay__spinner {
+      display: inline-block;
+      width: 50px;
+      height: 50px;
+      border: 4px solid var(--bg-tertiary);
+      border-top-color: var(--color-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: var(--spacing-lg);
+    }
+    
+    .loading-overlay__text {
+      color: var(--text-primary);
+      font-size: var(--font-size-lg);
+      font-weight: 500;
+      margin: 0;
+    }
+    
+    /* Error Message Container */
+    .error-message-container {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 20001;
+      max-width: 500px;
+      width: 90%;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity var(--transition-base), visibility var(--transition-base);
+    }
+    
+    .error-message-container.is-visible {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .error-message-box {
+      background: var(--bg-secondary);
+      border: 2px solid var(--color-error);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-xl);
+      text-align: center;
+      box-shadow: var(--shadow-lg);
+    }
+    
+    .error-message-box__text {
+      color: var(--color-error);
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      margin: 0 0 var(--spacing-lg) 0;
+    }
+    
+    .error-message-box__button {
+      margin-top: var(--spacing-md);
     }
   </style>
 </head>
@@ -1421,7 +1509,7 @@
                 جدول تفصیلی برنامه بازپرداخت
               </h2>
         </div>
-            <div>
+            <div style="overflow-x: auto; -webkit-overflow-scrolling: touch;">
               <table class="data-table" id="scheduleTable">
             <thead>
               <tr>
@@ -1500,6 +1588,17 @@
     </div>
   </div>
 
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay" class="loading-overlay is-hidden">
+    <div class="loading-overlay__content">
+      <div class="loading-overlay__spinner"></div>
+      <p class="loading-overlay__text">در حال بارگذاری...</p>
+    </div>
+  </div>
+
+  <!-- Error Message Container -->
+  <div id="errorMessageContainer" class="error-message-container is-hidden"></div>
+
   <!-- Save & Share Modal -->
   <div id="saveAndShareModal" class="modal-overlay">
     <div class="modal">
@@ -1514,7 +1613,7 @@
         
         <div class="input-wrapper">
           <label for="saveCustomerPhone" class="input-label is-required">شماره تماس</label>
-          <input type="tel" id="saveCustomerPhone" class="input-control" placeholder="شماره تماس را وارد کنید" required />
+          <input type="tel" id="saveCustomerPhone" class="input-control" placeholder="شماره تماس را با صفر وارد کنید (مثال: 09123456789)" required />
           <div class="input-hint">شماره تماس را به صورت انگلیسی وارد کنید</div>
         </div>
         
@@ -1539,7 +1638,6 @@
         </div>
         
         <div class="action-group" style="margin-top: var(--spacing-xl);">
-          <button type="button" class="action-button action-button--primary" id="saveOnlyBtn">ذخیره</button>
           <button type="button" class="action-button action-button--success" id="saveAndGetLinkBtn">ذخیره و دریافت لینک اشتراک</button>
           <button type="button" class="action-button action-button--secondary" id="cancelSaveBtn">انصراف</button>
         </div>
@@ -1783,15 +1881,167 @@
       return isValid;
     }
 
+    // Helper function to show/hide loading overlay
+    function showLoadingOverlay(state) {
+      const overlay = document.getElementById('loadingOverlay');
+      if (overlay) {
+        if (state) {
+          overlay.classList.remove('is-hidden');
+          overlay.classList.add('is-visible');
+          // Disable all buttons
+          document.querySelectorAll('button').forEach(btn => {
+            btn.disabled = true;
+          });
+        } else {
+          overlay.classList.remove('is-visible');
+          overlay.classList.add('is-hidden');
+          // Re-enable all buttons
+          document.querySelectorAll('button').forEach(btn => {
+            btn.disabled = false;
+          });
+        }
+      }
+    }
+    
+    // Helper function to show error message
+    function showError(message) {
+      const errorContainer = document.getElementById('errorMessageContainer');
+      if (errorContainer) {
+        errorContainer.innerHTML = `
+          <div class="error-message-box">
+            <p class="error-message-box__text">${message}</p>
+            <button type="button" class="action-button action-button--secondary error-message-box__button" onclick="window.location.href = window.location.pathname">
+              بازگشت به محاسبه
+            </button>
+          </div>
+        `;
+        errorContainer.classList.remove('is-hidden');
+        errorContainer.classList.add('is-visible');
+      }
+    }
+    
+    // Helper function to render calculation from saved payload
+    function renderCalculationFromPayload(inputPayload, resultPayload) {
+      // Store result for copy/download
+      window.lastCalculationResult = resultPayload;
+      
+      // Hide form and navigation
+      const calculatorForm = document.getElementById('calculatorForm');
+      const tabNav = document.querySelector('.tab-progress-nav');
+      if (calculatorForm) calculatorForm.classList.add('is-hidden');
+      if (tabNav) tabNav.classList.add('is-hidden');
+      
+      // Hide Step 5 form container
+      const step5Section = document.querySelector('.form-container[data-step="5"]');
+      if (step5Section) {
+        step5Section.classList.add('is-hidden');
+        step5Section.classList.remove('is-visible');
+      }
+      
+      // Set the progress tracker to the final step (Step 5)
+      currentStep = 5;
+      updateProgressTracker();
+      
+      // Show the results section
+      const resultsEl = document.getElementById('results');
+      if (resultsEl) {
+        resultsEl.classList.remove('is-hidden');
+      }
+      
+      // Display results using existing function
+      displayResults(resultPayload);
+      
+      // Hide share button (since it's a shared view)
+      const shareBtn = document.getElementById('shareResultsBtn');
+      if (shareBtn) {
+        shareBtn.style.display = 'none';
+      }
+      
+      // Hide save and share button (since it's a shared view)
+      const saveAndShareBtn = document.getElementById('saveAndShareBtn');
+      if (saveAndShareBtn) {
+        saveAndShareBtn.style.display = 'none';
+      }
+      
+      // Update reset button behavior
+      const resetBtn = document.getElementById('resetFormBtn');
+      if (resetBtn) {
+        resetBtn.textContent = 'محاسبه جدید';
+        resetBtn.onclick = function() {
+          window.location.href = window.location.pathname;
+        };
+      }
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
     // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Check if we should load shared results
+    document.addEventListener('DOMContentLoaded', async function() {
+      // Check if we should load saved calculation by shareId
       const urlParams = new URLSearchParams(window.location.search);
-      const shareId = urlParams.get('share');
+      const shareId = urlParams.get('shareId');
       
       if (shareId) {
+        // Show loading overlay
+        showLoadingOverlay(true);
+        
+        try {
+          // Fetch saved calculation from n8n
+          const response = await fetch(
+            'https://n8nb2wall.darkube.app/webhook/get-calculation-by-id?id=' + encodeURIComponent(shareId)
+          );
+          
+          if (!response.ok) {
+            throw new Error('خطا در ارتباط با سرور');
+          }
+          
+          let responseData;
+          try {
+            const responseText = await response.text();
+            if (!responseText || responseText.trim() === '') {
+              throw new Error('پاسخ خالی از سرور دریافت شد');
+            }
+            responseData = JSON.parse(responseText);
+          } catch (parseError) {
+            console.error('JSON Parse Error:', parseError);
+            throw new Error('پاسخ نامعتبر از سرور دریافت شد');
+          }
+          
+          // Handle array response (n8n webhook format)
+          let data = Array.isArray(responseData) ? responseData[0] : responseData;
+          
+          // Hide loading overlay
+          showLoadingOverlay(false);
+          
+          // Check if record was found
+          if (!data || !data.found) {
+            showError('محاسبه‌ای با این شناسه پیدا نشد');
+            return;
+          }
+          
+          // Render calculation from saved payload
+          if (data.input_payload && data.result_payload) {
+            renderCalculationFromPayload(data.input_payload, data.result_payload);
+          } else {
+            showError('داده‌های محاسبه ناقص است');
+          }
+          
+        } catch (error) {
+          console.error('Error loading saved calculation:', error);
+          showLoadingOverlay(false);
+          showError('خطا در بارگذاری محاسبه ذخیره‌شده');
+        }
+        
+        return; // Don't initialize form if loading saved calculation
+      }
+      
+      // Check if we should load shared results (existing functionality)
+      const shareParam = urlParams.get('share');
+      
+      if (shareParam) {
         // Load shared results instead of showing form
-        loadSharedResults(shareId);
+        loadSharedResults(shareParam);
         return; // Don't initialize form if loading shared results
       }
       
@@ -2939,7 +3189,6 @@
       const saveAndShareForm = document.getElementById('saveAndShareForm');
       const closeSaveAndShareModal = document.getElementById('closeSaveAndShareModal');
       const cancelSaveBtn = document.getElementById('cancelSaveBtn');
-      const saveOnlyBtn = document.getElementById('saveOnlyBtn');
       const saveAndGetLinkBtn = document.getElementById('saveAndGetLinkBtn');
       const saveLoadingState = document.getElementById('saveLoadingState');
       const saveSuccessState = document.getElementById('saveSuccessState');
@@ -2962,7 +3211,6 @@
           if (saveErrorState) saveErrorState.classList.add('is-hidden');
           if (saveShareLinkContainer) saveShareLinkContainer.classList.add('is-hidden');
           // Enable buttons
-          if (saveOnlyBtn) saveOnlyBtn.disabled = false;
           if (saveAndGetLinkBtn) saveAndGetLinkBtn.disabled = false;
         }
       }
@@ -3001,10 +3249,33 @@
         });
       }
       
-      // Handle save only button
-      if (saveOnlyBtn) {
-        saveOnlyBtn.addEventListener('click', async function() {
-          await handleSave();
+      // Persian to English digit conversion for phone field
+      const saveCustomerPhone = document.getElementById('saveCustomerPhone');
+      if (saveCustomerPhone) {
+        // Persian digit mapping
+        const persianToEnglish = {
+          '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+          '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9'
+        };
+        
+        saveCustomerPhone.addEventListener('input', function(e) {
+          let value = this.value;
+          // Convert Persian digits to English
+          value = value.split('').map(char => persianToEnglish[char] || char).join('');
+          // Keep only digits
+          value = value.replace(/[^\d]/g, '');
+          this.value = value;
+        });
+        
+        saveCustomerPhone.addEventListener('paste', function(e) {
+          e.preventDefault();
+          const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+          let value = pastedText;
+          // Convert Persian digits to English
+          value = value.split('').map(char => persianToEnglish[char] || char).join('');
+          // Keep only digits
+          value = value.replace(/[^\d]/g, '');
+          this.value = value;
         });
       }
       
@@ -3049,7 +3320,6 @@
         }
         
         // Disable buttons and show loading
-        if (saveOnlyBtn) saveOnlyBtn.disabled = true;
         if (saveAndGetLinkBtn) saveAndGetLinkBtn.disabled = true;
         if (cancelSaveBtn) cancelSaveBtn.disabled = true;
         if (saveLoadingState) saveLoadingState.classList.remove('is-hidden');
@@ -3142,7 +3412,6 @@
           }
           
           // Re-enable buttons
-          if (saveOnlyBtn) saveOnlyBtn.disabled = false;
           if (saveAndGetLinkBtn) saveAndGetLinkBtn.disabled = false;
           if (cancelSaveBtn) cancelSaveBtn.disabled = false;
         }
