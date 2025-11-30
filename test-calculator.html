@@ -3565,7 +3565,10 @@
           // Handle array response (n8n webhook format)
           let result = Array.isArray(responseData) ? responseData[0] : responseData;
           
+          console.log("Save calculation response:", result);
+          
           if (!result || result.saved !== true) {
+            console.error("Save failed or invalid response:", result);
             throw new Error(result?.message || 'ذخیره انجام نشد');
           }
           
@@ -3574,7 +3577,9 @@
           if (saveSuccessState) saveSuccessState.classList.remove('is-hidden');
           
           // If share link is available in response, show it
+          // Workflow returns: { saved: true, record_id: "...", share_url: "..." }
           if (result.share_url) {
+            console.log("Share URL received:", result.share_url);
             if (saveShareLinkInput) {
               saveShareLinkInput.value = result.share_url;
             }
@@ -3582,6 +3587,7 @@
               saveShareLinkContainer.classList.remove('is-hidden');
             }
           } else {
+            console.warn("No share_url in response:", result);
             if (saveShareLinkContainer) {
               saveShareLinkContainer.classList.add('is-hidden');
             }
