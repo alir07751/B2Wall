@@ -3004,14 +3004,14 @@
       // Handle save only button
       if (saveOnlyBtn) {
         saveOnlyBtn.addEventListener('click', async function() {
-          await handleSave(false);
+          await handleSave();
         });
       }
       
       // Handle save and get link button
       if (saveAndGetLinkBtn) {
         saveAndGetLinkBtn.addEventListener('click', async function() {
-          await handleSave(true);
+          await handleSave();
         });
       }
       
@@ -3022,14 +3022,14 @@
             saveShareLinkInput.select();
             if (navigator.clipboard) {
               navigator.clipboard.writeText(saveShareLinkInput.value).then(() => {
-                copySaveShareLinkBtn.textContent = 'کپی شد!';
+                copySaveShareLinkBtn.textContent = 'لینک کپی شد';
                 setTimeout(() => {
                   copySaveShareLinkBtn.textContent = 'کپی';
                 }, 2000);
               });
             } else {
               document.execCommand('copy');
-              copySaveShareLinkBtn.textContent = 'کپی شد!';
+              copySaveShareLinkBtn.textContent = 'لینک کپی شد';
               setTimeout(() => {
                 copySaveShareLinkBtn.textContent = 'کپی';
               }, 2000);
@@ -3039,7 +3039,7 @@
       }
       
       // Handle save function
-      async function handleSave(requestShareLink) {
+      async function handleSave() {
         const customerName = document.getElementById('saveCustomerName')?.value.trim();
         const customerPhone = document.getElementById('saveCustomerPhone')?.value.trim();
         
@@ -3072,8 +3072,7 @@
             customer_name: customerName,
             customer_phone: customerPhone,
             input_payload: inputPayload,
-            result_payload: resultPayload,
-            request_share_link: requestShareLink
+            result_payload: resultPayload
           };
           
           // Send to n8n webhook
@@ -3114,19 +3113,13 @@
           if (saveLoadingState) saveLoadingState.classList.add('is-hidden');
           if (saveSuccessState) saveSuccessState.classList.remove('is-hidden');
           
-          // If share link is available and requested, show it
-          if (requestShareLink && result.share_url) {
+          // If share link is available in response, show it
+          if (result.share_url) {
             if (saveShareLinkInput) {
               saveShareLinkInput.value = result.share_url;
             }
             if (saveShareLinkContainer) {
               saveShareLinkContainer.classList.remove('is-hidden');
-            }
-            // Auto-copy to clipboard
-            if (navigator.clipboard && saveShareLinkInput) {
-              navigator.clipboard.writeText(result.share_url).catch(() => {
-                // If copy fails, just show the link
-              });
             }
           } else {
             if (saveShareLinkContainer) {
