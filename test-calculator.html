@@ -2055,31 +2055,56 @@
     // ================================
     async function loadSharedCalculation(recordId) {
       try {
+        if (!recordId || recordId.length < 5) {
+          throw new Error("شناسه نامعتبر");
+        }
+
         showLoader();
 
         const apiUrl =
           `https://n8nb2wall.darkube.app/webhook/9b99f33f-c45c-44e2-a974-bfe1a3a1b0e8/get-calculation/${recordId}`;
 
-        const response = await fetch(apiUrl);
+        console.log("Fetching from:", apiUrl);
+
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Accept': 'application/json',
+          }
+        });
+
+        console.log("Response status:", response.status);
+        console.log("Response ok:", response.ok);
 
         if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error("نتایج پیدا نشد");
+          }
           throw new Error("HTTP error: " + response.status);
         }
 
+        // Check content type
+        const contentType = response.headers.get('content-type');
+        console.log("Content-Type:", contentType);
+
         // Read response as text first to debug
         const responseText = await response.text();
+        console.log("Response text length:", responseText ? responseText.length : 0);
+        console.log("Response text preview:", responseText ? responseText.substring(0, 200) : 'empty');
         
         if (!responseText || responseText.trim() === '') {
-          throw new Error("Empty response from server");
+          console.error("Empty response received");
+          throw new Error("پاسخ خالی از سرور دریافت شد. لطفاً شناسه را بررسی کنید.");
         }
 
         let data;
         try {
           data = JSON.parse(responseText);
+          console.log("Parsed data:", data);
         } catch (parseError) {
           console.error("JSON Parse Error:", parseError);
           console.error("Response Text:", responseText);
-          throw new Error("Invalid JSON: " + parseError.message);
+          throw new Error("پاسخ نامعتبر از سرور: " + parseError.message);
         }
 
         // Handle array response (n8n webhook format)
@@ -2090,7 +2115,7 @@
         // Check for success flag - according to workflow logic
         if (!data || typeof data !== 'object') {
           console.error("Invalid API structure:", data);
-          throw new Error("Invalid API structure");
+          throw new Error("ساختار پاسخ نامعتبر است");
         }
 
         // Check if request was unsuccessful
@@ -2102,7 +2127,7 @@
         // Check for success flag and data structure
         if (data.success !== true || !data.data) {
           console.error("Invalid API structure:", data);
-          throw new Error("Invalid API structure");
+          throw new Error("ساختار داده نامعتبر است");
         }
 
         renderCalculation(data.data);
@@ -2124,14 +2149,31 @@
       const params = new URLSearchParams(window.location.search);
       let recordId = params.get("shareId");
 
-      // If not in query, extract from /calc/share/<id>
+      console.log("Initial recordId from query:", recordId);
+      console.log("Current pathname:", window.location.pathname);
+
+      // If not in query, extract from path
       if (!recordId) {
-        const parts = window.location.pathname.split("/").filter(Boolean);
-        recordId = parts.pop();
+        const pathname = window.location.pathname;
+        
+        // Check for /calc/share/<id> or /share/<id> pattern
+        const shareMatch = pathname.match(/\/(?:calc\/)?share\/([^\/]+)/);
+        if (shareMatch) {
+          recordId = shareMatch[1];
+        } else {
+          // Fallback: get last part of path
+          const parts = pathname.split("/").filter(Boolean);
+          recordId = parts[parts.length - 1];
+        }
       }
 
+      console.log("Final recordId:", recordId);
+
       if (recordId && recordId.length > 5) {
+        console.log("Loading calculation for recordId:", recordId);
         loadSharedCalculation(recordId);
+      } else {
+        console.log("No valid recordId found, skipping load");
       }
     };
     
