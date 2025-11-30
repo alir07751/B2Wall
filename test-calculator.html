@@ -2055,15 +2055,33 @@
     // ================================
     async function loadSharedCalculation(recordId) {
       try {
-        // Validate recordId: must be valid UUID format or at least 5 chars, not a filename
-        if (!recordId || recordId.length < 5) {
+        // Strict validation: Only accept valid-looking IDs
+        if (!recordId || typeof recordId !== 'string') {
           throw new Error("شناسه نامعتبر");
         }
         
-        // Reject if it looks like a filename
-        if (recordId.includes('.html') || recordId.includes('.htm') || recordId.includes('.')) {
-          console.error("Invalid recordId (looks like filename):", recordId);
-          throw new Error("شناسه نامعتبر: نام فایل به عنوان شناسه استفاده شده است");
+        // Must be at least 8 characters (to avoid short invalid IDs)
+        if (recordId.length < 8) {
+          console.error("Invalid recordId (too short):", recordId);
+          throw new Error("شناسه نامعتبر: شناسه خیلی کوتاه است");
+        }
+        
+        // Reject if it looks like a filename or contains invalid characters
+        if (recordId.includes('.') || 
+            recordId.includes('/') || 
+            recordId.includes('\\') ||
+            recordId.includes(' ') ||
+            recordId.includes('test-calculator') ||
+            recordId.includes('.html') || 
+            recordId.includes('.htm')) {
+          console.error("Invalid recordId (looks like filename or contains invalid chars):", recordId);
+          throw new Error("شناسه نامعتبر: شناسه معتبر نیست");
+        }
+        
+        // Must contain only alphanumeric, dashes, or underscores (UUID-like format)
+        if (!/^[a-zA-Z0-9\-_]+$/.test(recordId)) {
+          console.error("Invalid recordId (contains invalid characters):", recordId);
+          throw new Error("شناسه نامعتبر: شناسه شامل کاراکترهای نامعتبر است");
         }
 
         showLoader();
@@ -2152,48 +2170,77 @@
     //   DETECT SHARE LINK ON LOAD
     // ================================
     window.onload = function () {
-      // Try query string first
+      // Only proceed if there's a clear indication of a share link
       const params = new URLSearchParams(window.location.search);
       let recordId = params.get("shareId");
 
-      console.log("Initial recordId from query:", recordId);
-      console.log("Current pathname:", window.location.pathname);
-
-      // If not in query, extract from path (ONLY if path contains /share/)
+      // If not in query, check path (ONLY if path explicitly contains /share/)
       if (!recordId) {
         const pathname = window.location.pathname;
         
-        // Check for /calc/share/<id> or /share/<id> pattern
-        // Only extract if path explicitly contains "share"
-        const shareMatch = pathname.match(/\/(?:calc\/)?share\/([^\/\?]+)/);
-        if (shareMatch && shareMatch[1]) {
-          recordId = shareMatch[1];
-          // Remove any query parameters or fragments from the ID
-          recordId = recordId.split('?')[0].split('#')[0];
+        // Only extract from path if it explicitly contains "share"
+        if (pathname.includes('/share/')) {
+          const shareMatch = pathname.match(/\/(?:calc\/)?share\/([^\/\?]+)/);
+          if (shareMatch && shareMatch[1]) {
+            recordId = shareMatch[1];
+            // Remove any query parameters or fragments from the ID
+            recordId = recordId.split('?')[0].split('#')[0];
+          }
         }
       }
 
-      console.log("Final recordId:", recordId);
+      // Strict validation: Only call API if we have a valid-looking UUID or ID
+      // UUID format: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx (36 chars with dashes)
+      // Or at least 8 alphanumeric chars (to avoid filenames)
+      const isValidId = recordId && 
+        recordId.length >= 8 && 
+        !recordId.includes('.') && 
+        !recordId.includes('/') &&
+        /^[a-zA-Z0-9\-_]+$/.test(recordId);
 
-      // Validate recordId: must be at least 5 chars and not a filename
-      if (recordId && recordId.length >= 5 && !recordId.includes('.html') && !recordId.includes('.')) {
-        console.log("Loading calculation for recordId:", recordId);
+      if (isValidId) {
+        console.log("Valid share link detected, loading calculation for recordId:", recordId);
         loadSharedCalculation(recordId);
       } else {
-        console.log("No valid recordId found, skipping load. recordId was:", recordId);
+        // No valid share link - proceed with normal form initialization
+        console.log("No valid share link found, proceeding with normal form. recordId was:", recordId);
       }
     };
     
     // Initialize form on page load (existing functionality)
     document.addEventListener('DOMContentLoaded', function() {
-      // Check if this is a share link - if so, skip form initialization
+      // Check if this is a valid share link - if so, skip form initialization
       const urlParams = new URLSearchParams(window.location.search);
       const shareId = urlParams.get('shareId');
       const shareParam = urlParams.get('share');
-      const sharePath = window.location.pathname.includes('/share/');
+      const pathname = window.location.pathname;
+      const sharePath = pathname.includes('/share/');
       
-      // If it's a share link, skip form initialization (window.onload will handle it)
-      if (shareId || sharePath) {
+      // Validate shareId if it exists
+      let isValidShareId = false;
+      if (shareId) {
+        isValidShareId = shareId.length >= 8 && 
+          !shareId.includes('.') && 
+          !shareId.includes('/') &&
+          /^[a-zA-Z0-9\-_]+$/.test(shareId);
+      }
+      
+      // Extract from path if sharePath is true
+      let recordIdFromPath = null;
+      if (sharePath && !isValidShareId) {
+        const shareMatch = pathname.match(/\/(?:calc\/)?share\/([^\/\?]+)/);
+        if (shareMatch && shareMatch[1]) {
+          recordIdFromPath = shareMatch[1].split('?')[0].split('#')[0];
+          isValidShareId = recordIdFromPath && 
+            recordIdFromPath.length >= 8 && 
+            !recordIdFromPath.includes('.') && 
+            !recordIdFromPath.includes('/') &&
+            /^[a-zA-Z0-9\-_]+$/.test(recordIdFromPath);
+        }
+      }
+      
+      // If it's a valid share link, skip form initialization (window.onload will handle it)
+      if (isValidShareId || (sharePath && recordIdFromPath)) {
         return;
       }
       
