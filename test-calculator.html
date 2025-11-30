@@ -2055,8 +2055,15 @@
     // ================================
     async function loadSharedCalculation(recordId) {
       try {
+        // Validate recordId: must be valid UUID format or at least 5 chars, not a filename
         if (!recordId || recordId.length < 5) {
           throw new Error("شناسه نامعتبر");
+        }
+        
+        // Reject if it looks like a filename
+        if (recordId.includes('.html') || recordId.includes('.htm') || recordId.includes('.')) {
+          console.error("Invalid recordId (looks like filename):", recordId);
+          throw new Error("شناسه نامعتبر: نام فایل به عنوان شناسه استفاده شده است");
         }
 
         showLoader();
@@ -2152,28 +2159,28 @@
       console.log("Initial recordId from query:", recordId);
       console.log("Current pathname:", window.location.pathname);
 
-      // If not in query, extract from path
+      // If not in query, extract from path (ONLY if path contains /share/)
       if (!recordId) {
         const pathname = window.location.pathname;
         
         // Check for /calc/share/<id> or /share/<id> pattern
-        const shareMatch = pathname.match(/\/(?:calc\/)?share\/([^\/]+)/);
-        if (shareMatch) {
+        // Only extract if path explicitly contains "share"
+        const shareMatch = pathname.match(/\/(?:calc\/)?share\/([^\/\?]+)/);
+        if (shareMatch && shareMatch[1]) {
           recordId = shareMatch[1];
-        } else {
-          // Fallback: get last part of path
-          const parts = pathname.split("/").filter(Boolean);
-          recordId = parts[parts.length - 1];
+          // Remove any query parameters or fragments from the ID
+          recordId = recordId.split('?')[0].split('#')[0];
         }
       }
 
       console.log("Final recordId:", recordId);
 
-      if (recordId && recordId.length > 5) {
+      // Validate recordId: must be at least 5 chars and not a filename
+      if (recordId && recordId.length >= 5 && !recordId.includes('.html') && !recordId.includes('.')) {
         console.log("Loading calculation for recordId:", recordId);
         loadSharedCalculation(recordId);
       } else {
-        console.log("No valid recordId found, skipping load");
+        console.log("No valid recordId found, skipping load. recordId was:", recordId);
       }
     };
     
