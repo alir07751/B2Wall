@@ -2041,42 +2041,83 @@
       });
     }
     
-    // Initialize on page load - Share Link functionality
-    window.onload = async function () {
-      const pathParts = window.location.pathname.split("/");
-      const recordId = pathParts[pathParts.length - 1];
+    // Function to show calculation error
+    function showCalculationError() {
+      const resultsEl = document.getElementById('results');
+      if (resultsEl) {
+        resultsEl.classList.add('is-hidden');
+      }
+      showError('خطا در نمایش محاسبه');
+    }
 
-      if (!recordId || recordId.length < 5) return;
-
-      document.getElementById("loadingOverlay").style.display = "flex";
-
-      const apiUrl = `https://n8nb2wall.darkube.app/webhook/9b99f33f-c45c-44e2-a974-bfe1a3a1b0e8/get-calculation/${recordId}`;
-
+    // ================================
+    //    LOAD SHARED CALCULATION
+    // ================================
+    async function loadSharedCalculation(recordId) {
       try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
+        showLoader();
 
-        if (!data || data.success !== true) {
-          document.getElementById("loadingOverlay").style.display = "none";
-          showError("محاسبه‌ای با این لینک یافت نشد.");
-          return;
+        const apiUrl =
+          `https://n8nb2wall.darkube.app/webhook/9b99f33f-c45c-44e2-a974-bfe1a3a1b0e8/get-calculation/${recordId}`;
+
+        const response = await fetch(apiUrl);
+
+        if (!response.ok) throw new Error("HTTP error: " + response.status);
+
+        let data;
+        try {
+          data = await response.json();
+        } catch {
+          throw new Error("Invalid JSON");
         }
 
+        if (!data || !data.success || !data.data)
+          throw new Error("Invalid API structure");
+
         renderCalculation(data.data);
-        document.getElementById("loadingOverlay").style.display = "none";
+
+        hideLoader();
+
       } catch (err) {
-        console.error('Error loading saved calculation:', err);
-        document.getElementById("loadingOverlay").style.display = "none";
+        console.error("Error loading shared calculation", err);
+        hideLoader();
         showError("خطا در نمایش محاسبه");
+      }
+    }
+
+    // ================================
+    //   DETECT SHARE LINK ON LOAD
+    // ================================
+    window.onload = function () {
+      // Try query string first
+      const params = new URLSearchParams(window.location.search);
+      let recordId = params.get("shareId");
+
+      // If not in query, extract from /calc/share/<id>
+      if (!recordId) {
+        const parts = window.location.pathname.split("/").filter(Boolean);
+        recordId = parts.pop();
+      }
+
+      if (recordId && recordId.length > 5) {
+        loadSharedCalculation(recordId);
       }
     };
     
     // Initialize form on page load (existing functionality)
     document.addEventListener('DOMContentLoaded', function() {
-      // Check if we should load shared results (existing functionality)
+      // Check if this is a share link - if so, skip form initialization
       const urlParams = new URLSearchParams(window.location.search);
+      const shareId = urlParams.get('shareId');
       const shareParam = urlParams.get('share');
+      const sharePath = window.location.pathname.includes('/share/');
       
+      // If it's a share link, skip form initialization (window.onload will handle it)
+      if (shareId || sharePath) {
+        return;
+      }
+      
+      // Check for old share parameter format (legacy)
       if (shareParam) {
         // Load shared results instead of showing form
         loadSharedResults(shareParam);
