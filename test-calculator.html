@@ -1613,7 +1613,7 @@
         
         <div class="input-wrapper">
           <label for="saveCustomerPhone" class="input-label is-required">شماره تماس</label>
-          <input type="tel" id="saveCustomerPhone" class="input-control" placeholder="شماره تماس را با صفر وارد کنید (مثال: 09123456789)" required />
+          <input type="tel" id="saveCustomerPhone" class="input-control" placeholder="مثال: 09351234567" required />
           <div class="input-hint">شماره تماس را به صورت انگلیسی وارد کنید</div>
         </div>
         
@@ -1881,6 +1881,33 @@
       return isValid;
     }
 
+    // Helper function to normalize phone number (Persian to English)
+    function normalizePhone(input) {
+      const persianToEnglish = {
+        '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+        '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9'
+      };
+      if (!input) return '';
+      return input.toString().split('').map(char => persianToEnglish[char] || char).join('').replace(/[^\d]/g, '');
+    }
+    
+    // Helper function to format numbers with commas
+    function formatNumber(num) {
+      if (!num && num !== 0) return '';
+      const numStr = num.toString().replace(/[^\d]/g, '');
+      return numStr.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    }
+    
+    // Helper function to show loader
+    function showLoader() {
+      showLoadingOverlay(true);
+    }
+    
+    // Helper function to hide loader
+    function hideLoader() {
+      showLoadingOverlay(false);
+    }
+    
     // Helper function to show/hide loading overlay
     function showLoadingOverlay(state) {
       const overlay = document.getElementById('loadingOverlay');
@@ -1921,7 +1948,12 @@
     }
     
     // Helper function to render calculation from saved payload
-    function renderCalculationFromPayload(inputPayload, resultPayload) {
+    function renderCalculation(data) {
+      const inputPayload = data.input_payload;
+      const resultPayload = data.result_payload;
+      const customerName = data.customer_name || '';
+      const customerPhone = data.customer_phone || '';
+      
       // Store result for copy/download
       window.lastCalculationResult = resultPayload;
       
@@ -1946,6 +1978,29 @@
       const resultsEl = document.getElementById('results');
       if (resultsEl) {
         resultsEl.classList.remove('is-hidden');
+      }
+      
+      // Add customer info if available
+      if (customerName || customerPhone) {
+        const resultsStep = document.getElementById('resultsStep');
+        if (resultsStep) {
+          const customerInfo = document.createElement('div');
+          customerInfo.style.cssText = 'background: var(--bg-primary); border: 2px solid var(--border-color); border-radius: var(--border-radius); padding: var(--spacing-lg); margin-bottom: var(--spacing-xl);';
+          customerInfo.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+              <span style="color: var(--text-secondary); font-weight: 600;">نام مشتری:</span>
+              <span style="color: var(--text-primary); font-weight: 600;">${customerName || '—'}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-secondary); font-weight: 600;">شماره تماس:</span>
+              <span style="color: var(--text-primary); font-weight: 600;" class="persian-number">${customerPhone || '—'}</span>
+            </div>
+          `;
+          const summaryCards = document.getElementById('summaryCards');
+          if (summaryCards && summaryCards.parentNode) {
+            summaryCards.parentNode.insertBefore(customerInfo, summaryCards);
+          }
+        }
       }
       
       // Display results using existing function
@@ -1976,65 +2031,77 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
     
+    // Legacy function for backward compatibility
+    function renderCalculationFromPayload(inputPayload, resultPayload) {
+      renderCalculation({
+        input_payload: inputPayload,
+        result_payload: resultPayload,
+        customer_name: '',
+        customer_phone: ''
+      });
+    }
+    
     // Initialize on page load
-    document.addEventListener('DOMContentLoaded', async function() {
-      // Check if we should load saved calculation by shareId
-      const urlParams = new URLSearchParams(window.location.search);
-      const shareId = urlParams.get('shareId');
+    document.addEventListener('DOMContentLoaded', function() {
+      // Extract recordId from URL path: /calc/share/<recordId>
+      const recordId = window.location.pathname.split("/").pop();
       
-      if (shareId) {
-        // Show loading overlay
-        showLoadingOverlay(true);
-        
-        try {
-          // Fetch saved calculation from n8n
-          const response = await fetch(
-            'https://n8nb2wall.darkube.app/webhook/get-calculation-by-id?id=' + encodeURIComponent(shareId)
-          );
+      // Check if recordId is missing or invalid
+      if (!recordId || recordId === '' || recordId === 'calc' || recordId === 'share') {
+        // Hide results section and show error
+        const resultsEl = document.getElementById('results');
+        if (resultsEl) {
+          resultsEl.classList.add('is-hidden');
+        }
+        showError('خطا در نمایش محاسبه');
+        return;
+      }
+      
+      // Show loading overlay immediately
+      showLoader();
+      
+      // Fetch saved calculation from n8n
+      const apiUrl = `https://n8nb2wall.darkube.app/webhook/get-calculation/${recordId}`;
+      
+      fetch(apiUrl)
+        .then(res => res.json())
+        .then(response => {
+          // Hide loading animation
+          hideLoader();
           
-          if (!response.ok) {
-            throw new Error('خطا در ارتباط با سرور');
-          }
-          
-          let responseData;
-          try {
-            const responseText = await response.text();
-            if (!responseText || responseText.trim() === '') {
-              throw new Error('پاسخ خالی از سرور دریافت شد');
+          // Check if request was successful
+          if (!response.success) {
+            const resultsEl = document.getElementById('results');
+            if (resultsEl) {
+              resultsEl.classList.add('is-hidden');
             }
-            responseData = JSON.parse(responseText);
-          } catch (parseError) {
-            console.error('JSON Parse Error:', parseError);
-            throw new Error('پاسخ نامعتبر از سرور دریافت شد');
-          }
-          
-          // Handle array response (n8n webhook format)
-          let data = Array.isArray(responseData) ? responseData[0] : responseData;
-          
-          // Hide loading overlay
-          showLoadingOverlay(false);
-          
-          // Check if record was found
-          if (!data || !data.found) {
-            showError('محاسبه‌ای با این شناسه پیدا نشد');
+            showError('خطا در نمایش محاسبه');
             return;
           }
           
-          // Render calculation from saved payload
-          if (data.input_payload && data.result_payload) {
-            renderCalculationFromPayload(data.input_payload, data.result_payload);
-          } else {
-            showError('داده‌های محاسبه ناقص است');
-          }
+          // Extract data from response
+          const input = response.data.input_payload;
+          const result = response.data.result_payload;
           
-        } catch (error) {
-          console.error('Error loading saved calculation:', error);
-          showLoadingOverlay(false);
-          showError('خطا در بارگذاری محاسبه ذخیره‌شده');
-        }
-        
-        return; // Don't initialize form if loading saved calculation
-      }
+          // Render calculation with customer info
+          renderCalculation({
+            input_payload: input,
+            result_payload: result,
+            customer_name: response.data.customer_name || '',
+            customer_phone: response.data.customer_phone || ''
+          });
+        })
+        .catch(err => {
+          console.error('Error loading saved calculation:', err);
+          hideLoader();
+          const resultsEl = document.getElementById('results');
+          if (resultsEl) {
+            resultsEl.classList.add('is-hidden');
+          }
+          showError('خطا در نمایش محاسبه');
+        });
+      
+      return; // Don't initialize form if loading saved calculation
       
       // Check if we should load shared results (existing functionality)
       const shareParam = urlParams.get('share');
@@ -3252,30 +3319,14 @@
       // Persian to English digit conversion for phone field
       const saveCustomerPhone = document.getElementById('saveCustomerPhone');
       if (saveCustomerPhone) {
-        // Persian digit mapping
-        const persianToEnglish = {
-          '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
-          '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9'
-        };
-        
         saveCustomerPhone.addEventListener('input', function(e) {
-          let value = this.value;
-          // Convert Persian digits to English
-          value = value.split('').map(char => persianToEnglish[char] || char).join('');
-          // Keep only digits
-          value = value.replace(/[^\d]/g, '');
-          this.value = value;
+          this.value = normalizePhone(this.value);
         });
         
         saveCustomerPhone.addEventListener('paste', function(e) {
           e.preventDefault();
           const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-          let value = pastedText;
-          // Convert Persian digits to English
-          value = value.split('').map(char => persianToEnglish[char] || char).join('');
-          // Keep only digits
-          value = value.replace(/[^\d]/g, '');
-          this.value = value;
+          this.value = normalizePhone(pastedText);
         });
       }
       
