@@ -2041,77 +2041,38 @@
       });
     }
     
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', function() {
-      // Check if this is a share URL: /calc/share/<recordId>
-      const pathname = window.location.pathname;
-      const isShareUrl = pathname.includes('/calc/share/') || pathname.includes('/share/');
-      
-      if (!isShareUrl) {
-        // This is not a share URL, continue with normal form initialization
-        // The rest of the initialization code will run below
-      } else {
-        // Extract recordId from URL path: /calc/share/<recordId>
-        const recordId = pathname.split("/").pop();
-        
-        // Check if recordId is missing or invalid
-        if (!recordId || recordId === '' || recordId === 'calc' || recordId === 'share') {
-          // Hide results section and show error
-          const resultsEl = document.getElementById('results');
-          if (resultsEl) {
-            resultsEl.classList.add('is-hidden');
-          }
-          showError('خطا در نمایش محاسبه');
+    // Initialize on page load - Share Link functionality
+    window.onload = async function () {
+      const pathParts = window.location.pathname.split("/");
+      const recordId = pathParts[pathParts.length - 1];
+
+      if (!recordId || recordId.length < 5) return;
+
+      document.getElementById("loadingOverlay").style.display = "flex";
+
+      const apiUrl = `https://n8nb2wall.darkube.app/webhook/9b99f33f-c45c-44e2-a974-bfe1a3a1b0e8/get-calculation/${recordId}`;
+
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+
+        if (!data || data.success !== true) {
+          document.getElementById("loadingOverlay").style.display = "none";
+          showError("محاسبه‌ای با این لینک یافت نشد.");
           return;
         }
-        
-        // Show loading overlay immediately
-        showLoader();
-        
-        // Fetch saved calculation from n8n
-        const apiUrl = `https://n8nb2wall.darkube.app/webhook/get-calculation/${recordId}`;
-        
-        fetch(apiUrl)
-          .then(res => res.json())
-          .then(response => {
-            // Hide loading animation
-            hideLoader();
-            
-            // Check if request was successful
-            if (!response.success) {
-              const resultsEl = document.getElementById('results');
-              if (resultsEl) {
-                resultsEl.classList.add('is-hidden');
-              }
-              showError('خطا در نمایش محاسبه');
-              return;
-            }
-            
-            // Extract data from response
-            const input = response.data.input_payload;
-            const result = response.data.result_payload;
-            
-            // Render calculation with customer info
-            renderCalculation({
-              input_payload: input,
-              result_payload: result,
-              customer_name: response.data.customer_name || '',
-              customer_phone: response.data.customer_phone || ''
-            });
-          })
-          .catch(err => {
-            console.error('Error loading saved calculation:', err);
-            hideLoader();
-            const resultsEl = document.getElementById('results');
-            if (resultsEl) {
-              resultsEl.classList.add('is-hidden');
-            }
-            showError('خطا در نمایش محاسبه');
-          });
-        
-        return; // Don't initialize form if loading saved calculation
+
+        renderCalculation(data.data);
+        document.getElementById("loadingOverlay").style.display = "none";
+      } catch (err) {
+        console.error('Error loading saved calculation:', err);
+        document.getElementById("loadingOverlay").style.display = "none";
+        showError("خطا در نمایش محاسبه");
       }
-      
+    };
+    
+    // Initialize form on page load (existing functionality)
+    document.addEventListener('DOMContentLoaded', function() {
       // Check if we should load shared results (existing functionality)
       const urlParams = new URLSearchParams(window.location.search);
       const shareParam = urlParams.get('share');
