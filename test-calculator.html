@@ -2087,8 +2087,20 @@
           data = data[0];
         }
 
+        // Check for success flag - according to workflow logic
+        if (!data || typeof data !== 'object') {
+          console.error("Invalid API structure:", data);
+          throw new Error("Invalid API structure");
+        }
+
+        // Check if request was unsuccessful
+        if (data.success === false) {
+          const errorMessage = data.message || "نتایج پیدا نشد";
+          throw new Error(errorMessage);
+        }
+
         // Check for success flag and data structure
-        if (!data || data.success !== true || !data.data) {
+        if (data.success !== true || !data.data) {
           console.error("Invalid API structure:", data);
           throw new Error("Invalid API structure");
         }
