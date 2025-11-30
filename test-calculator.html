@@ -2062,17 +2062,36 @@
 
         const response = await fetch(apiUrl);
 
-        if (!response.ok) throw new Error("HTTP error: " + response.status);
+        if (!response.ok) {
+          throw new Error("HTTP error: " + response.status);
+        }
+
+        // Read response as text first to debug
+        const responseText = await response.text();
+        
+        if (!responseText || responseText.trim() === '') {
+          throw new Error("Empty response from server");
+        }
 
         let data;
         try {
-          data = await response.json();
-        } catch {
-          throw new Error("Invalid JSON");
+          data = JSON.parse(responseText);
+        } catch (parseError) {
+          console.error("JSON Parse Error:", parseError);
+          console.error("Response Text:", responseText);
+          throw new Error("Invalid JSON: " + parseError.message);
         }
 
-        if (!data || !data.success || !data.data)
+        // Handle array response (n8n webhook format)
+        if (Array.isArray(data) && data.length > 0) {
+          data = data[0];
+        }
+
+        // Check for success flag and data structure
+        if (!data || data.success !== true || !data.data) {
+          console.error("Invalid API structure:", data);
           throw new Error("Invalid API structure");
+        }
 
         renderCalculation(data.data);
 
@@ -2081,7 +2100,7 @@
       } catch (err) {
         console.error("Error loading shared calculation", err);
         hideLoader();
-        showError("خطا در نمایش محاسبه");
+        showError("خطا در نمایش محاسبه: " + (err.message || "خطای نامشخص"));
       }
     }
 
