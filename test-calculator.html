@@ -801,6 +801,11 @@
       display: none !important;
     }
 
+    /* Standalone shared result section */
+    #result-section {
+      display: none;
+    }
+
     /* Responsive Design */
     @media (max-width: 768px) {
       .page-content {
@@ -1099,6 +1104,7 @@
         </div>
       </nav>
 
+    <div id="form-section">
     <form id="calculatorForm">
         <!-- Section 1: Loan Information -->
         <section class="form-container is-visible" data-step="1" aria-labelledby="section-1-title">
@@ -1466,6 +1472,22 @@
           </div>
         </section>
       </form>
+    </div>
+
+      <!-- Shared Result Section (for shareId links) -->
+      <div id="result-section">
+        <section class="form-container is-visible">
+          <div class="form-container__heading">
+            <h2 class="form-container__title">
+              <span class="form-container__title-icon"></span>
+              نتایج ذخیره‌شده
+            </h2>
+          </div>
+          <p>نام مشتری: <span id="customer-name" class="persian-number"></span></p>
+          <p>شماره تماس: <span id="customer-phone" class="persian-number"></span></p>
+          <div id="result-box" class="expandable-content" style="margin-top: var(--spacing-lg);"></div>
+        </section>
+      </div>
 
       <!-- Results Section -->
       <div id="results" class="is-hidden">
@@ -2279,7 +2301,8 @@
         }
         
         // Extract saved result
-        const calc = data.record.result_payload;
+        const rec = data.record;
+        const calc = rec.result_payload;
         
         // Store result for copy/download
         window.lastCalculationResult = calc;
@@ -2299,13 +2322,39 @@
         currentStep = 5;
         updateProgressTracker();
         
-        // Show the results section
-        if (resultsEl) {
-          resultsEl.classList.remove('is-hidden');
+        // Show the shared result section
+        const formSection = document.getElementById('form-section');
+        if (formSection) {
+          formSection.style.display = 'none';
+        }
+        const sharedResultSection = document.getElementById('result-section');
+        if (sharedResultSection) {
+          sharedResultSection.style.display = 'block';
         }
         
-        // Display results using existing function
-        displayResults(calc);
+        // Fill customer info placeholders (use DB field names)
+        const customerNameEl = document.getElementById('customer-name');
+        const customerPhoneEl = document.getElementById('customer-phone');
+        if (customerNameEl) {
+          customerNameEl.textContent = rec.customer_name || rec.full_name || '';
+        }
+        if (customerPhoneEl) {
+          customerPhoneEl.textContent = rec.customer_phone || rec.phone || '';
+        }
+        
+        // Fill simple summary box
+        const summary = calc && calc.summary ? calc.summary : {};
+        const box = document.getElementById('result-box');
+        if (box) {
+          const totalPaymentsSum = summary.totalPaymentsSum || 0;
+          const numberOfPayments = summary.numberOfPayments || 0;
+          const finalDay = summary.finalDay || 0;
+          box.innerHTML = `
+            <p>مبلغ کل پرداختی: ${totalPaymentsSum.toLocaleString('fa-IR')} ریال</p>
+            <p>تعداد اقساط: ${numberOfPayments}</p>
+            <p>آخرین روز: ${finalDay}</p>
+          `;
+        }
         
         // Hide share button (since it's a shared view)
         const shareBtn = document.getElementById('shareResultsBtn');
@@ -3428,12 +3477,18 @@
           }
           
           try {
+            // اطمینان از این‌که ساختار ریزالت، خود آبجکت محاسبه است
+            let calculationResult = window.lastCalculationResult;
+            if (calculationResult && calculationResult.calculationResult) {
+              calculationResult = calculationResult.calculationResult;
+            }
+            
             // Prepare data to send to n8n
             const shareData = {
               firstName: firstName,
               lastName: lastName,
               phone: phone,
-              calculationResult: window.lastCalculationResult,
+              calculationResult: calculationResult,
               createdAt: new Date().toISOString()
             };
             
@@ -3655,7 +3710,11 @@
           const inputPayload = collectFormData();
           
           // Get result data
-          const resultPayload = window.lastCalculationResult;
+          let resultPayload = window.lastCalculationResult;
+          // اگر نتیجه داخل فیلد calculationResult بسته‌بندی شده باشد، همان را بیرون می‌کشیم
+          if (resultPayload && resultPayload.calculationResult) {
+            resultPayload = resultPayload.calculationResult;
+          }
           
           if (!inputPayload || !resultPayload) {
             throw new Error('داده‌های محاسبه یافت نشد');
@@ -3793,6 +3852,11 @@
           
           // Handle array response (n8n webhook format)
           let result = Array.isArray(responseData) ? responseData[0] : responseData;
+          
+          // اگر نتیجه داخل فیلد calculationResult بسته‌بندی شده باشد، همان را استفاده می‌کنیم
+          if (result && typeof result === 'object' && result.calculationResult) {
+            result = result.calculationResult;
+          }
           
           // Defensive check for response structure
           if (!result || typeof result !== 'object') {
@@ -4049,6 +4113,11 @@
           result = result[0];
         }
         
+        // اگر نتیجه داخل فیلد calculationResult بسته‌بندی شده باشد، همان را استفاده می‌کنیم
+        if (result && typeof result === 'object' && result.calculationResult) {
+          result = result.calculationResult;
+        }
+        
         // Defensive check - never throw
         if (!result || typeof result !== 'object') {
           console.warn('Invalid data structure in displayResults()', result);
@@ -4056,7 +4125,7 @@
           return;
         }
         
-        // Store result for copy/download
+        // Store result for copy/download (همیشه خود آبجکت محاسبه نهایی را ذخیره می‌کنیم)
         window.lastCalculationResult = result;
         
         // Safe fallback structure
