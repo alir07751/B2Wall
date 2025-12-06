@@ -2339,9 +2339,11 @@
           `https://n8nb2wall.darkube.app/webhook/get-calculation?shareId=${shareId}`
         );
         
+        // Read response text once
+        const responseText = await response.text();
+        
         if (!response.ok) {
-          const errorText = await response.text().catch(() => '');
-          console.error('API Error:', response.status, errorText);
+          console.error('API Error:', response.status, responseText);
           if (response.status === 500) {
             throw new Error('خطای سرور (500): لطفاً بعداً تلاش کنید یا با پشتیبانی تماس بگیرید');
           }
@@ -2350,7 +2352,6 @@
         
         let data;
         try {
-          const responseText = await response.text();
           if (!responseText || responseText.trim() === '') {
             throw new Error('پاسخ خالی از سرور دریافت شد');
           }
