@@ -2340,6 +2340,11 @@
         );
         
         if (!response.ok) {
+          const errorText = await response.text().catch(() => '');
+          console.error('API Error:', response.status, errorText);
+          if (response.status === 500) {
+            throw new Error('خطای سرور (500): لطفاً بعداً تلاش کنید یا با پشتیبانی تماس بگیرید');
+          }
           throw new Error('نتایج پیدا نشد');
         }
         
@@ -2376,16 +2381,35 @@
         console.log('Owner full_name:', rec.full_name);
         console.log('Owner phone:', rec.phone);
         
+        // Validate required data before rendering
+        if (!rec || !rec.input_payload || !rec.result_payload) {
+          console.error('Invalid record data:', rec);
+          const summaryCards = document.getElementById('summaryCards');
+          if (summaryCards) {
+            summaryCards.innerHTML = '<div class="results-summary__card"><div class="results-summary__item" style="border-bottom: none;"><span class="results-summary__label">خطا: داده‌های نامعتبر دریافت شد.</span></div></div>';
+          }
+          return;
+        }
+        
         // Use renderCalculation to display full results with detailed table and summary
         // Format data to match renderCalculation expected structure
-        renderCalculation({
-          input_payload: rec.input_payload,
-          result_payload: rec.result_payload,
-          customer_name: rec.customer_name || '',
-          customer_phone: rec.customer_phone || '',
-          full_name: rec.full_name || '',
-          phone: rec.phone || ''
-        });
+        try {
+          renderCalculation({
+            input_payload: rec.input_payload,
+            result_payload: rec.result_payload,
+            customer_name: rec.customer_name || '',
+            customer_phone: rec.customer_phone || '',
+            full_name: rec.full_name || '',
+            phone: rec.phone || ''
+          });
+        } catch (error) {
+          console.error('Error rendering calculation:', error);
+          const summaryCards = document.getElementById('summaryCards');
+          if (summaryCards) {
+            summaryCards.innerHTML = '<div class="results-summary__card"><div class="results-summary__item" style="border-bottom: none;"><span class="results-summary__label">خطا در نمایش نتایج: ' + error.message + '</span></div></div>';
+          }
+          return;
+        }
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
