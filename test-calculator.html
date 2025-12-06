@@ -1483,6 +1483,22 @@
               نتایج ذخیره‌شده
             </h2>
           </div>
+          
+          <!-- Calculation Owner Info (shown for shared calculations in simple view) -->
+          <div id="calculation-owner-simple" style="display: none; background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light)); color: var(--text-inverse); padding: var(--spacing-xl); border-radius: var(--border-radius-lg); box-shadow: var(--shadow-md); margin-bottom: var(--spacing-xl);">
+            <div style="text-align: center; font-size: var(--font-size-md); font-weight: 600; margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-md); border-bottom: 1px solid rgba(255, 255, 255, 0.25);">
+              این محاسبه برای:
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0; border-bottom: 1px solid rgba(255, 255, 255, 0.25);">
+              <span style="font-size: var(--font-size-sm); opacity: 0.95; font-weight: 500;">نام:</span>
+              <span style="font-size: var(--font-size-lg); font-weight: 700;" id="owner-full-name-simple"></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: var(--spacing-md) 0;">
+              <span style="font-size: var(--font-size-sm); opacity: 0.95; font-weight: 500;">شماره تماس:</span>
+              <span style="font-size: var(--font-size-lg); font-weight: 700;" class="persian-number" id="owner-phone-simple"></span>
+            </div>
+          </div>
+          
           <p>نام مشتری: <span id="customer-name" class="persian-number"></span></p>
           <p>شماره تماس: <span id="customer-phone" class="persian-number"></span></p>
           <div id="result-box" class="expandable-content" style="margin-top: var(--spacing-lg);"></div>
@@ -1503,6 +1519,23 @@
             </h2>
       </div>
           
+          <!-- Calculation Owner Info (shown for shared calculations) -->
+          <div id="calculation-owner" style="display: none; margin-bottom: var(--spacing-xl);">
+            <div class="results-summary__card">
+              <div class="results-summary__item" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25);">
+                <span class="results-summary__label" style="width: 100%; text-align: center; font-size: var(--font-size-md);">این محاسبه برای:</span>
+              </div>
+              <div class="results-summary__item" style="border-bottom: 1px solid rgba(255, 255, 255, 0.25);">
+                <span class="results-summary__label">نام:</span>
+                <span class="results-summary__value" id="owner-full-name"></span>
+              </div>
+              <div class="results-summary__item" style="border-bottom: none;">
+                <span class="results-summary__label">شماره تماس:</span>
+                <span class="results-summary__value persian-number" id="owner-phone"></span>
+              </div>
+            </div>
+          </div>
+
           <div id="summaryCards" class="results-summary"></div>
           
           <!-- Modules Information Section -->
@@ -1982,6 +2015,10 @@
       const customerName = data.customer_name || '';
       const customerPhone = data.customer_phone || '';
       
+      console.log('renderCalculation - data:', data);
+      console.log('renderCalculation - Owner full_name:', data.full_name);
+      console.log('renderCalculation - Owner phone:', data.phone);
+      
       // Store result for copy/download
       window.lastCalculationResult = resultPayload;
       
@@ -2002,10 +2039,42 @@
       currentStep = 5;
       updateProgressTracker();
       
+      // Hide the simple result section (if it was shown)
+      const sharedResultSection = document.getElementById('result-section');
+      if (sharedResultSection) {
+        sharedResultSection.style.display = 'none';
+      }
+      
+      // Hide form section
+      const formSection = document.getElementById('form-section');
+      if (formSection) {
+        formSection.style.display = 'none';
+      }
+      
       // Show the results section
       const resultsEl = document.getElementById('results');
       if (resultsEl) {
         resultsEl.classList.remove('is-hidden');
+      }
+      
+      // Show calculation owner info if available
+      const ownerFullName = data.full_name || '';
+      const ownerPhone = data.phone || '';
+      console.log('renderCalculation - Extracted owner info - Full Name:', ownerFullName, 'Phone:', ownerPhone);
+      if (ownerFullName || ownerPhone) {
+        console.log('renderCalculation - Attempting to show owner info...');
+        const ownerDiv = document.getElementById('calculation-owner');
+        const ownerFullNameEl = document.getElementById('owner-full-name');
+        const ownerPhoneEl = document.getElementById('owner-phone');
+        console.log('renderCalculation - Owner elements found:', ownerDiv, ownerFullNameEl, ownerPhoneEl);
+        if (ownerDiv && ownerFullNameEl && ownerPhoneEl) {
+          ownerFullNameEl.textContent = ownerFullName || '—';
+          ownerPhoneEl.textContent = ownerPhone || '—';
+          ownerDiv.style.display = 'block';
+          console.log('renderCalculation - Owner info displayed successfully');
+        }
+      } else {
+        console.log('renderCalculation - No owner info available in data');
       }
       
       // Add customer info if available
@@ -2242,7 +2311,7 @@
       }
     };
     
-    // Load calculation by shareId from WF-GetCalculationById endpoint
+    // Load calculation by shareId from get-calculation endpoint
     async function loadCalculationByShareId(shareId) {
       try {
         // Hide form and navigation
@@ -2265,9 +2334,9 @@
           }
         }
         
-        // Make GET request to new endpoint
+        // Make GET request to get-calculation endpoint
         const response = await fetch(
-          'https://n8nb2wall.darkube.app/webhook/WF-GetCalculationById?shareId=' + shareId
+          `https://n8nb2wall.darkube.app/webhook/get-calculation?shareId=${shareId}`
         );
         
         if (!response.ok) {
@@ -2302,80 +2371,21 @@
         
         // Extract saved result
         const rec = data.record;
-        const calc = rec.result_payload;
         
-        // Store result for copy/download
-        window.lastCalculationResult = calc;
+        console.log('Record data:', rec);
+        console.log('Owner full_name:', rec.full_name);
+        console.log('Owner phone:', rec.phone);
         
-        // Hide form and navigation
-        if (calculatorForm) calculatorForm.classList.add('is-hidden');
-        if (tabNav) tabNav.classList.add('is-hidden');
-        
-        // Hide Step 5 form container
-        const step5Section = document.querySelector('.form-container[data-step="5"]');
-        if (step5Section) {
-          step5Section.classList.add('is-hidden');
-          step5Section.classList.remove('is-visible');
-        }
-        
-        // Set the progress tracker to the final step (Step 5)
-        currentStep = 5;
-        updateProgressTracker();
-        
-        // Show the shared result section
-        const formSection = document.getElementById('form-section');
-        if (formSection) {
-          formSection.style.display = 'none';
-        }
-        const sharedResultSection = document.getElementById('result-section');
-        if (sharedResultSection) {
-          sharedResultSection.style.display = 'block';
-        }
-        
-        // Fill customer info placeholders (use DB field names)
-        const customerNameEl = document.getElementById('customer-name');
-        const customerPhoneEl = document.getElementById('customer-phone');
-        if (customerNameEl) {
-          customerNameEl.textContent = rec.customer_name || rec.full_name || '';
-        }
-        if (customerPhoneEl) {
-          customerPhoneEl.textContent = rec.customer_phone || rec.phone || '';
-        }
-        
-        // Fill simple summary box
-        const summary = calc && calc.summary ? calc.summary : {};
-        const box = document.getElementById('result-box');
-        if (box) {
-          const totalPaymentsSum = summary.totalPaymentsSum || 0;
-          const numberOfPayments = summary.numberOfPayments || 0;
-          const finalDay = summary.finalDay || 0;
-          box.innerHTML = `
-            <p>مبلغ کل پرداختی: ${totalPaymentsSum.toLocaleString('fa-IR')} ریال</p>
-            <p>تعداد اقساط: ${numberOfPayments}</p>
-            <p>آخرین روز: ${finalDay}</p>
-          `;
-        }
-        
-        // Hide share button (since it's a shared view)
-        const shareBtn = document.getElementById('shareResultsBtn');
-        if (shareBtn) {
-          shareBtn.style.display = 'none';
-        }
-        
-        // Hide save and share button (since it's a shared view)
-        const saveAndShareBtn = document.getElementById('saveAndShareBtn');
-        if (saveAndShareBtn) {
-          saveAndShareBtn.style.display = 'none';
-        }
-        
-        // Update reset button behavior
-        const resetBtn = document.getElementById('resetFormBtn');
-        if (resetBtn) {
-          resetBtn.textContent = 'محاسبه جدید';
-          resetBtn.onclick = function() {
-            window.location.href = window.location.pathname;
-          };
-        }
+        // Use renderCalculation to display full results with detailed table and summary
+        // Format data to match renderCalculation expected structure
+        renderCalculation({
+          input_payload: rec.input_payload,
+          result_payload: rec.result_payload,
+          customer_name: rec.customer_name || '',
+          customer_phone: rec.customer_phone || '',
+          full_name: rec.full_name || '',
+          phone: rec.phone || ''
+        });
         
         window.scrollTo({ top: 0, behavior: 'smooth' });
         
