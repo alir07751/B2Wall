@@ -134,9 +134,7 @@
       return div.innerHTML;
     }
 
-    var API_URL = (typeof window !== 'undefined' && window.location && window.location.origin)
-      ? (window.location.origin + '/opportunities')
-      : 'https://n8nb2wall.darkube.app/webhook/opportunities';
+    var API_URL = 'https://n8nb2wall.darkube.app/webhook/opportunities';
     var DATA = [];
 
     function toPublicUrl(u) {
@@ -214,7 +212,10 @@
       if (error) { error.style.display = 'none'; error.textContent = ''; }
 
       fetch(API_URL, { cache: 'no-store', method: 'GET' })
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+          if (!r.ok) throw new Error('HTTP ' + r.status);
+          return r.json();
+        })
         .then(function(json) {
           var arr = extractArray(json);
           DATA = arr.map(function(item, i) { return normalizeItem(item, i); });
