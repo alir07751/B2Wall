@@ -76,10 +76,9 @@
 
   <div class="tabs-wrap">
     <div class="tabs" role="tablist" aria-label="فیلتر بر اساس وضعیت">
-      <button type="button" role="tab" aria-selected="false" data-status="">همه</button>
-      <button type="button" role="tab" aria-selected="true" class="active" data-status="FUNDING">در حال جذب سرمایه</button>
+      <button type="button" role="tab" aria-selected="true" class="active" data-status="">همه</button>
+      <button type="button" role="tab" aria-selected="false" data-status="FUNDING">در حال جذب سرمایه</button>
       <button type="button" role="tab" aria-selected="false" data-status="REVIEW">در حال کارشناسی</button>
-      <button type="button" role="tab" aria-selected="false" data-status="COMING_SOON">به‌زودی</button>
       <button type="button" role="tab" aria-selected="false" data-status="COMPLETED">تکمیل‌شده</button>
     </div>
   </div>
@@ -94,8 +93,8 @@
 
   <script>
     var PERSIAN_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
-    var STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'در حال کارشناسی', COMPLETED: 'تکمیل‌شده', COMING_SOON: 'به‌زودی' };
-    var STATUS_ORDER = { FUNDING: 0, REVIEW: 1, COMING_SOON: 2, COMPLETED: 3 };
+    var STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'در حال کارشناسی', COMPLETED: 'تکمیل‌شده' };
+    var STATUS_ORDER = { FUNDING: 0, REVIEW: 1, COMPLETED: 2 };
 
     var FALLBACK_SVG = '<svg class="fallback" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
 
@@ -244,8 +243,8 @@
       var progressLabel = item.status === 'COMPLETED' ? 'تکمیل‌شده' : (toPersianDigits(pct) + '٪');
       var profitIntervalVal = 'هر ' + toPersianDigits(item.profitPayoutIntervalDays) + ' روز';
       var principalVal = principalText(item.principalPayoutIntervalDays, item.durationMonths);
-      var showOverlay = item.status === 'REVIEW' || item.status === 'COMPLETED' || item.status === 'COMING_SOON';
-      var overlayText = item.status === 'REVIEW' ? 'در حال کارشناسی' : (item.status === 'COMPLETED' ? 'تکمیل‌شده' : (item.status === 'COMING_SOON' ? 'به‌زودی' : ''));
+      var showOverlay = item.status === 'REVIEW' || item.status === 'COMPLETED';
+      var overlayText = item.status === 'REVIEW' ? 'در حال کارشناسی' : (item.status === 'COMPLETED' ? 'تکمیل‌شده' : '');
 
       var card = document.createElement('article');
       card.className = 'card';
@@ -311,7 +310,7 @@
 
     function applyFilterSort() {
       var activeBtn = document.querySelector('.tabs button.active');
-      var statusFilter = (activeBtn && activeBtn.dataset.status) ? activeBtn.dataset.status : 'FUNDING';
+      var statusFilter = activeBtn ? (activeBtn.dataset.status ?? '') : '';
       var list = DATA.slice();
       if (statusFilter) list = list.filter(function(i) { return i.status === statusFilter; });
       list.sort(function(a, b) {
