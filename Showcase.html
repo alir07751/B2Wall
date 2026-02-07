@@ -134,7 +134,9 @@
       return div.innerHTML;
     }
 
-    var N8N_WEBHOOK_URL = 'https://n8nb2wall.darkube.app/webhook/opportunities';
+    var API_URL = (typeof window !== 'undefined' && window.location && window.location.origin)
+      ? (window.location.origin + '/opportunities')
+      : 'https://n8nb2wall.darkube.app/webhook/opportunities';
     var DATA = [];
 
     function toPublicUrl(u) {
@@ -161,7 +163,10 @@
 
       var funded = raw.fundedAmountToman != null ? Number(raw.fundedAmountToman) : (raw.capital_raised != null ? Number(raw.capital_raised) : 0);
       var required = raw.requiredAmountToman != null ? Number(raw.requiredAmountToman) : (raw.capital_required != null ? Number(raw.capital_required) : 0);
-      if (funded > 1e10 || required > 1e10) { funded = Math.round(funded / 10); required = Math.round(required / 10); }
+      if ((raw.capital_raised != null || raw.capital_required != null) && (funded > 1e10 || required > 1e10)) {
+        funded = Math.round(funded / 10);
+        required = Math.round(required / 10);
+      }
 
       var dur = raw.durationMonths != null ? Number(raw.durationMonths) : (raw.tenor_months != null ? Number(raw.tenor_months) : 12);
       var profitPct = raw.monthlyProfitPercent != null ? Number(raw.monthlyProfitPercent) : null;
@@ -180,6 +185,7 @@
         title: raw.title || '—',
         status: status,
         monthlyProfitPercent: profitPct,
+        planProfitPercent: raw.planProfitPercent != null ? Number(raw.planProfitPercent) : null,
         durationMonths: dur,
         profitPayoutIntervalDays: profitDays,
         principalPayoutIntervalDays: principalDays,
@@ -207,7 +213,7 @@
       if (loading) loading.style.display = 'block';
       if (error) { error.style.display = 'none'; error.textContent = ''; }
 
-      fetch(N8N_WEBHOOK_URL, { cache: 'no-store', method: 'GET' })
+      fetch(API_URL, { cache: 'no-store', method: 'GET' })
         .then(function(r) { return r.json(); })
         .then(function(json) {
           var arr = extractArray(json);
@@ -227,7 +233,9 @@
     }
 
     function buildCard(item) {
-      var planProfitPercent = Math.round((item.monthlyProfitPercent || 0) * (item.durationMonths || 0));
+      var planProfitPercent = (item.planProfitPercent != null && !isNaN(item.planProfitPercent))
+        ? Math.round(Number(item.planProfitPercent))
+        : Math.round((item.monthlyProfitPercent || 0) * (item.durationMonths || 0));
       var funded = item.fundedAmountToman;
       var required = item.requiredAmountToman;
       var pct = progressPercent(funded, required, item.status);
