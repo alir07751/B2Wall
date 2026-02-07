@@ -201,6 +201,7 @@
       if (json && Array.isArray(json.opportunities)) return json.opportunities;
       if (json && Array.isArray(json.projects)) return json.projects;
       if (json && json.body && !Array.isArray(json.body)) return [json.body];
+      if (json && typeof json === 'object' && (json.id != null || json.title != null || json.status != null)) return [json];
       return [];
     }
 
