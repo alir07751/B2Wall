@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>موتور یادآوری عمومی</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Persian Datepicker CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css" />
+  <style>
+    :root {
+      /* Teal Color Palette */
+      --jungle-teal: #6b9080;
+      --muted-teal: #a4c3b2;
+      --frozen-water: #cce3de;
+      --azure-mist: #eaf4f4;
+      --mint-cream: #f6fff8;
+      
+      /* Semantic Color Variables */
+      --color-primary: var(--jungle-teal);
+      --color-primary-dark: #5a7a6d;
+      --color-primary-light: var(--muted-teal);
+      --color-accent: var(--frozen-water);
+      --color-success: #4a8b5c;
+      --color-warning: #e8a640;
+      --color-error: #c84c4c;
+      
+      /* Background Colors */
+      --bg-primary: var(--mint-cream);
+      --bg-secondary: #ffffff;
+      --bg-tertiary: var(--azure-mist);
+      --bg-accent: var(--frozen-water);
+      
+      /* Text Colors */
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --text-inverse: #ffffff;
+      
+      /* Border & Shadow */
+      --border-color: var(--frozen-water);
+      --border-radius: 12px;
+      --border-radius-lg: 16px;
+      --shadow-sm: 0 2px 8px rgba(107, 144, 128, 0.08);
+      --shadow-md: 0 4px 16px rgba(107, 144, 128, 0.12);
+      --shadow-lg: 0 8px 24px rgba(107, 144, 128, 0.16);
+      
+      /* Spacing */
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      /* Typography */
+      --font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      --font-size-3xl: 2rem;
+      
+      /* Transitions */
+      --transition-fast: 150ms ease;
+      --transition-base: 250ms ease;
+      --transition-slow: 350ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: #ffffff;
+      color: var(--text-primary);
+      line-height: 1.7;
+      direction: rtl;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Module Container */
+    .reminder-engine-container {
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    /* Form Container */
+    .form-container {
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-2xl);
+      margin-bottom: var(--spacing-xl);
+      border: 1px solid var(--bg-tertiary);
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-container__heading {
+      margin-bottom: var(--spacing-xl);
+      padding-bottom: var(--spacing-lg);
+      border-bottom: 2px solid var(--bg-tertiary);
+    }
+
+    .form-container__title {
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .form-container__title-icon {
+      width: 6px;
+      height: 2rem;
+      background: linear-gradient(180deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Input Fields */
+    .input-wrapper {
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .input-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .input-label.is-required::after {
+      content: ' *';
+      color: var(--color-error);
+      font-weight: 700;
+    }
+
+    .input-control {
+      width: 100%;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      transition: all var(--transition-fast);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .input-control:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: var(--bg-secondary);
+      box-shadow: 0 0 0 4px rgba(107, 144, 128, 0.12);
+    }
+
+    .input-control:disabled {
+      background: var(--bg-tertiary);
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    textarea.input-control {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    /* Module Section */
+    .module-section {
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .module-section__title {
+      font-size: var(--font-size-lg);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-md);
+      padding-bottom: var(--spacing-sm);
+      border-bottom: 2px solid var(--border-color);
+    }
+
+    /* Toggle Control */
+    .toggle-control {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg);
+      background: var(--bg-primary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      cursor: pointer;
+      transition: all var(--transition-base);
+      user-select: none;
+      margin-bottom: var(--spacing-md);
+    }
+
+    .toggle-control:hover {
+      border-color: var(--color-primary);
+      background: var(--bg-secondary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .toggle-control input[type="checkbox"] {
+      width: 2.75rem;
+      height: 1.625rem;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .toggle-control__label {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    /* Hidden State */
+    .is-hidden {
+      display: none !important;
+    }
+
+    /* Grid Layout for Side-by-Side Inputs */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+
+    /* Preview Area */
+    .preview-area {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      min-height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    /* Rule Card */
+    .rule-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-md);
+      display: flex;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .rule-card__fields {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+
+    .rule-card__remove {
+      background: var(--color-error);
+      color: var(--text-inverse);
+      border: none;
+      border-radius: var(--border-radius);
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: var(--font-size-lg);
+      font-weight: 700;
+      transition: all var(--transition-base);
+      flex-shrink: 0;
+      font-family: var(--font-family);
+    }
+
+    .rule-card__remove:hover {
+      background: #b03d3d;
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .add-rule-btn {
+      background: var(--bg-primary);
+      color: var(--color-primary);
+      border: 2px dashed var(--color-primary);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md) var(--spacing-xl);
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      width: 100%;
+      margin-top: var(--spacing-md);
+      font-family: var(--font-family);
+    }
+
+    .add-rule-btn:hover {
+      background: var(--color-primary);
+      color: var(--text-inverse);
+      border-color: var(--color-primary);
+    }
+
+    .rules-container {
+      margin-top: var(--spacing-md);
+    }
+
+    .rules-container.is-hidden {
+      display: none;
+    }
+
+    /* Preview Table */
+    .preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-size-sm);
+    }
+
+    .preview-table th,
+    .preview-table td {
+      padding: var(--spacing-sm) var(--spacing-md);
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .preview-table th {
+      background: var(--bg-primary);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .preview-table td {
+      color: var(--text-secondary);
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .reminder-engine-container {
+        padding: var(--spacing-md) var(--spacing-sm);
+      }
+
+      .form-container {
+        padding: var(--spacing-lg);
+      }
+
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .rule-card {
+        flex-direction: column;
+      }
+
+      .rule-card__fields {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="reminder-engine-container">
+    <!-- Block A: Event Info -->
+    <div class="form-container">
+      <div class="form-container__heading">
+        <h2 class="form-container__title">
+          <span class="form-container__title-icon"></span>
+          مشخصات رویداد
+        </h2>
+      </div>
+
+      <div class="input-wrapper">
+        <label class="input-label is-required" for="reminderTitle">عنوان یادآوری</label>
+        <input type="text" id="reminderTitle" class="input-control" placeholder="عنوان یادآوری" />
+      </div>
+
+      <div class="input-wrapper">
+        <label class="input-label" for="reminderDescription">توضیحات</label>
+        <textarea id="reminderDescription" class="input-control" rows="3" placeholder="توضیحات (اختیاری)"></textarea>
+      </div>
+
+      <div class="input-wrapper">
+        <label class="input-label is-required" for="reminderDueDate">تاریخ موعد اصلی</label>
+        <input type="text" id="reminderDueDate" class="datepicker-input input-control" />
+      </div>
+
+      <div class="input-wrapper">
+        <label class="input-label is-required" for="reminderMobile">شماره موبایل مخاطب</label>
+        <input type="tel" id="reminderMobile" class="input-control" placeholder="مثال: 09123456789" />
+      </div>
+    </div>
+
+    <!-- Block B: Reminder Rules -->
+    <div class="form-container">
+      <div class="form-container__heading">
+        <h2 class="form-container__title">
+          <span class="form-container__title-icon"></span>
+          قوانین یادآوری
+        </h2>
+      </div>
+
+      <!-- Pre-due Section -->
+      <div class="module-section">
+        <h3 class="module-section__title">قبل از موعد</h3>
+        
+        <div class="input-wrapper" style="margin-bottom: var(--spacing-md);">
+          <label class="toggle-control">
+            <input type="checkbox" id="beforeDueEnabled" />
+            <span class="toggle-control__label">فعال‌سازی یادآوری قبل از موعد</span>
+          </label>
+        </div>
+
+        <div class="rules-container is-hidden" id="beforeDueRulesContainer">
+          <div id="beforeDueRulesList"></div>
+          <button type="button" class="add-rule-btn" id="addBeforeDueRuleBtn">+ افزودن قانون جدید</button>
+        </div>
+      </div>
+
+      <!-- On Due Section -->
+      <div class="module-section">
+        <h3 class="module-section__title">روز موعد</h3>
+        
+        <div class="input-wrapper">
+          <label class="toggle-control">
+            <input type="checkbox" id="onDueEnabled" />
+            <span class="toggle-control__label">در زمان موعد یادآوری شود</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Post-due Section -->
+      <div class="module-section">
+        <h3 class="module-section__title">پس از موعد</h3>
+        
+        <div class="input-wrapper" style="margin-bottom: var(--spacing-md);">
+          <label class="toggle-control">
+            <input type="checkbox" id="afterDueEnabled" />
+            <span class="toggle-control__label">فعال‌سازی یادآوری پس از موعد</span>
+          </label>
+        </div>
+
+        <div class="input-wrapper is-hidden" id="afterDueFields" style="margin-right: var(--spacing-lg);">
+          <div class="input-grid" style="margin-bottom: var(--spacing-md);">
+            <div>
+              <label class="input-label" for="afterDueInterval">هر X روز/ساعت</label>
+              <input type="number" id="afterDueInterval" class="input-control" placeholder="مثال: 2" min="1" step="1" />
+            </div>
+            <div>
+              <label class="input-label" for="afterDueUnit">واحد</label>
+              <select id="afterDueUnit" class="input-control">
+                <option value="day">روز</option>
+                <option value="hour">ساعت</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="input-label" for="afterDueDuration">تا Y روز/ساعت ادامه داشته باشد</label>
+            <input type="number" id="afterDueDuration" class="input-control" placeholder="مثال: 30" min="1" step="1" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Channels -->
+    <div class="form-container">
+      <div class="form-container__heading">
+        <h2 class="form-container__title">
+          <span class="form-container__title-icon"></span>
+          کانال‌های ارسال یادآوری
+        </h2>
+      </div>
+
+      <div class="input-wrapper" style="margin-bottom: var(--spacing-md);">
+        <label class="toggle-control">
+          <input type="checkbox" id="channelSms" checked />
+          <span class="toggle-control__label">پیامک (SMS)</span>
+        </label>
+      </div>
+
+      <div class="input-wrapper" style="margin-bottom: var(--spacing-md);">
+        <label class="toggle-control">
+          <input type="checkbox" id="channelEmail" />
+          <span class="toggle-control__label">ایمیل (Email)</span>
+        </label>
+      </div>
+
+      <div class="input-wrapper" style="margin-bottom: var(--spacing-md);">
+        <label class="toggle-control">
+          <input type="checkbox" id="channelPush" />
+          <span class="toggle-control__label">پوش‌نوتیفیکیشن (Push Notification)</span>
+        </label>
+      </div>
+
+      <div class="input-wrapper" style="margin-bottom: var(--spacing-md);">
+        <label class="toggle-control">
+          <input type="checkbox" id="channelWhatsapp" />
+          <span class="toggle-control__label">واتساپ (WhatsApp)</span>
+        </label>
+      </div>
+
+      <div class="input-wrapper">
+        <label class="toggle-control">
+          <input type="checkbox" id="channelInbox" />
+          <span class="toggle-control__label">پیام داخل پروفایل کاربری (Inbox)</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Block C: Preview -->
+    <div class="form-container">
+      <div class="form-container__heading">
+        <h2 class="form-container__title">
+          <span class="form-container__title-icon"></span>
+          پیش‌نمایش زمان‌بندی
+        </h2>
+      </div>
+
+      <div class="preview-area">
+        <table class="preview-table">
+          <thead>
+            <tr>
+              <th>تاریخ یادآوری</th>
+              <th>نوع یادآوری</th>
+              <th>توضیح</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="3" style="text-align: center; color: var(--text-muted); padding: var(--spacing-xl);">
+                پیش‌نمایش زمان‌بندی یادآوری‌ها در اینجا نمایش داده خواهد شد
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- jQuery (required for persian-datepicker) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Persian Date -->
+  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
+  <!-- Persian Datepicker -->
+  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+  <script>
+    let beforeDueRuleCounter = 0;
+
+    // Initialize Persian datepicker
+    $(document).ready(function() {
+      $('.datepicker-input').persianDatepicker({
+        format: 'YYYY/MM/DD',
+        observer: true,
+        autoClose: true
+      });
+
+      // Toggle before due rules container
+      $('#beforeDueEnabled').on('change', function() {
+        if ($(this).is(':checked')) {
+          $('#beforeDueRulesContainer').removeClass('is-hidden');
+        } else {
+          $('#beforeDueRulesContainer').addClass('is-hidden');
+        }
+      });
+
+      // Toggle after due fields
+      $('#afterDueEnabled').on('change', function() {
+        if ($(this).is(':checked')) {
+          $('#afterDueFields').removeClass('is-hidden');
+        } else {
+          $('#afterDueFields').addClass('is-hidden');
+        }
+      });
+
+      // Add before due rule
+      $('#addBeforeDueRuleBtn').on('click', function() {
+        addBeforeDueRule();
+      });
+
+      // Remove rule handler (delegated)
+      $(document).on('click', '.rule-card__remove', function() {
+        $(this).closest('.rule-card').remove();
+      });
+    });
+
+    // Add a new before due rule
+    function addBeforeDueRule() {
+      beforeDueRuleCounter++;
+      const ruleId = `beforeDueRule-${beforeDueRuleCounter}`;
+      
+      const ruleHTML = `
+        <div class="rule-card" id="${ruleId}">
+          <div class="rule-card__fields">
+            <div>
+              <label class="input-label" for="${ruleId}-days">X روز قبل</label>
+              <input type="number" id="${ruleId}-days" class="input-control" placeholder="مثال: 7" min="1" step="1" />
+            </div>
+            <div>
+              <label class="input-label" for="${ruleId}-count">Y تعداد دفعات</label>
+              <input type="number" id="${ruleId}-count" class="input-control" placeholder="مثال: 2" min="1" step="1" />
+            </div>
+          </div>
+          <button type="button" class="rule-card__remove" title="حذف">×</button>
+        </div>
+      `;
+      
+      $('#beforeDueRulesList').append(ruleHTML);
+    }
+  </script>
+</body>
+</html>
+

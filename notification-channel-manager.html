@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>مدیریت کانال‌های ارسال</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* Teal Color Palette */
+      --jungle-teal: #6b9080;
+      --muted-teal: #a4c3b2;
+      --frozen-water: #cce3de;
+      --azure-mist: #eaf4f4;
+      --mint-cream: #f6fff8;
+      
+      /* Semantic Color Variables */
+      --color-primary: var(--jungle-teal);
+      --color-primary-dark: #5a7a6d;
+      --color-primary-light: var(--muted-teal);
+      --color-accent: var(--frozen-water);
+      --color-success: #4a8b5c;
+      --color-warning: #e8a640;
+      --color-error: #c84c4c;
+      
+      /* Background Colors */
+      --bg-primary: var(--mint-cream);
+      --bg-secondary: #ffffff;
+      --bg-tertiary: var(--azure-mist);
+      --bg-accent: var(--frozen-water);
+      
+      /* Text Colors */
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --text-inverse: #ffffff;
+      
+      /* Border & Shadow */
+      --border-color: var(--frozen-water);
+      --border-radius: 12px;
+      --border-radius-lg: 16px;
+      --shadow-sm: 0 2px 8px rgba(107, 144, 128, 0.08);
+      --shadow-md: 0 4px 16px rgba(107, 144, 128, 0.12);
+      --shadow-lg: 0 8px 24px rgba(107, 144, 128, 0.16);
+      
+      /* Spacing */
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      
+      /* Typography */
+      --font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      --font-size-3xl: 2rem;
+      
+      /* Transitions */
+      --transition-fast: 150ms ease;
+      --transition-base: 250ms ease;
+      --transition-slow: 350ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-family);
+      background: #ffffff;
+      color: var(--text-primary);
+      line-height: 1.7;
+      direction: rtl;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Layout Container */
+    .page-container {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .page-header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: var(--spacing-md) var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+
+    .page-header__inner {
+      max-width: 800px;
+      margin: 0 auto; 
+      text-align: center;
+    }
+
+    .page-header__title {
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: var(--spacing-xs);
+      letter-spacing: -0.02em;
+    }
+
+    .page-header__description {
+      font-size: var(--font-size-base);
+      color: var(--text-secondary);
+      font-weight: 400;
+    }
+
+    /* Main Content */
+    .page-content {
+      flex: 1;
+      max-width: 800px;
+      width: 100%;
+      margin: 0 auto;
+      padding: var(--spacing-xl) var(--spacing-md);
+    }
+
+    /* Form Container */
+    .form-container {
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-2xl);
+      margin-bottom: var(--spacing-xl);
+      border: 1px solid var(--bg-tertiary);
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .form-container__heading {
+      margin-bottom: var(--spacing-xl);
+      padding-bottom: var(--spacing-lg);
+      border-bottom: 2px solid var(--bg-tertiary);
+    }
+
+    .form-container__title {
+      font-size: var(--font-size-2xl);
+      font-weight: 600;
+      color: var(--color-primary);
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .form-container__title-icon {
+      width: 6px;
+      height: 2rem;
+      background: linear-gradient(180deg, var(--color-primary), var(--color-primary-light));
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* Input Fields */
+    .input-wrapper {
+      margin-bottom: var(--spacing-2xl);
+    }
+
+    .input-label {
+      display: block;
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: var(--spacing-sm);
+    }
+
+    .input-label.is-required::after {
+      content: ' *';
+      color: var(--color-error);
+      font-weight: 700;
+    }
+
+    .input-control {
+      width: 100%;
+      padding: var(--spacing-md) var(--spacing-lg);
+      border: 2px solid var(--border-color);
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      color: var(--text-primary);
+      background: var(--bg-secondary);
+      transition: all var(--transition-fast);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .input-control:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: var(--bg-secondary);
+      box-shadow: 0 0 0 4px rgba(107, 144, 128, 0.12);
+    }
+
+    .input-control:disabled {
+      background: var(--bg-tertiary);
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    textarea.input-control {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    /* Channel List */
+    .channel-list {
+      list-style: none;
+    }
+
+    .channel-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: var(--spacing-lg);
+      margin-bottom: var(--spacing-md);
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      transition: all var(--transition-base);
+    }
+
+    .channel-item:hover {
+      border-color: var(--color-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .channel-item__name {
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .channel-item__actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    /* Toggle Control */
+    .toggle-control {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .toggle-control input[type="checkbox"] {
+      width: 2.75rem;
+      height: 1.625rem;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    /* Buttons */
+    .action-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      padding: var(--spacing-md) var(--spacing-xl);
+      border: none;
+      border-radius: var(--border-radius);
+      font-family: var(--font-family);
+      font-size: var(--font-size-base);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition-base);
+      text-decoration: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .action-button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .action-button:hover::before {
+      left: 100%;
+    }
+
+    .action-button--primary {
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      color: var(--text-inverse);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-button--primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
+    }
+
+    .action-button--secondary {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+
+    .action-button--secondary:hover:not(:disabled) {
+      background: var(--bg-secondary);
+      border-color: var(--color-primary);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .action-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    .action-button--small {
+      padding: var(--spacing-sm) var(--spacing-lg);
+      font-size: var(--font-size-sm);
+    }
+
+    /* Collapsible Panel */
+    .config-panel {
+      margin-top: var(--spacing-xl);
+      padding-top: var(--spacing-xl);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .config-panel.is-hidden {
+      display: none;
+    }
+
+    /* Test Result Area */
+    .test-result {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-md);
+      margin-top: var(--spacing-md);
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: var(--font-size-sm);
+    }
+
+    /* Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: var(--font-size-sm);
+      margin-top: var(--spacing-md);
+    }
+
+    .data-table th,
+    .data-table td {
+      padding: var(--spacing-sm) var(--spacing-md);
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .data-table th {
+      background: var(--bg-primary);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .data-table td {
+      color: var(--text-secondary);
+    }
+
+    .data-table tbody tr:hover {
+      background: var(--bg-primary);
+    }
+
+    /* File Upload */
+    .file-upload-area {
+      background: var(--bg-primary);
+      border: 2px dashed var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-xl);
+      text-align: center;
+      margin-bottom: var(--spacing-lg);
+      transition: all var(--transition-base);
+    }
+
+    .file-upload-area:hover {
+      border-color: var(--color-primary);
+      background: var(--bg-secondary);
+    }
+
+    /* Grid Layout */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--spacing-md);
+    }
+
+    /* Hidden State */
+    .is-hidden {
+      display: none !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .page-content {
+        padding: var(--spacing-md) var(--spacing-sm);
+      }
+
+      .page-header {
+        padding: var(--spacing-sm) var(--spacing-md);
+      }
+
+      .page-header__title {
+        font-size: var(--font-size-2xl);
+      }
+
+      .form-container {
+        padding: var(--spacing-lg);
+      }
+
+      .channel-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+      }
+
+      .channel-item__actions {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .action-button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="page-header">
+      <div class="page-header__inner">
+        <h1 class="page-header__title">مدیریت کانال‌های ارسال</h1>
+        <p class="page-header__description">تنظیم و فعال‌سازی کانال‌های پیام‌رسانی سیستم</p>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <!-- Section 1: Channel List -->
+      <div class="form-container">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            فهرست کانال‌ها
+          </h2>
+        </div>
+
+        <ul class="channel-list">
+          <li class="channel-item">
+            <span class="channel-item__name">پیامک (SMS)</span>
+            <div class="channel-item__actions">
+              <label class="toggle-control">
+                <input type="checkbox" id="channelSmsToggle" checked />
+              </label>
+              <button type="button" class="action-button action-button--secondary action-button--small" data-panel="smsConfig">تنظیمات</button>
+            </div>
+          </li>
+
+          <li class="channel-item">
+            <span class="channel-item__name">ایمیل (Email)</span>
+            <div class="channel-item__actions">
+              <label class="toggle-control">
+                <input type="checkbox" id="channelEmailToggle" />
+              </label>
+              <button type="button" class="action-button action-button--secondary action-button--small" data-panel="emailConfig">تنظیمات</button>
+            </div>
+          </li>
+
+          <li class="channel-item">
+            <span class="channel-item__name">واتساپ (WhatsApp)</span>
+            <div class="channel-item__actions">
+              <label class="toggle-control">
+                <input type="checkbox" id="channelWhatsappToggle" />
+              </label>
+              <button type="button" class="action-button action-button--secondary action-button--small" data-panel="whatsappConfig">تنظیمات</button>
+            </div>
+          </li>
+
+          <li class="channel-item">
+            <span class="channel-item__name">پوش‌نوتیفیکیشن (Push Notification)</span>
+            <div class="channel-item__actions">
+              <label class="toggle-control">
+                <input type="checkbox" id="channelPushToggle" />
+              </label>
+              <button type="button" class="action-button action-button--secondary action-button--small" data-panel="pushConfig">تنظیمات</button>
+            </div>
+          </li>
+
+          <li class="channel-item">
+            <span class="channel-item__name">پیام داخل پروفایل کاربری (Inbox)</span>
+            <div class="channel-item__actions">
+              <label class="toggle-control">
+                <input type="checkbox" id="channelInboxToggle" />
+              </label>
+              <button type="button" class="action-button action-button--secondary action-button--small" data-panel="inboxConfig">تنظیمات</button>
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Section 2: Channel Configuration Panels -->
+
+      <!-- SMS Configuration -->
+      <div class="form-container config-panel is-hidden" id="smsConfig">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            تنظیمات پیامک (SMS)
+          </h2>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="smsProviderUrl">Provider URL</label>
+          <input type="text" id="smsProviderUrl" class="input-control" placeholder="https://api.example.com/sms" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="smsApiKey">API Key</label>
+          <input type="text" id="smsApiKey" class="input-control" placeholder="API Key" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="smsSenderNumber">شماره فرستنده</label>
+          <input type="text" id="smsSenderNumber" class="input-control" placeholder="مثال: 09123456789" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label" for="smsTestNumber">شماره تست</label>
+          <input type="tel" id="smsTestNumber" class="input-control" placeholder="مثال: 09123456789" />
+        </div>
+
+        <div class="input-wrapper">
+          <button type="button" class="action-button action-button--primary">ارسال پیام تستی</button>
+        </div>
+
+        <div class="test-result">
+          نتیجه تست در اینجا نمایش داده خواهد شد
+        </div>
+      </div>
+
+      <!-- Email Configuration -->
+      <div class="form-container config-panel is-hidden" id="emailConfig">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            تنظیمات ایمیل (Email)
+          </h2>
+        </div>
+
+        <div class="input-grid">
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="emailSmtpHost">SMTP Host</label>
+            <input type="text" id="emailSmtpHost" class="input-control" placeholder="smtp.example.com" />
+          </div>
+
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="emailSmtpPort">SMTP Port</label>
+            <input type="number" id="emailSmtpPort" class="input-control" placeholder="587" />
+          </div>
+        </div>
+
+        <div class="input-grid">
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="emailUsername">Username</label>
+            <input type="text" id="emailUsername" class="input-control" placeholder="username" />
+          </div>
+
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="emailPassword">Password</label>
+            <input type="password" id="emailPassword" class="input-control" placeholder="password" />
+          </div>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="emailEncryption">Encryption</label>
+          <select id="emailEncryption" class="input-control">
+            <option value="none">None</option>
+            <option value="ssl">SSL</option>
+            <option value="tls">TLS</option>
+          </select>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="emailFrom">Default From Email</label>
+          <input type="email" id="emailFrom" class="input-control" placeholder="noreply@example.com" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label" for="emailTest">ایمیل تست</label>
+          <input type="email" id="emailTest" class="input-control" placeholder="test@example.com" />
+        </div>
+
+        <div class="input-wrapper">
+          <button type="button" class="action-button action-button--primary">ارسال ایمیل تستی</button>
+        </div>
+
+        <div class="test-result">
+          نتیجه تست در اینجا نمایش داده خواهد شد
+        </div>
+      </div>
+
+      <!-- WhatsApp Configuration -->
+      <div class="form-container config-panel is-hidden" id="whatsappConfig">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            تنظیمات واتساپ (WhatsApp)
+          </h2>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="whatsappAccessToken">Access Token</label>
+          <input type="text" id="whatsappAccessToken" class="input-control" placeholder="Access Token" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="whatsappBusinessId">Business ID</label>
+          <input type="text" id="whatsappBusinessId" class="input-control" placeholder="Business ID" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="whatsappPhoneNumberId">Phone Number ID</label>
+          <input type="text" id="whatsappPhoneNumberId" class="input-control" placeholder="Phone Number ID" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="whatsappTemplateName">Template Name</label>
+          <input type="text" id="whatsappTemplateName" class="input-control" placeholder="Template Name" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label" for="whatsappTestPhone">شماره تست</label>
+          <input type="tel" id="whatsappTestPhone" class="input-control" placeholder="مثال: 989123456789" />
+        </div>
+
+        <div class="input-wrapper">
+          <button type="button" class="action-button action-button--primary">ارسال تستی واتساپ</button>
+        </div>
+
+        <div class="test-result">
+          نتیجه تست در اینجا نمایش داده خواهد شد
+        </div>
+      </div>
+
+      <!-- Push Notification Configuration -->
+      <div class="form-container config-panel is-hidden" id="pushConfig">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            تنظیمات پوش‌نوتیفیکیشن (FCM)
+          </h2>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="pushServerKey">Server Key</label>
+          <input type="text" id="pushServerKey" class="input-control" placeholder="Server Key" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="pushProjectId">Project ID</label>
+          <input type="text" id="pushProjectId" class="input-control" placeholder="Project ID" />
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label" for="pushTestToken">Test Device Token</label>
+          <input type="text" id="pushTestToken" class="input-control" placeholder="Device Token" />
+        </div>
+
+        <div class="input-wrapper">
+          <button type="button" class="action-button action-button--primary">ارسال پوش تستی</button>
+        </div>
+
+        <div class="test-result">
+          نتیجه تست در اینجا نمایش داده خواهد شد
+        </div>
+      </div>
+
+      <!-- Inbox Configuration -->
+      <div class="form-container config-panel is-hidden" id="inboxConfig">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            تنظیمات پیام داخل پروفایل کاربری
+          </h2>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="toggle-control">
+            <input type="checkbox" id="inboxEnabled" />
+            <span class="toggle-control__label">فعال‌سازی پیام داخل پروفایل کاربری</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Section 3: Bulk Messaging -->
+      <div class="form-container">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            ارسال انبوه پیام
+          </h2>
+        </div>
+
+        <div class="input-wrapper">
+          <div class="file-upload-area">
+            <button type="button" class="action-button action-button--primary">آپلود فایل اکسل</button>
+            <p style="margin-top: var(--spacing-md); color: var(--text-muted); font-size: var(--font-size-sm);">
+              فایل اکسل را انتخاب کنید
+            </p>
+          </div>
+        </div>
+
+        <div class="input-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ردیف</th>
+                <th>گیرنده</th>
+                <th>اطلاعات اضافی</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="3" style="text-align: center; color: var(--text-muted); padding: var(--spacing-xl);">
+                  داده‌های فایل اکسل در اینجا نمایش داده خواهد شد
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label is-required" for="bulkChannel">انتخاب کانال ارسال</label>
+          <select id="bulkChannel" class="input-control">
+            <option value="">-- انتخاب کنید --</option>
+            <option value="sms">پیامک (SMS)</option>
+            <option value="email">ایمیل (Email)</option>
+            <option value="whatsapp">واتساپ (WhatsApp)</option>
+            <option value="push">پوش‌نوتیفیکیشن</option>
+            <option value="inbox">پیام داخل پروفایل</option>
+          </select>
+        </div>
+
+        <div class="input-wrapper">
+          <label class="input-label" for="bulkMessage">متن پیام (اختیاری)</label>
+          <textarea id="bulkMessage" class="input-control" rows="4" placeholder="متن پیام (در صورت استفاده از قالب، این فیلد اختیاری است)"></textarea>
+        </div>
+
+        <div class="input-wrapper">
+          <button type="button" class="action-button action-button--primary">ارسال پیام‌ها</button>
+        </div>
+      </div>
+
+      <!-- Section 4: Delivery Logs -->
+      <div class="form-container">
+        <div class="form-container__heading">
+          <h2 class="form-container__title">
+            <span class="form-container__title-icon"></span>
+            گزارش ارسال پیام‌ها
+          </h2>
+        </div>
+
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>گیرنده</th>
+              <th>کانال</th>
+              <th>پیام</th>
+              <th>تاریخ</th>
+              <th>وضعیت</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: var(--spacing-xl);">
+                گزارش ارسال پیام‌ها در اینجا نمایش داده خواهد شد
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    // Toggle configuration panels
+    document.addEventListener('DOMContentLoaded', function() {
+      const configButtons = document.querySelectorAll('[data-panel]');
+      
+      configButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const panelId = this.getAttribute('data-panel');
+          const panel = document.getElementById(panelId);
+          
+          // Hide all panels
+          document.querySelectorAll('.config-panel').forEach(p => {
+            p.classList.add('is-hidden');
+          });
+          
+          // Show selected panel
+          if (panel) {
+            panel.classList.remove('is-hidden');
+            panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>
+

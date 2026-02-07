@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>یادآور اقساط</title>
+  <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- Persian Datepicker CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css" />
+  <style>
+    :root {
+      --jungle-teal: #6b9080;
+      --muted-teal: #a4c3b2;
+      --frozen-water: #cce3de;
+      --azure-mist: #eaf4f4;
+      --mint-cream: #f6fff8;
+      --color-primary: var(--jungle-teal);
+      --color-primary-dark: #5a7a6d;
+      --color-primary-light: var(--muted-teal);
+      --color-accent: var(--frozen-water);
+      --color-success: #4a8b5c;
+      --color-warning: #e8a640;
+      --color-error: #c84c4c;
+      --bg-primary: var(--mint-cream);
+      --bg-secondary: #ffffff;
+      --bg-tertiary: var(--azure-mist);
+      --bg-accent: var(--frozen-water);
+      --text-primary: #1a1a1a;
+      --text-secondary: #4a5568;
+      --text-muted: #718096;
+      --text-inverse: #ffffff;
+      --border-color: var(--frozen-water);
+      --border-radius: 12px;
+      --border-radius-lg: 16px;
+      --shadow-sm: 0 2px 8px rgba(107, 144, 128, 0.08);
+      --shadow-md: 0 4px 16px rgba(107, 144, 128, 0.12);
+      --shadow-lg: 0 8px 24px rgba(107, 144, 128, 0.16);
+      --spacing-xs: 0.5rem;
+      --spacing-sm: 0.75rem;
+      --spacing-md: 1rem;
+      --spacing-lg: 1.5rem;
+      --spacing-xl: 2rem;
+      --spacing-2xl: 3rem;
+      --font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      --font-size-xs: 0.75rem;
+      --font-size-sm: 0.875rem;
+      --font-size-base: 1rem;
+      --font-size-lg: 1.125rem;
+      --font-size-xl: 1.25rem;
+      --font-size-2xl: 1.5rem;
+      --font-size-3xl: 2rem;
+      --transition-fast: 150ms ease;
+      --transition-base: 250ms ease;
+      --transition-slow: 350ms ease;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font-family);
+      background: #ffffff;
+      color: var(--text-primary);
+      line-height: 1.7;
+      direction: rtl;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .page-container { min-height: 100vh; display: flex; flex-direction: column; }
+    .page-header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: var(--spacing-md) var(--spacing-md);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+    }
+    .page-header__inner { max-width: 800px; margin: 0 auto; text-align: center; }
+    .page-header__title {
+      font-size: var(--font-size-3xl);
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: var(--spacing-xs);
+      letter-spacing: -0.02em;
+    }
+    .page-content { flex: 1; max-width: 800px; width: 100%; margin: 0 auto; padding: var(--spacing-xl) var(--spacing-md); }
+    .tab-progress-nav {
+      background: rgba(255, 255, 255, 0.95);
+      border-bottom: 1px solid var(--bg-tertiary);
+      margin-bottom: var(--spacing-xl);
+      position: sticky;
+      top: 0;
+      z-index: 999;
+      backdrop-filter: blur(12px);
+    }
+    .tab-progress-nav__container {
+      max-width: 800px; margin: 0 auto; display: flex; position: relative; overflow-x: auto; -webkit-overflow-scrolling: touch;
+    }
+    .tab-progress-nav__item {
+      flex: 1; min-width: 120px; padding: var(--spacing-md) var(--spacing-lg); text-align: center;
+      font-size: var(--font-size-sm); font-weight: 500; color: var(--text-secondary);
+      cursor: pointer; transition: all var(--transition-base); border: none; background: none; font-family: var(--font-family); white-space: nowrap;
+    }
+    .tab-progress-nav__item:hover { color: var(--color-primary); background: var(--bg-primary); }
+    .tab-progress-nav__item.is-active { color: var(--color-primary); font-weight: 600; }
+    .tab-progress-nav__item.is-complete { color: var(--text-primary); }
+    .tab-progress-nav__indicator {
+      position: absolute; bottom: 0; height: 4px; background: var(--color-primary);
+      transition: all var(--transition-slow) cubic-bezier(0.4,0,0.2,1); border-radius: 2px 2px 0 0;
+    }
+    .form-container {
+      background: var(--bg-secondary);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-2xl);
+      margin-bottom: var(--spacing-xl);
+      border: 1px solid var(--bg-tertiary);
+      position: relative;
+      box-shadow: var(--shadow-sm);
+    }
+    .form-container.is-hidden { display: none; }
+    .is-hidden { display: none !important; }
+    .form-container.is-visible { display: block; animation: containerSlideIn var(--transition-base); }
+    @keyframes containerSlideIn { from { opacity:0; transform:translateX(20px);} to {opacity:1; transform:translateX(0);} }
+    .form-container__heading { margin-bottom: var(--spacing-xl); padding-bottom: var(--spacing-lg); border-bottom: 2px solid var(--bg-tertiary); }
+    .form-container__title { font-size: var(--font-size-2xl); font-weight: 600; color: var(--color-primary); display: flex; align-items: center; gap: var(--spacing-md); }
+    .form-container__title-icon { width: 6px; height: 2rem; background: linear-gradient(180deg, var(--color-primary), var(--color-primary-light)); border-radius: 3px; flex-shrink: 0; }
+    .input-wrapper { margin-bottom: var(--spacing-2xl); }
+    .input-label { display: block; font-size: var(--font-size-sm); font-weight: 600; color: var(--text-primary); margin-bottom: var(--spacing-sm); }
+    .input-label.is-required::after { content: ' *'; color: var(--color-error); font-weight: 700; }
+    .input-control {
+      width: 100%; padding: var(--spacing-md) var(--spacing-lg); border: 2px solid var(--border-color);
+      border-radius: var(--border-radius); font-family: var(--font-family); font-size: var(--font-size-base);
+      color: var(--text-primary); background: var(--bg-secondary); transition: all var(--transition-fast);
+      direction: ltr; text-align: left;
+    }
+    .input-control:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 4px rgba(107,144,128,0.12); }
+    .input-control:disabled { background: var(--bg-tertiary); cursor: not-allowed; opacity: 0.65; }
+    .action-button {
+      display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-sm);
+      padding: var(--spacing-md) var(--spacing-xl); border: none; border-radius: var(--border-radius);
+      font-family: var(--font-family); font-size: var(--font-size-base); font-weight: 600;
+      cursor: pointer; transition: all var(--transition-base); text-decoration: none; position: relative; overflow: hidden;
+    }
+    .action-button::before {
+      content: ''; position: absolute; top:0; left:-100%; width:100%; height:100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); transition: left 0.5s ease;
+    }
+    .action-button:hover::before { left: 100%; }
+    .action-button--primary { background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: var(--text-inverse); box-shadow: var(--shadow-sm); }
+    .action-button--primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: var(--shadow-md); background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary)); }
+    .action-button--primary:active:not(:disabled) { transform: translateY(0); box-shadow: var(--shadow-sm); }
+    .action-button--secondary {
+      background: var(--bg-primary); color: var(--text-primary); border: 2px solid var(--border-color);
+    }
+    .action-button--secondary:hover:not(:disabled) { background: var(--bg-secondary); border-color: var(--color-primary); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+    .action-button:disabled { opacity: 0.6; cursor: not-allowed; transform: none !important; }
+    .action-group { display: flex; gap: var(--spacing-md); margin-top: var(--spacing-2xl); flex-wrap: wrap; }
+    .module-section { margin-bottom: var(--spacing-xl); }
+    .module-section__title {
+      font-size: var(--font-size-lg); font-weight: 600; color: var(--text-primary);
+      margin-bottom: var(--spacing-md); padding-bottom: var(--spacing-sm); border-bottom: 2px solid var(--border-color);
+    }
+    .toggle-control {
+      display: flex; align-items: center; gap: var(--spacing-md);
+      padding: var(--spacing-md) var(--spacing-lg); background: var(--bg-primary);
+      border: 2px solid var(--border-color); border-radius: var(--border-radius);
+      cursor: pointer; transition: all var(--transition-base); user-select: none;
+    }
+    .toggle-control:hover { border-color: var(--color-primary); background: var(--bg-secondary); box-shadow: var(--shadow-sm); }
+    .toggle-control input[type="checkbox"] { width: 2.75rem; height: 1.625rem; cursor: pointer; accent-color: var(--color-primary); }
+    .toggle-control__label { font-weight: 500; color: var(--text-primary); }
+    .installment-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--bg-tertiary);
+      border-radius: var(--border-radius-lg);
+      padding: var(--spacing-xl);
+      margin-bottom: var(--spacing-lg);
+      box-shadow: var(--shadow-sm);
+    }
+    .installment-card__header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: var(--spacing-lg);
+      padding-bottom: var(--spacing-md);
+      border-bottom: 1px solid var(--border-color);
+    }
+    .installment-card__title { font-size: var(--font-size-lg); font-weight: 600; color: var(--color-primary); }
+    .more-toggle-btn {
+      background: none;
+      border: none;
+      color: var(--color-primary);
+      font-family: var(--font-family);
+      font-size: var(--font-size-sm);
+      font-weight: 600;
+      cursor: pointer;
+      padding: 0;
+    }
+    .extra-fields {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius);
+      padding: var(--spacing-lg);
+      margin-top: var(--spacing-md);
+    }
+    .extra-fields.is-hidden { display: none; }
+    @media (max-width: 768px) {
+      .page-content { padding: var(--spacing-md) var(--spacing-sm); }
+      .page-header { padding: var(--spacing-sm) var(--spacing-md); }
+      .page-header__title { font-size: var(--font-size-2xl); }
+      .tab-progress-nav__item { min-width: 100px; padding: var(--spacing-sm) var(--spacing-md); font-size: var(--font-size-xs); }
+      .form-container { padding: var(--spacing-lg); }
+      .action-group { flex-direction: column; }
+      .action-button { width: 100%; }
+      .installment-card { padding: var(--spacing-md); }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-container">
+    <header class="page-header">
+      <div class="page-header__inner">
+        <h1 class="page-header__title">یادآور اقساط</h1>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <!-- Tabs -->
+      <nav class="tab-progress-nav" aria-label="مراحل فرم">
+        <div class="tab-progress-nav__container">
+          <div class="tab-progress-nav__indicator" id="tabIndicator"></div>
+          <button type="button" class="tab-progress-nav__item is-active" data-step="1">اطلاعات پروژه و اقساط</button>
+          <button type="button" class="tab-progress-nav__item" data-step="2">ثبت اطلاعات هر قسط</button>
+        </div>
+      </nav>
+
+      <form id="reminderForm">
+        <!-- Step 1 -->
+        <section class="form-container is-visible" data-step="1" aria-labelledby="step1-title">
+          <div class="form-container__heading">
+            <h2 id="step1-title" class="form-container__title">
+              <span class="form-container__title-icon"></span>
+              اطلاعات پروژه و اقساط
+            </h2>
+          </div>
+
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="projectId">شماره سرمایه‌پذیر</label>
+            <input type="tel" id="projectId" class="input-control" placeholder="مثال: 09123456789" />
+          </div>
+
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="installmentCount">تعداد اقساط</label>
+            <input type="number" id="installmentCount" class="input-control" placeholder="مثال: 12" min="1" step="1" />
+          </div>
+
+          <div class="input-wrapper">
+            <label class="toggle-control">
+              <input type="checkbox" id="sameAmountToggle" />
+              <span class="toggle-control__label">مبلغ اقساط یکسان است؟</span>
+            </label>
+          </div>
+
+          <div class="input-wrapper is-hidden" id="equalAmountWrapper">
+            <label class="input-label" for="equalAmount">مبلغ هر قسط</label>
+            <input type="number" id="equalAmount" class="input-control" placeholder="مثال: 10000000" min="0" step="1000" />
+          </div>
+
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="defaultPayment">روش پرداخت اقساط</label>
+            <select id="defaultPayment" class="input-control">
+              <option value="check">چک</option>
+              <option value="online">آنلاین</option>
+              <option value="cash">نقدی</option>
+              <option value="wallet">کیف پول</option>
+              <option value="auto">برداشت خودکار</option>
+              <option value="other">سایر</option>
+            </select>
+          </div>
+
+          <div class="action-group">
+            <button type="button" id="step1NextBtn" class="action-button action-button--primary">مرحله بعد</button>
+          </div>
+        </section>
+
+        <!-- Step 2 -->
+        <section class="form-container is-hidden" data-step="2" aria-labelledby="step2-title">
+          <div class="form-container__heading">
+            <h2 id="step2-title" class="form-container__title">
+              <span class="form-container__title-icon"></span>
+              جزئیات اقساط
+            </h2>
+          </div>
+
+          <div id="installmentsContainer" class="installments-container"></div>
+
+          <div class="action-group">
+            <button type="button" id="step2BackBtn" class="action-button action-button--secondary">بازگشت</button>
+            <button type="button" id="finalSubmitBtn" class="action-button action-button--primary">ثبت نهایی</button>
+          </div>
+        </section>
+      </form>
+    </main>
+  </div>
+
+  <!-- jQuery -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <!-- Persian Date -->
+  <script src="https://cdn.jsdelivr.net/npm/persian-date@1.1.0/dist/persian-date.min.js"></script>
+  <!-- Persian Datepicker -->
+  <script src="https://cdn.jsdelivr.net/npm/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
+
+  <script>
+    let currentStep = 1;
+    let installmentCount = 0;
+    let defaultPayment = 'check';
+    let equalAmounts = false;
+    let equalAmountValue = '';
+
+    const methodFields = {
+      check: `
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-payee">در وجه</label>
+          <input type="text" id="PAY_ID-payee" class="input-control extra-payee" placeholder="نام گیرنده" />
+        </div>
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-owner">صاحب حساب</label>
+          <input type="text" id="PAY_ID-owner" class="input-control extra-owner" placeholder="نام صاحب حساب" />
+        </div>
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-number">شماره چک</label>
+          <input type="text" id="PAY_ID-number" class="input-control extra-number" placeholder="شماره چک" />
+        </div>
+      `,
+      online: `
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-ref">مرجع تراکنش (اختیاری)</label>
+          <input type="text" id="PAY_ID-ref" class="input-control extra-ref" placeholder="Ref#" />
+        </div>
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-desc">توضیحات</label>
+          <textarea id="PAY_ID-desc" class="input-control extra-desc" rows="3" style="resize: vertical;"></textarea>
+        </div>
+      `,
+      cash: `
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-place">محل پرداخت (اختیاری)</label>
+          <input type="text" id="PAY_ID-place" class="input-control extra-place" placeholder="محل پرداخت" />
+        </div>
+      `,
+      wallet: `
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-wallet">شماره کیف پول</label>
+          <input type="text" id="PAY_ID-wallet" class="input-control extra-wallet" placeholder="شماره کیف پول" />
+        </div>
+      `,
+      auto: `
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-iban">شماره شبا</label>
+          <input type="text" id="PAY_ID-iban" class="input-control extra-iban" placeholder="IRxxxxxxxxxxxx" />
+        </div>
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-bank">نام بانک</label>
+          <input type="text" id="PAY_ID-bank" class="input-control extra-bank" placeholder="نام بانک" />
+        </div>
+      `,
+      other: `
+        <div class="input-wrapper">
+          <label class="input-label" for="PAY_ID-free">توضیحات آزاد</label>
+          <textarea id="PAY_ID-free" class="input-control extra-free" rows="3" style="resize: vertical;"></textarea>
+        </div>
+      `
+    };
+
+    function initDatepickers(scope = document) {
+      $(scope).find('.datepicker-input').persianDatepicker({
+        format: 'YYYY/MM/DD',
+        observer: true,
+        autoClose: true
+      });
+    }
+
+    function updateTabIndicator() {
+      const indicator = document.getElementById('tabIndicator');
+      const activeTab = document.querySelector('.tab-progress-nav__item.is-active');
+      if (indicator && activeTab) {
+        indicator.style.width = activeTab.offsetWidth + 'px';
+        indicator.style.left = activeTab.offsetLeft + 'px';
+      }
+    }
+
+    function goToStep(step) {
+      document.querySelectorAll('.form-container[data-step]').forEach(sec => {
+        sec.classList.remove('is-visible');
+        sec.classList.add('is-hidden');
+      });
+      const target = document.querySelector(`.form-container[data-step="${step}"]`);
+      if (target) {
+        target.classList.add('is-visible');
+        target.classList.remove('is-hidden');
+      }
+      document.querySelectorAll('.tab-progress-nav__item').forEach(tab => {
+        const s = parseInt(tab.getAttribute('data-step'));
+        if (s === step) tab.classList.add('is-active');
+        else tab.classList.remove('is-active');
+        if (s < step) tab.classList.add('is-complete'); else tab.classList.remove('is-complete');
+      });
+      currentStep = step;
+      updateTabIndicator();
+      setTimeout(() => initDatepickers(), 50);
+    }
+
+    function buildInstallmentCard(idx) {
+      const ordMap = {
+        1: 'اول',
+        2: 'دوم',
+        3: 'سوم',
+        4: 'چهارم',
+        5: 'پنجم',
+        6: 'ششم',
+        7: 'هفتم',
+        8: 'هشتم',
+        9: 'نهم',
+        10: 'دهم'
+      };
+      const ordLabel = ordMap[idx] || idx;
+      const payId = `pay-${idx}`;
+      const extraHtml = (methodFields[defaultPayment] || '').replace(/PAY_ID/g, payId);
+      const amountValue = equalAmounts ? (equalAmountValue || '') : '';
+      const readOnlyAttr = equalAmounts ? 'readonly' : '';
+
+      return `
+        <div class="installment-card" id="installment-${idx}">
+          <div class="installment-card__header">
+            <h4 class="installment-card__title">قسط ${ordLabel}</h4>
+            <button type="button" class="more-toggle-btn" data-toggle="extra-${idx}">نمایش فیلدهای بیشتر</button>
+          </div>
+
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="amount-${idx}">مبلغ قسط</label>
+            <input type="number" id="amount-${idx}" class="input-control inst-amount" placeholder="مثال: 10000000" min="0" step="1000" value="${amountValue}" ${readOnlyAttr} />
+          </div>
+
+          <div class="input-wrapper">
+            <label class="input-label is-required" for="date-${idx}">تاریخ سررسید</label>
+            <input type="text" id="date-${idx}" class="datepicker-input input-control inst-date" />
+          </div>
+
+          <div class="extra-fields is-hidden" id="extra-${idx}" data-method="${defaultPayment}">
+            ${extraHtml || '<div class="input-wrapper"><span class="input-label">فیلد اضافه‌ای وجود ندارد.</span></div>'}
+          </div>
+        </div>
+      `;
+    }
+
+    function generateInstallments() {
+      const container = document.getElementById('installmentsContainer');
+      container.innerHTML = '';
+      for (let i = 1; i <= installmentCount; i++) {
+        container.insertAdjacentHTML('beforeend', buildInstallmentCard(i));
+      }
+      initDatepickers(container);
+    }
+
+    function toggleExtra(id) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.classList.toggle('is-hidden');
+      // Re-init datepickers in case toggled content contains date inputs (currently none)
+      if (!el.classList.contains('is-hidden')) {
+        initDatepickers(el);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      initDatepickers();
+      updateTabIndicator();
+
+      const equalWrapper = document.getElementById('equalAmountWrapper');
+      const sameAmountToggle = document.getElementById('sameAmountToggle');
+      const equalAmountInput = document.getElementById('equalAmount');
+      const defaultPaymentSelect = document.getElementById('defaultPayment');
+
+      sameAmountToggle.addEventListener('change', () => {
+        equalAmounts = sameAmountToggle.checked;
+        if (equalAmounts) {
+          equalWrapper.classList.remove('is-hidden');
+        } else {
+          equalWrapper.classList.add('is-hidden');
+        }
+      });
+
+      defaultPaymentSelect.addEventListener('change', () => {
+        defaultPayment = defaultPaymentSelect.value;
+      });
+
+      document.querySelectorAll('.tab-progress-nav__item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const step = parseInt(btn.getAttribute('data-step'));
+          if (step <= currentStep) goToStep(step);
+        });
+      });
+
+      document.getElementById('step1NextBtn').addEventListener('click', () => {
+        const count = parseInt(document.getElementById('installmentCount').value) || 0;
+        if (count <= 0) {
+          alert('لطفاً تعداد اقساط را وارد کنید');
+          return;
+        }
+        installmentCount = count;
+        equalAmounts = sameAmountToggle.checked;
+        equalAmountValue = equalAmounts ? (equalAmountInput.value || '') : '';
+        defaultPayment = defaultPaymentSelect.value;
+        generateInstallments();
+        goToStep(2);
+      });
+
+      document.getElementById('step2BackBtn').addEventListener('click', () => {
+        goToStep(1);
+      });
+
+      document.getElementById('finalSubmitBtn').addEventListener('click', () => {
+        alert('ثبت با موفقیت انجام شد');
+      });
+
+      document.getElementById('installmentsContainer').addEventListener('click', (e) => {
+        const toggleId = e.target.getAttribute('data-toggle');
+        if (toggleId) {
+          toggleExtra(toggleId);
+        }
+      });
+
+      window.addEventListener('resize', updateTabIndicator);
+    });
+  </script>
+</body>
+</html>
+
