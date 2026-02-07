@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ویترین فرصت‌های سرمایه‌گذاری</title>
+  <style>
+    :root {
+      --primary: #0f172a;
+      --success: #0d7d4d;
+      --gray-bg: #f4f4f5;
+      --gray-border: #e4e4e7;
+      --gray-text: #52525b;
+      --white: #fff;
+      --space-8: 8px;
+      --space-12: 12px;
+      --space-16: 16px;
+      --space-24: 24px;
+      --radius: 14px;
+      --shadow: 0 1px 4px rgba(0,0,0,.06);
+      --shadow-hover: 0 4px 14px rgba(0,0,0,.08);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", Tahoma, "Vazirmatn", sans-serif; background: var(--gray-bg); color: var(--primary); line-height: 1.45; min-height: 100vh; }
+
+    .page-header { padding: var(--space-24) var(--space-16); text-align: center; background: var(--white); border-bottom: 1px solid var(--gray-border); }
+    .page-header h1 { margin: 0; font-size: 1.75rem; font-weight: 700; color: var(--primary); }
+    .page-header p { margin: var(--space-8) 0 0; font-size: 0.95rem; color: var(--gray-text); }
+
+    .tabs-wrap { padding: var(--space-16); background: var(--white); border-bottom: 1px solid var(--gray-border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tabs { display: inline-flex; gap: 0; min-width: min-content; border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 3px; background: var(--gray-bg); }
+    .tabs button { padding: var(--space-8) var(--space-16); border: none; border-radius: 12px; background: transparent; color: var(--gray-text); font-size: 0.9rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
+    .tabs button:hover { color: var(--primary); background: var(--white); }
+    .tabs button.active { background: var(--white); color: var(--primary); box-shadow: var(--shadow); }
+    .tabs button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    .main-wrap { max-width: 1200px; margin: 0 auto; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--space-16); padding: var(--space-16); }
+
+    .card { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: box-shadow .2s, border-color .2s; display: flex; flex-direction: column; min-height: 0; }
+    .card:hover { box-shadow: var(--shadow-hover); border-color: var(--gray-text); }
+    .card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+    .card-img-wrap { aspect-ratio: 16/9; background: var(--gray-border); position: relative; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    .card-img-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .card-img-wrap.card-img-wrap--overlay img { filter: blur(5px); transform: scale(1.08); }
+    .card-img-wrap .fallback { width: 64px; height: 64px; color: var(--gray-text); opacity: .6; flex-shrink: 0; }
+    .card-img-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; }
+    .card-img-overlay span { color: var(--white); font-size: 1.35rem; font-weight: 700; text-align: center; text-shadow: 0 1px 2px rgba(0,0,0,.5); padding: var(--space-12); }
+
+    .card-body { padding: var(--space-16); display: flex; flex-direction: column; gap: var(--space-12); flex: 1; }
+    .card-title { font-size: 1.05rem; font-weight: 600; margin: 0; color: var(--primary); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .card-profit-wrap { margin-bottom: var(--space-8); }
+    .card-profit-badge { display: inline-block; font-size: 1.35rem; font-weight: 700; color: var(--success); }
+    .card-profit-caption { font-size: 0.72rem; color: var(--gray-text); margin-top: 2px; }
+    .card-meta { display: grid; grid-template-columns: auto 1fr; gap: var(--space-8) var(--space-12); font-size: 0.85rem; color: var(--gray-text); line-height: 1.5; align-items: baseline; }
+    .card-meta .key { color: var(--gray-text); }
+    .card-meta .val { color: var(--primary); }
+    .card-progress-wrap { margin-top: auto; }
+    .card-progress-head { font-size: 0.8rem; color: var(--gray-text); margin-bottom: var(--space-8); display: flex; justify-content: space-between; align-items: center; }
+    .card-progress-bar { height: 8px; background: var(--gray-border); border-radius: 999px; overflow: hidden; }
+    .card-progress-fill { height: 100%; background: var(--success); border-radius: 999px; transition: width .3s; }
+    .card-amounts { display: flex; justify-content: space-between; font-size: 0.8rem; margin-top: var(--space-12); color: var(--gray-text); }
+    .card-amounts .funded { color: var(--primary); }
+    .card-amounts .required { color: var(--gray-text); }
+
+    .footer { padding: var(--space-16); text-align: center; font-size: 0.8rem; color: var(--gray-text); border-top: 1px solid var(--gray-border); }
+  </style>
+</head>
+<body>
+  <header class="page-header">
+    <h1>ویترین فرصت‌های سرمایه‌گذاری</h1>
+    <p>طرح‌های سرمایه‌گذاری با اطلاعات کلیدی و ضمانت شفاف</p>
+  </header>
+
+  <div class="tabs-wrap">
+    <div class="tabs" role="tablist" aria-label="فیلتر بر اساس وضعیت">
+      <button type="button" role="tab" aria-selected="false" data-status="">همه</button>
+      <button type="button" role="tab" aria-selected="true" class="active" data-status="FUNDING">در حال جذب سرمایه</button>
+      <button type="button" role="tab" aria-selected="false" data-status="REVIEW">در حال کارشناسی</button>
+      <button type="button" role="tab" aria-selected="false" data-status="COMING_SOON">به‌زودی</button>
+      <button type="button" role="tab" aria-selected="false" data-status="COMPLETED">تکمیل‌شده</button>
+    </div>
+  </div>
+
+  <div class="main-wrap">
+    <p id="loading" style="display:none; text-align:center; padding:2rem; color:var(--gray-text);">در حال بارگذاری…</p>
+    <p id="error" style="display:none; text-align:center; padding:2rem; color:#b91c1c;"></p>
+    <main class="grid" id="grid" aria-live="polite"></main>
+  </div>
+
+  <footer class="footer">ویترین فرصت‌های سرمایه‌گذاری</footer>
+
+  <script>
+    var PERSIAN_DIGITS = ['۰','۱','۲','۳','۴','۵','۶','۷','۸','۹'];
+    var STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'در حال کارشناسی', COMPLETED: 'تکمیل‌شده', COMING_SOON: 'به‌زودی' };
+    var STATUS_ORDER = { FUNDING: 0, REVIEW: 1, COMING_SOON: 2, COMPLETED: 3 };
+
+    var FALLBACK_SVG = '<svg class="fallback" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>';
+
+    function toPersianDigits(n) {
+      if (n == null || n === '') return 'نامشخص';
+      return String(n).replace(/\d/g, function(d) { return PERSIAN_DIGITS[+d]; });
+    }
+
+    function formatToman(num) {
+      if (num == null || isNaN(num)) return 'نامشخص';
+      var n = Number(num);
+      if (n >= 1e9) return toPersianDigits((n / 1e9).toFixed(1).replace('.', '٫')) + ' میلیارد تومان';
+      if (n >= 1e6) return toPersianDigits(Math.round(n / 1e6)) + ' میلیون تومان';
+      return toPersianDigits(Math.round(n)) + ' تومان';
+    }
+
+    function principalText(principalDays, durationMonths) {
+      if (principalDays == null || isNaN(principalDays)) return 'نامشخص';
+      var d = Number(principalDays);
+      var months = durationMonths != null ? Number(durationMonths) : 0;
+      var durationDays = months * 30;
+      if (durationDays > 0 && d >= durationDays - 5) return 'پایان طرح (' + toPersianDigits(d) + ' روز)';
+      return 'هر ' + toPersianDigits(d) + ' روز';
+    }
+
+    function progressPercent(funded, required, status) {
+      if (status === 'COMPLETED') return 100;
+      if (required == null || required <= 0) return 0;
+      return Math.min(100, Math.round((Number(funded) / Number(required)) * 100));
+    }
+
+    function escapeHtml(s) {
+      if (s == null) return '';
+      var div = document.createElement('div');
+      div.textContent = s;
+      return div.innerHTML;
+    }
+
+    var N8N_WEBHOOK_URL = 'http://n8nb2wall.darkube.app/webhook/opportunities';
+    var DATA = [];
+
+    function toPublicUrl(u) {
+      if (!u) return '';
+      var url = String(u).trim();
+      if (/^data:image\//i.test(url)) return url;
+      if (/^https?:\/\//i.test(url)) {
+        if (url.indexOf('drive.google.com') !== -1) {
+          var m = url.match(/\/d\/([\w-]+)/) || url.match(/[?&]id=([\w-]+)/);
+          if (m) return 'https://drive.google.com/uc?export=view&id=' + m[1];
+        }
+        return url;
+      }
+      if (url.indexOf('drive.google.com') === 0) return 'https://' + url;
+      if (url.indexOf('//') === 0) return 'https:' + url;
+      if (url.indexOf('/') === 0) return window.location.origin + url;
+      return window.location.origin + '/' + url.replace(/^\//, '');
+    }
+
+    function normalizeItem(raw, index) {
+      var s = (raw.status || '').toString().toLowerCase();
+      var statusMap = { open: 'FUNDING', funding: 'FUNDING', review: 'REVIEW', completed: 'COMPLETED', close: 'COMPLETED', closed: 'COMPLETED', coming_soon: 'COMING_SOON' };
+      var status = raw.status && /^[A-Z_]+$/.test(raw.status) ? raw.status : (statusMap[s] || 'FUNDING');
+
+      var funded = raw.fundedAmountToman != null ? Number(raw.fundedAmountToman) : (raw.capital_raised != null ? Number(raw.capital_raised) : 0);
+      var required = raw.requiredAmountToman != null ? Number(raw.requiredAmountToman) : (raw.capital_required != null ? Number(raw.capital_required) : 0);
+      if (funded > 1e10 || required > 1e10) { funded = Math.round(funded / 10); required = Math.round(required / 10); }
+
+      var dur = raw.durationMonths != null ? Number(raw.durationMonths) : (raw.tenor_months != null ? Number(raw.tenor_months) : 12);
+      var profitPct = raw.monthlyProfitPercent != null ? Number(raw.monthlyProfitPercent) : null;
+      if (profitPct == null && raw.expected_profit_pct != null) {
+        var ep = Number(raw.expected_profit_pct);
+        profitPct = ep > 0 && ep < 1 ? (ep * 100 / dur) : (ep / dur);
+      }
+      if (profitPct == null) profitPct = 0;
+
+      var profitDays = raw.profitPayoutIntervalDays != null ? Number(raw.profitPayoutIntervalDays) : 90;
+      var principalDays = raw.principalPayoutIntervalDays != null ? Number(raw.principalPayoutIntervalDays) : (dur * 30);
+      var guarantee = raw.guaranteeType || (Array.isArray(raw.guarantees) ? raw.guarantees.join('، ') : (raw.guarantees || '—'));
+
+      return {
+        id: raw.id != null ? raw.id : index + 1,
+        title: raw.title || '—',
+        status: status,
+        monthlyProfitPercent: profitPct,
+        durationMonths: dur,
+        profitPayoutIntervalDays: profitDays,
+        principalPayoutIntervalDays: principalDays,
+        guaranteeType: guarantee,
+        fundedAmountToman: funded,
+        requiredAmountToman: required,
+        imageUrl: toPublicUrl(raw.imageUrl || raw.image || '')
+      };
+    }
+
+    function extractArray(json) {
+      if (Array.isArray(json)) return json;
+      if (json && Array.isArray(json.body)) return json.body;
+      if (json && Array.isArray(json.data)) return json.data;
+      if (json && Array.isArray(json.opportunities)) return json.opportunities;
+      if (json && Array.isArray(json.projects)) return json.projects;
+      if (json && json.body && !Array.isArray(json.body)) return [json.body];
+      return [];
+    }
+
+    function loadData(callback) {
+      var loading = document.getElementById('loading');
+      var error = document.getElementById('error');
+      var grid = document.getElementById('grid');
+      if (loading) loading.style.display = 'block';
+      if (error) { error.style.display = 'none'; error.textContent = ''; }
+
+      fetch(N8N_WEBHOOK_URL, { cache: 'no-store', method: 'GET' })
+        .then(function(r) { return r.json(); })
+        .then(function(json) {
+          var arr = extractArray(json);
+          DATA = arr.map(function(item, i) { return normalizeItem(item, i); });
+          if (loading) loading.style.display = 'none';
+          if (callback) callback();
+        })
+        .catch(function(err) {
+          if (loading) loading.style.display = 'none';
+          if (error) {
+            error.textContent = 'خطا در بارگذاری داده‌ها. لطفاً دوباره تلاش کنید. (' + (err.message || 'شبکه') + ')';
+            error.style.display = 'block';
+          }
+          DATA = [];
+          if (callback) callback();
+        });
+    }
+
+    function buildCard(item) {
+      var planProfitPercent = Math.round((item.monthlyProfitPercent || 0) * (item.durationMonths || 0));
+      var funded = item.fundedAmountToman;
+      var required = item.requiredAmountToman;
+      var pct = progressPercent(funded, required, item.status);
+      var progressLabel = item.status === 'COMPLETED' ? 'تکمیل‌شده' : (toPersianDigits(pct) + '٪');
+      var profitIntervalVal = 'هر ' + toPersianDigits(item.profitPayoutIntervalDays) + ' روز';
+      var principalVal = principalText(item.principalPayoutIntervalDays, item.durationMonths);
+      var showOverlay = item.status === 'REVIEW' || item.status === 'COMPLETED' || item.status === 'COMING_SOON';
+      var overlayText = item.status === 'REVIEW' ? 'در حال کارشناسی' : (item.status === 'COMPLETED' ? 'تکمیل‌شده' : (item.status === 'COMING_SOON' ? 'به‌زودی' : ''));
+
+      var card = document.createElement('article');
+      card.className = 'card';
+      card.setAttribute('data-id', item.id);
+
+      var imgWrap = document.createElement('div');
+      imgWrap.className = 'card-img-wrap' + (showOverlay ? ' card-img-wrap--overlay' : '');
+      if (item.imageUrl) {
+        var img = document.createElement('img');
+        img.src = item.imageUrl;
+        img.alt = '';
+        img.loading = 'lazy';
+        img.onerror = function() {
+          img.remove();
+          imgWrap.insertAdjacentHTML('beforeend', FALLBACK_SVG);
+        };
+        imgWrap.appendChild(img);
+        if (showOverlay) {
+          var ov = document.createElement('div');
+          ov.className = 'card-img-overlay';
+          ov.innerHTML = '<span>' + overlayText + '</span>';
+          imgWrap.appendChild(ov);
+        }
+      } else {
+        imgWrap.insertAdjacentHTML('beforeend', FALLBACK_SVG);
+        if (showOverlay) {
+          var ov = document.createElement('div');
+          ov.className = 'card-img-overlay';
+          ov.innerHTML = '<span>' + overlayText + '</span>';
+          imgWrap.appendChild(ov);
+        }
+      }
+
+      var body = document.createElement('div');
+      body.className = 'card-body';
+      body.innerHTML =
+        '<h2 class="card-title" title="' + escapeHtml(item.title) + '">' + escapeHtml(item.title) + '</h2>' +
+        '<div class="card-profit-wrap">' +
+          '<div class="card-profit-badge">' + toPersianDigits(planProfitPercent) + '٪</div>' +
+          '<div class="card-profit-caption">سود طرح</div>' +
+        '</div>' +
+        '<div class="card-meta">' +
+          '<span class="key">موعد پرداخت سود:</span><span class="val">' + profitIntervalVal + '</span>' +
+          '<span class="key">موعد پرداخت اصل پول:</span><span class="val">' + principalVal + '</span>' +
+          '<span class="key">نوع ضمانت:</span><span class="val">' + escapeHtml(item.guaranteeType || '—') + '</span>' +
+          '<span class="key">مدت طرح:</span><span class="val">' + toPersianDigits(item.durationMonths) + ' ماه</span>' +
+        '</div>' +
+        '<div class="card-progress-wrap">' +
+          '<div class="card-progress-head"><span>تکمیل</span><span>' + progressLabel + '</span></div>' +
+          '<div class="card-progress-bar" role="progressbar" aria-valuenow="' + pct + '" aria-valuemin="0" aria-valuemax="100" aria-label="تکمیل طرح">' +
+            '<div class="card-progress-fill" style="width:' + pct + '%"></div>' +
+          '</div>' +
+          '<div class="card-amounts">' +
+            '<span class="funded">تأمین‌شده: ' + formatToman(funded) + '</span>' +
+            '<span class="required">موردنیاز: ' + formatToman(required) + '</span>' +
+          '</div>' +
+        '</div>';
+
+      card.appendChild(imgWrap);
+      card.appendChild(body);
+      return card;
+    }
+
+    function applyFilterSort() {
+      var activeBtn = document.querySelector('.tabs button.active');
+      var statusFilter = (activeBtn && activeBtn.dataset.status) ? activeBtn.dataset.status : 'FUNDING';
+      var list = DATA.slice();
+      if (statusFilter) list = list.filter(function(i) { return i.status === statusFilter; });
+      list.sort(function(a, b) {
+        var order = (STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0);
+        if (order !== 0) return order;
+        return progressPercent(b.fundedAmountToman, b.requiredAmountToman, b.status) - progressPercent(a.fundedAmountToman, a.requiredAmountToman, a.status);
+      });
+      return list;
+    }
+
+    function render() {
+      var grid = document.getElementById('grid');
+      var list = applyFilterSort();
+      grid.innerHTML = '';
+      list.forEach(function(item) { grid.appendChild(buildCard(item)); });
+    }
+
+    document.querySelectorAll('.tabs button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        document.querySelectorAll('.tabs button').forEach(function(b) {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        render();
+      });
+    });
+
+    loadData(function() { render(); });
+  </script>
+</body>
+</html>
