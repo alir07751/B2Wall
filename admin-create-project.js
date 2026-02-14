@@ -38,8 +38,8 @@ const MSG = {
   PROGRESS_CREATE: 'در حال ایجاد پروژه...',
   PROGRESS_UPLOAD: 'در حال آپلود تصویر...',
   PROGRESS_ATTACH: 'در حال ثبت تصویر...',
-  CREATE_OK_UPLOAD_FAIL: 'پروژه ایجاد شد اما آپلود تصویر انجام نشد. لطفاً دوباره تلاش کنید.',
-  UPLOAD_OK_ATTACH_FAIL: 'آپلود انجام شد اما ثبت تصویر روی پروژه انجام نشد. لطفاً دوباره تلاش کنید.',
+  CREATE_OK_UPLOAD_FAIL: 'پروژه ایجاد شد اما آپلود تصویر انجام نشد.',
+  UPLOAD_OK_ATTACH_FAIL: 'پروژه ایجاد شد اما اتصال تصویر انجام نشد.',
   IMAGE_INVALID_FORMAT: 'فرمت تصویر نامعتبر است. فقط JPG، PNG و WebP مجاز است.',
   IMAGE_TOO_LARGE: 'حجم فایل بیش از حد مجاز است. حداکثر ۳ مگابایت.',
   IMAGE_TOO_SMALL: 'ابعاد تصویر کمتر از حد مجاز است. حداقل ۴۰۰×۳۰۰ پیکسل.',
@@ -59,6 +59,18 @@ function normalizeStatus(raw) {
   if (s === 'ACTIVE') return 'FUNDING';
   if (['FUNDING', 'REVIEW', 'COMPLETED'].indexOf(s) !== -1) return s;
   return 'FUNDING';
+}
+
+/** Publish status: backend values. UI labels: منتشر شود (PUBLIC), منتشر نشود (PRIVATE). */
+const PUBLISH_STATUS = {
+  PUBLISH: 'PUBLIC',
+  DRAFT: 'PRIVATE',
+};
+const PUBLISH_STATUS_VALUES = [PUBLISH_STATUS.PUBLISH, PUBLISH_STATUS.DRAFT];
+
+/** Map backend visibility to select value. For edit mode when pre-filling form. */
+function publishStatusFromBackend(backendValue) {
+  return PUBLISH_STATUS_VALUES.includes(backendValue) ? backendValue : PUBLISH_STATUS.DRAFT;
 }
 
 // Server field path → input element ID
@@ -273,7 +285,7 @@ function collectFormData() {
   const required_amount_toman = !isNaN(reqRaw) ? Math.floor(reqRaw) : NaN;
 
   const statusRaw = (form.querySelector('#project-status')?.value || 'REVIEW').trim().toUpperCase();
-  const visibility = (form.querySelector('#project-visibility')?.value || 'PRIVATE').trim();
+  const visibility = (form.querySelector('#project-visibility')?.value || PUBLISH_STATUS.DRAFT).trim();
 
   const project = {
     title,
@@ -316,7 +328,7 @@ function normalizePayload(owner, project) {
     guarantee_type: String(project.guarantee_type || '').trim(),
     funded_amount_toman: Math.floor(safeNumber(project.funded_amount_toman, 0)),
     required_amount_toman: Math.floor(safeNumber(project.required_amount_toman)),
-    visibility: project.visibility === 'PUBLIC' ? 'PUBLIC' : 'PRIVATE',
+    visibility: PUBLISH_STATUS_VALUES.includes(project.visibility) ? project.visibility : PUBLISH_STATUS.DRAFT,
   };
   return { owner: o, project: p };
 }
@@ -372,8 +384,8 @@ async function validateForm(model) {
   if (!reqVal.valid) errors.push({ field: 'project_required_amount_toman', message: 'مبلغ مورد نیاز باید عدد صحیح و حداقل ۱۰۰٬۰۰۰ تومان باشد.' });
   if (funded > required) errors.push({ field: 'project_required_amount_toman', message: 'مبلغ تأمین‌شده نمی‌تواند بیشتر از مبلغ مورد نیاز باشد.' });
 
-  if (!project.visibility || !['PRIVATE', 'PUBLIC'].includes(project.visibility)) {
-    errors.push({ field: 'project_visibility', message: 'نمایش الزامی است.' });
+  if (!project.visibility || !PUBLISH_STATUS_VALUES.includes(project.visibility)) {
+    errors.push({ field: 'project_visibility', message: 'وضعیت انتشار الزامی است.' });
   }
 
   if (file) {
@@ -515,44 +527,44 @@ async function fetchWithTimeout(url, opts) {
   }
 }
 
-/** Upload cover image. Returns { success: true, url } or { success: false, message }. */
-async function requestUploadCover({ opportunityId, file }) {
+/** Upload cover image. Returns { success: true, url, ok } or { success: false, message }. */
+async function requestUploadCover({ entityId, file }) {
   const fd = new FormData();
-  fd.append('entity_id', opportunityId);
+  fd.append('entity_id', String(entityId || ''));
   fd.append('context', 'projects');
   fd.append('entity_type', 'opportunity');
   fd.append('file_type', 'cover');
   fd.append('visibility', 'PUBLIC');
   fd.append('file', file);
   try {
-    const { ok, status, json } = await fetchWithTimeout(CONFIG.UPLOAD_URL, {
+    const { ok, json } = await fetchWithTimeout(CONFIG.UPLOAD_URL, {
       method: 'POST',
       body: fd,
     });
-    if (ok && json?.url) return { success: true, url: json.url };
+    if (ok && json?.url) return { success: true, ok: true, url: json.url, key: json?.key };
     const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
-    return { success: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
+    return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
   } catch (err) {
-    if (err.name === 'AbortError') return { success: false, message: MSG.REQUEST_TIMEOUT };
-    return { success: false, message: err.message || MSG.REQUEST_FAILED };
+    if (err.name === 'AbortError') return { success: false, ok: false, message: MSG.REQUEST_TIMEOUT };
+    return { success: false, ok: false, message: err.message || MSG.REQUEST_FAILED };
   }
 }
 
-/** Attach cover URL to opportunity. Returns { success: true, opportunity } or { success: false, message }. */
-async function requestAttachCover({ opportunityId, imageUrl }) {
+/** Attach cover URL to project. Backend expects entity_id and image_url. */
+async function requestAttachCover({ entityId, imageUrl }) {
+  const payload = { entity_id: String(entityId || ''), image_url: String(imageUrl || '') };
   try {
-    const oid = Number(opportunityId) || opportunityId;
     const { ok, json } = await fetchWithTimeout(CONFIG.ATTACH_COVER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ opportunity_id: oid, image_url: imageUrl }),
+      body: JSON.stringify(payload),
     });
-    if (ok && json?.opportunity) return { success: true, opportunity: json.opportunity };
+    if (ok) return { success: true, ok: true, json };
     const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
-    return { success: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
+    return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
   } catch (err) {
-    if (err.name === 'AbortError') return { success: false, message: MSG.REQUEST_TIMEOUT };
-    return { success: false, message: err.message || MSG.REQUEST_FAILED };
+    if (err.name === 'AbortError') return { success: false, ok: false, message: MSG.REQUEST_TIMEOUT };
+    return { success: false, ok: false, message: err.message || MSG.REQUEST_FAILED };
   }
 }
 
@@ -861,42 +873,54 @@ async function handleSubmit(e) {
   try {
     // 1) Create API
     const formData = buildCreateFormData(model.owner, model.project);
-    const result = await callCreateProject(formData);
+    const createRes = await callCreateProject(formData);
+    console.log('[CREATE]', createRes);
 
-    if (result.kind === 'validation') {
+    if (createRes.kind === 'validation') {
       showError(MSG.VALIDATION_FIX);
-      showFieldErrors(result.errors);
-      scrollToFirstError(result.errors);
+      showFieldErrors(createRes.errors);
+      scrollToFirstError(createRes.errors);
       return;
     }
 
-    if (result.kind === 'system') {
-      showError(result.message || MSG.SYSTEM_ERROR, { requestId: result.requestId });
+    if (createRes.kind === 'system') {
+      showError(createRes.message || MSG.SYSTEM_ERROR, { requestId: createRes.requestId });
       return;
     }
 
-    const created = result.data;
-    const opportunityId = created?.id;
-    if (!opportunityId) {
+    const created = createRes.data;
+    const projectId = created?.id ?? created?.opportunity_id ?? created?.project?.id ?? null;
+    if (!projectId) {
       showError(MSG.INVALID_RESPONSE);
       return;
     }
 
-    // 2) Upload + 3) Attach cover (if image selected)
+    const file = model.file || form.querySelector('#project-image')?.files?.[0] || null;
+    console.log('[FILE]', file ? { name: file.name, size: file.size } : null);
+
+    // 2) Upload + 3) Attach cover — ALWAYS call attach after successful upload
     let finalOpportunity = created;
-    if (model.file) {
-      const uploadResult = await requestUploadCover({ opportunityId, file: model.file });
-      if (!uploadResult.success) {
-        showError(`${MSG.CREATE_OK_UPLOAD_FAIL} (شناسه پروژه: ${opportunityId})`);
+    if (file) {
+      const uploadResult = await requestUploadCover({ entityId: projectId, file });
+      console.log('[UPLOAD]', uploadResult);
+
+      if (!uploadResult.success || !uploadResult.url) {
+        showError(`${MSG.CREATE_OK_UPLOAD_FAIL} (شناسه پروژه: ${projectId})`);
         return;
       }
 
-      const attachResult = await requestAttachCover({ opportunityId, imageUrl: uploadResult.url });
+      const attachPayload = { entity_id: projectId, image_url: uploadResult.url };
+      console.log('[ATTACH payload]', attachPayload);
+
+      const attachResult = await requestAttachCover({ entityId: projectId, imageUrl: uploadResult.url });
+      console.log('[ATTACH]', attachResult);
+
       if (!attachResult.success) {
-        showError(`${MSG.UPLOAD_OK_ATTACH_FAIL} (شناسه پروژه: ${opportunityId})`);
+        showError(`${MSG.UPLOAD_OK_ATTACH_FAIL} (شناسه پروژه: ${projectId})`);
         return;
       }
-      finalOpportunity = normalizeResponse(attachResult.opportunity || created);
+
+      finalOpportunity = normalizeResponse(attachResult.json?.opportunity ?? attachResult.json ?? created);
     }
 
     // All steps succeeded
@@ -906,6 +930,7 @@ async function handleSubmit(e) {
     if (imageInput) imageInput.value = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
+    console.error(err);
     showError(err.message || MSG.SUBMIT_ERROR);
   } finally {
     clearLoadingState();

@@ -101,11 +101,12 @@
           <span class="field-error" id="project-required-amount-toman-error" role="alert"></span>
         </div>
         <div class="form-row">
-          <label for="project-visibility">نمایش <span class="required">*</span></label>
+          <label for="project-visibility">وضعیت انتشار <span class="required">*</span></label>
           <select id="project-visibility" name="project_visibility" required>
-            <option value="PRIVATE">خصوصی</option>
-            <option value="PUBLIC">عمومی</option>
+            <option value="PUBLIC">منتشر شود</option>
+            <option value="PRIVATE">منتشر نشود</option>
           </select>
+          <span class="field-hint">در صورت انتخاب منتشر شود، پروژه در ویترین نمایش داده خواهد شد.</span>
           <span class="field-error" id="project-visibility-error" role="alert"></span>
         </div>
       </section>
