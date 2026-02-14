@@ -423,7 +423,9 @@ async function validateForm(model) {
     errors.push({ field: 'project_visibility', message: 'وضعیت انتشار الزامی است.' });
   }
 
-  if (file) {
+  if (!file) {
+    errors.push({ field: 'project_image', message: 'تصویر پروژه الزامی است.' });
+  } else {
     const imgResult = await validateImageFile(file);
     if (!imgResult.valid) errors.push({ field: 'project_image', message: imgResult.message });
   }
@@ -1007,14 +1009,8 @@ async function handleSubmit(e) {
     console.log('[FILE]', file ? { name: file.name, size: file.size } : null);
 
     if (!file) {
-      submitState = STATE.DONE;
-      lastErrorStep = null;
-      clearLoadingState();
-      renderSuccess({ ...model.project, ...created });
-      clearForm(true);
-      if (imageInput) imageInput.value = '';
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      submitState = STATE.IDLE;
+      lastErrorStep = MSG.STEP_UPLOAD;
+      showError('تصویر پروژه الزامی است.', { stepName: MSG.STEP_UPLOAD, projectId });
       return;
     }
 
