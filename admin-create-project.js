@@ -7,7 +7,8 @@
 // ——— Config ———
 const CONFIG = {
   APP_MODE: 'WITH_OWNER', // or 'SELF_SERVICE'
-  WEBHOOK_URL: '/webhook/create',
+  N8N_BASE: 'https://n8nb2wall.darkube.app',
+  get WEBHOOK_URL() { return `${this.N8N_BASE}/webhook/create`; },
   FILE_MAX_BYTES: 2 * 1024 * 1024, // 2MB
   CLEAR_OWNER_ON_SUCCESS: false,
   IMAGE_BASE: 'https://b2wall.storage.c2.liara.space/',
