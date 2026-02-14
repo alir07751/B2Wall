@@ -576,11 +576,13 @@ async function requestUploadCover({ entityId, file }) {
       method: 'POST',
       body: fd,
     });
-    const rawUrl = json?.url ?? json?.data?.url ?? json?.data?.image_url ?? '';
+    // Upload API may return array: [{ ok, key, url }] or object: { ok, key, url }
+    const data = Array.isArray(json) ? json[0] : json;
+    const rawUrl = data?.url ?? data?.data?.url ?? data?.data?.image_url ?? json?.url ?? json?.data?.url ?? '';
     const cleanUrl = String(rawUrl || '').trim();
-    if (ok && cleanUrl) return { success: true, ok: true, url: cleanUrl, key: json?.key ?? json?.data?.key, status, raw: text };
+    if (ok && cleanUrl) return { success: true, ok: true, url: cleanUrl, key: data?.key ?? data?.data?.key, status, raw: text };
     if (ok && !cleanUrl) return { success: false, ok: true, message: 'پاسخ آپلود بدون آدرس تصویر است.', status, raw: text };
-    const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
+    const msg = data?.message || data?.error || (typeof data?.error === 'object' && data.error?.message) || MSG.SYSTEM_ERROR;
     return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, status, raw: text };
   } catch (err) {
     if (err.name === 'AbortError') return { success: false, ok: false, message: MSG.REQUEST_TIMEOUT };
