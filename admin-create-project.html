@@ -18,7 +18,14 @@
         <p class="loading-overlay-text">در حال ثبت اطلاعات، لطفاً صبر کنید...</p>
       </div>
     </div>
-    <div id="global-error" class="alert alert-error" role="alert" aria-live="polite" hidden></div>
+    <div id="global-error" class="alert alert-error" role="alert" aria-live="polite" hidden>
+      <div class="alert-content"></div>
+      <div id="error-retry-actions" class="alert-actions" hidden></div>
+      <details id="error-technical-details" class="error-technical-details" hidden>
+        <summary>جزئیات فنی</summary>
+        <pre id="error-technical-pre"></pre>
+      </details>
+    </div>
     <div id="success-banner" class="success-banner" role="status" aria-live="polite" hidden></div>
     <div id="summary-card" class="summary-card-wrap" hidden></div>
 
@@ -103,8 +110,8 @@
         <div class="form-row">
           <label for="project-visibility">وضعیت انتشار <span class="required">*</span></label>
           <select id="project-visibility" name="project_visibility" required>
-            <option value="PUBLIC">منتشر شود</option>
-            <option value="PRIVATE">منتشر نشود</option>
+            <option value="PUBLISHED">منتشر شود</option>
+            <option value="UNPUBLISHED">منتشر نشود</option>
           </select>
           <span class="field-hint">در صورت انتخاب منتشر شود، پروژه در ویترین نمایش داده خواهد شد.</span>
           <span class="field-error" id="project-visibility-error" role="alert"></span>

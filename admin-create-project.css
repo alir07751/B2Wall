@@ -167,6 +167,50 @@ body {
   border-radius: 4px;
 }
 
+.alert-actions {
+  margin-top: var(--space-12);
+  display: flex;
+  gap: var(--space-8);
+}
+
+.error-technical-details {
+  margin-top: var(--space-12);
+  font-size: 0.8rem;
+}
+
+.error-technical-details summary {
+  cursor: pointer;
+  color: var(--gray-text);
+}
+
+.error-technical-details pre {
+  margin: var(--space-8) 0 0;
+  padding: var(--space-12);
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 6px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-size: 0.75rem;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.btn-retry {
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  border: 1px solid var(--error);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--error);
+  cursor: pointer;
+}
+
+.btn-retry:hover {
+  background: #fef2f2;
+}
+
 .btn-copy {
   padding: 4px 10px;
   font-family: inherit;

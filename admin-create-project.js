@@ -39,7 +39,11 @@ const MSG = {
   PROGRESS_UPLOAD: 'در حال آپلود تصویر...',
   PROGRESS_ATTACH: 'در حال ثبت تصویر...',
   CREATE_OK_UPLOAD_FAIL: 'پروژه ایجاد شد اما آپلود تصویر انجام نشد.',
-  UPLOAD_OK_ATTACH_FAIL: 'پروژه ایجاد شد اما اتصال تصویر انجام نشد.',
+  UPLOAD_OK_ATTACH_FAIL: 'پروژه ایجاد شد اما ثبت تصویر انجام نشد.',
+  STEP_CREATE: 'ایجاد پروژه',
+  STEP_UPLOAD: 'آپلود تصویر',
+  STEP_ATTACH: 'ثبت تصویر',
+  RETRY_ATTACH: 'تلاش مجدد ثبت تصویر',
   IMAGE_INVALID_FORMAT: 'فرمت تصویر نامعتبر است. فقط JPG، PNG و WebP مجاز است.',
   IMAGE_TOO_LARGE: 'حجم فایل بیش از حد مجاز است. حداکثر ۳ مگابایت.',
   IMAGE_TOO_SMALL: 'ابعاد تصویر کمتر از حد مجاز است. حداقل ۴۰۰×۳۰۰ پیکسل.',
@@ -61,17 +65,39 @@ function normalizeStatus(raw) {
   return 'FUNDING';
 }
 
-/** Publish status: backend values. UI labels: منتشر شود (PUBLIC), منتشر نشود (PRIVATE). */
+/** Publish status: UI values. Backend mapping: PUBLISHED→PUBLIC, UNPUBLISHED→PRIVATE. */
 const PUBLISH_STATUS = {
-  PUBLISH: 'PUBLIC',
-  DRAFT: 'PRIVATE',
+  PUBLISHED: 'PUBLISHED',
+  UNPUBLISHED: 'UNPUBLISHED',
 };
-const PUBLISH_STATUS_VALUES = [PUBLISH_STATUS.PUBLISH, PUBLISH_STATUS.DRAFT];
+const PUBLISH_STATUS_VALUES = [PUBLISH_STATUS.PUBLISHED, PUBLISH_STATUS.UNPUBLISHED];
 
-/** Map backend visibility to select value. For edit mode when pre-filling form. */
-function publishStatusFromBackend(backendValue) {
-  return PUBLISH_STATUS_VALUES.includes(backendValue) ? backendValue : PUBLISH_STATUS.DRAFT;
+/** Map UI value to backend visibility. */
+function publishStatusToBackend(uiValue) {
+  return uiValue === PUBLISH_STATUS.PUBLISHED ? 'PUBLIC' : 'PRIVATE';
 }
+
+/** Map backend visibility to UI select value. */
+function publishStatusFromBackend(backendValue) {
+  if (backendValue === 'PUBLIC') return PUBLISH_STATUS.PUBLISHED;
+  return PUBLISH_STATUS.UNPUBLISHED;
+}
+
+// ——— State machine ———
+const STATE = {
+  IDLE: 'IDLE',
+  VALIDATING: 'VALIDATING',
+  CREATING: 'CREATING',
+  UPLOADING: 'UPLOADING',
+  ATTACHING: 'ATTACHING',
+  DONE: 'DONE',
+  ERROR: 'ERROR',
+};
+
+let submitState = STATE.IDLE;
+let lastSuccessfulProjectId = null;
+let lastUploadResult = null;
+let lastErrorStep = null;
 
 // Server field path → input element ID
 const FIELD_PATH_TO_ID = {
@@ -101,6 +127,9 @@ const imageInput = document.getElementById('project-image');
 const imagePreviewWrap = document.getElementById('image-preview-wrap');
 const imagePreview = document.getElementById('image-preview');
 const loadingOverlayEl = document.getElementById('loading-overlay');
+const errorRetryActionsEl = document.getElementById('error-retry-actions');
+const errorTechnicalDetailsEl = document.getElementById('error-technical-details');
+const errorTechnicalPreEl = document.getElementById('error-technical-pre');
 
 // Client-side validation field mapping (legacy)
 const FIELD_IDS = {
@@ -168,6 +197,8 @@ function validateNumberRange(val, min, max, options) {
 
 const DANGEROUS_TITLE = /[<>{}]|<script|script>|javascript:/i;
 const ONLY_NUMBERS = /^\d+$/;
+/** Iranian mobile: 09xxxxxxxxx (11 digits, starts with 09) */
+const IRANIAN_MOBILE = /^09\d{9}$/;
 
 /** Validates image file: mime, extension, size, dimensions. Returns { valid, message } or { valid: true }. */
 function validateImageFile(file) {
@@ -285,7 +316,7 @@ function collectFormData() {
   const required_amount_toman = !isNaN(reqRaw) ? Math.floor(reqRaw) : NaN;
 
   const statusRaw = (form.querySelector('#project-status')?.value || 'REVIEW').trim().toUpperCase();
-  const visibility = (form.querySelector('#project-visibility')?.value || PUBLISH_STATUS.DRAFT).trim();
+  const visibility = (form.querySelector('#project-visibility')?.value || PUBLISH_STATUS.UNPUBLISHED).trim();
 
   const project = {
     title,
@@ -328,7 +359,7 @@ function normalizePayload(owner, project) {
     guarantee_type: String(project.guarantee_type || '').trim(),
     funded_amount_toman: Math.floor(safeNumber(project.funded_amount_toman, 0)),
     required_amount_toman: Math.floor(safeNumber(project.required_amount_toman)),
-    visibility: PUBLISH_STATUS_VALUES.includes(project.visibility) ? project.visibility : PUBLISH_STATUS.DRAFT,
+    visibility: publishStatusToBackend(PUBLISH_STATUS_VALUES.includes(project.visibility) ? project.visibility : PUBLISH_STATUS.UNPUBLISHED),
   };
   return { owner: o, project: p };
 }
@@ -346,14 +377,18 @@ async function validateForm(model) {
   const { owner, project, file } = model;
 
   if (CONFIG.APP_MODE === 'WITH_OWNER') {
-    if (!owner.phone) errors.push({ field: 'owner_phone', message: 'شماره موبایل الزامی است.' });
-    if (!owner.full_name) errors.push({ field: 'owner_full_name', message: 'نام و نام خانوادگی الزامی است.' });
+    const phoneNorm = String(owner.phone || '').replace(/\s/g, '');
+    if (!phoneNorm) errors.push({ field: 'owner_phone', message: 'شماره موبایل الزامی است.' });
+    else if (!IRANIAN_MOBILE.test(phoneNorm)) errors.push({ field: 'owner_phone', message: 'شماره موبایل معتبر نیست. مثال: ۰۹۱۲۰۰۰۰۰۰۰' });
+    const fullName = String(owner.full_name || '').trim();
+    if (!fullName) errors.push({ field: 'owner_full_name', message: 'نام و نام خانوادگی الزامی است.' });
+    else if (fullName.length < 3 || fullName.length > 80) errors.push({ field: 'owner_full_name', message: 'نام باید بین ۳ تا ۸۰ کاراکتر باشد.' });
   }
 
   const title = project.title || '';
   if (!title) errors.push({ field: 'project_title', message: 'عنوان الزامی است.' });
   else {
-    if (title.length < 3 || title.length > 120) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۱۲۰ کاراکتر باشد.' });
+    if (title.length < 3 || title.length > 80) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۸۰ کاراکتر باشد.' });
     else if (ONLY_NUMBERS.test(title)) errors.push({ field: 'project_title', message: 'عنوان نمی‌تواند فقط عدد باشد.' });
     else if (DANGEROUS_TITLE.test(title)) errors.push({ field: 'project_title', message: 'عنوان شامل کاراکترهای نامعتبر است.' });
   }
@@ -527,7 +562,7 @@ async function fetchWithTimeout(url, opts) {
   }
 }
 
-/** Upload cover image. Returns { success: true, url, ok } or { success: false, message }. */
+/** Upload cover image. Returns { success, url, key, status, raw } or { success: false, message }. URL is trimmed. */
 async function requestUploadCover({ entityId, file }) {
   const fd = new FormData();
   fd.append('entity_id', String(entityId || ''));
@@ -537,31 +572,44 @@ async function requestUploadCover({ entityId, file }) {
   fd.append('visibility', 'PUBLIC');
   fd.append('file', file);
   try {
-    const { ok, json } = await fetchWithTimeout(CONFIG.UPLOAD_URL, {
+    const { ok, status, json, text } = await fetchWithTimeout(CONFIG.UPLOAD_URL, {
       method: 'POST',
       body: fd,
     });
-    if (ok && json?.url) return { success: true, ok: true, url: json.url, key: json?.key };
+    const rawUrl = json?.url ?? json?.data?.url ?? json?.data?.image_url ?? '';
+    const cleanUrl = String(rawUrl || '').trim();
+    if (ok && cleanUrl) return { success: true, ok: true, url: cleanUrl, key: json?.key ?? json?.data?.key, status, raw: text };
+    if (ok && !cleanUrl) return { success: false, ok: true, message: 'پاسخ آپلود بدون آدرس تصویر است.', status, raw: text };
     const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
-    return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
+    return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, status, raw: text };
   } catch (err) {
     if (err.name === 'AbortError') return { success: false, ok: false, message: MSG.REQUEST_TIMEOUT };
     return { success: false, ok: false, message: err.message || MSG.REQUEST_FAILED };
   }
 }
 
-/** Attach cover URL to project. Backend expects entity_id and image_url. */
+/** Attach cover URL to project. Sends entity_id, image_url + synonyms for backend compatibility. */
 async function requestAttachCover({ entityId, imageUrl }) {
-  const payload = { entity_id: String(entityId || ''), image_url: String(imageUrl || '') };
+  const eid = String(entityId || '');
+  const url = String(imageUrl || '').trim();
+  const payload = {
+    entity_id: eid,
+    image_url: url,
+    opportunity_id: eid,
+    project_id: eid,
+    id: eid,
+    imageUrl: url,
+    url,
+  };
   try {
-    const { ok, json } = await fetchWithTimeout(CONFIG.ATTACH_COVER_URL, {
+    const { ok, status, json, text } = await fetchWithTimeout(CONFIG.ATTACH_COVER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (ok) return { success: true, ok: true, json };
+    if (ok) return { success: true, ok: true, json, status, raw: text };
     const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
-    return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
+    return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, status, raw: text };
   } catch (err) {
     if (err.name === 'AbortError') return { success: false, ok: false, message: MSG.REQUEST_TIMEOUT };
     return { success: false, ok: false, message: err.message || MSG.REQUEST_FAILED };
@@ -583,7 +631,10 @@ function clearErrors() {
   document.querySelectorAll('.error').forEach((el) => el.classList.remove('error'));
   if (globalErrorEl) {
     globalErrorEl.hidden = true;
-    globalErrorEl.innerHTML = '';
+    const content = globalErrorEl.querySelector('.alert-content');
+    if (content) content.innerHTML = '';
+    if (errorRetryActionsEl) { errorRetryActionsEl.hidden = true; errorRetryActionsEl.innerHTML = ''; }
+    if (errorTechnicalDetailsEl) errorTechnicalDetailsEl.hidden = true;
   }
 }
 
@@ -612,52 +663,81 @@ function clearFieldErrorsOnly() {
 }
 
 function showGlobalError(opts) {
-  const { type, message, requestId, clearFields } = opts || {};
+  const { type, message, requestId, clearFields, stepName, projectId, technicalDetails, retryAttachCallback } = opts || {};
   if (!globalErrorEl) return;
   if (!message) {
     globalErrorEl.hidden = true;
-    globalErrorEl.innerHTML = '';
+    const content = globalErrorEl.querySelector('.alert-content');
+    if (content) content.innerHTML = '';
+    if (errorRetryActionsEl) { errorRetryActionsEl.hidden = true; errorRetryActionsEl.innerHTML = ''; }
+    if (errorTechnicalDetailsEl) errorTechnicalDetailsEl.hidden = true;
     return;
   }
   if (clearFields) clearFieldErrorsOnly();
 
-  const msgSpan = document.createElement('span');
-  msgSpan.className = 'alert-message';
-  msgSpan.textContent = message;
+  const content = globalErrorEl.querySelector('.alert-content');
+  if (content) {
+    content.innerHTML = '';
+    const parts = [];
+    if (stepName) parts.push(`[${stepName}]`);
+    parts.push(message);
+    const msgSpan = document.createElement('span');
+    msgSpan.className = 'alert-message';
+    msgSpan.textContent = parts.join(' ');
+    content.appendChild(msgSpan);
 
-  const container = document.createElement('div');
-  container.className = 'alert-content';
-  container.appendChild(msgSpan);
+    if (projectId) {
+      const idRow = document.createElement('div');
+      idRow.className = 'alert-request-id';
+      idRow.innerHTML = `<span>شناسه پروژه: </span><code>${escapeHtml(projectId)}</code>`;
+      content.appendChild(idRow);
+    }
 
-  if (requestId) {
-    const reqRow = document.createElement('div');
-    reqRow.className = 'alert-request-id';
-    const reqLabel = document.createElement('span');
-    reqLabel.textContent = `${MSG.TRACKING_CODE}: `;
-    const reqVal = document.createElement('code');
-    reqVal.textContent = requestId;
-    const copyBtn = document.createElement('button');
-    copyBtn.type = 'button';
-    copyBtn.className = 'btn-copy';
-    copyBtn.textContent = MSG.COPY;
-    copyBtn.addEventListener('click', () => {
-      navigator.clipboard.writeText(requestId).then(() => {
-        copyBtn.textContent = MSG.COPIED;
-        copyBtn.disabled = true;
-        setTimeout(() => {
-          copyBtn.textContent = MSG.COPY;
-          copyBtn.disabled = false;
-        }, 2000);
+    if (requestId) {
+      const reqRow = document.createElement('div');
+      reqRow.className = 'alert-request-id';
+      const reqLabel = document.createElement('span');
+      reqLabel.textContent = `${MSG.TRACKING_CODE}: `;
+      const reqVal = document.createElement('code');
+      reqVal.textContent = requestId;
+      const copyBtn = document.createElement('button');
+      copyBtn.type = 'button';
+      copyBtn.className = 'btn-copy';
+      copyBtn.textContent = MSG.COPY;
+      copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(requestId).then(() => {
+          copyBtn.textContent = MSG.COPIED;
+          copyBtn.disabled = true;
+          setTimeout(() => { copyBtn.textContent = MSG.COPY; copyBtn.disabled = false; }, 2000);
+        });
       });
-    });
-    reqRow.appendChild(reqLabel);
-    reqRow.appendChild(reqVal);
-    reqRow.appendChild(copyBtn);
-    container.appendChild(reqRow);
+      reqRow.appendChild(reqLabel);
+      reqRow.appendChild(reqVal);
+      reqRow.appendChild(copyBtn);
+      content.appendChild(reqRow);
+    }
   }
 
-  globalErrorEl.innerHTML = '';
-  globalErrorEl.appendChild(container);
+  if (errorRetryActionsEl) {
+    errorRetryActionsEl.innerHTML = '';
+    errorRetryActionsEl.hidden = !retryAttachCallback;
+    if (retryAttachCallback) {
+      const retryBtn = document.createElement('button');
+      retryBtn.type = 'button';
+      retryBtn.className = 'btn-retry';
+      retryBtn.textContent = MSG.RETRY_ATTACH;
+      retryBtn.addEventListener('click', retryAttachCallback);
+      errorRetryActionsEl.appendChild(retryBtn);
+    }
+  }
+
+  if (errorTechnicalDetailsEl && errorTechnicalPreEl) {
+    errorTechnicalDetailsEl.hidden = !technicalDetails;
+    if (technicalDetails) {
+      errorTechnicalPreEl.textContent = typeof technicalDetails === 'string' ? technicalDetails : JSON.stringify(technicalDetails, null, 2);
+    }
+  }
+
   globalErrorEl.hidden = false;
 }
 
@@ -672,12 +752,12 @@ function setLoadingState(isLoading, progressText) {
 /** Full loading overlay: block interaction, show Persian text. */
 function setOverlayLoading(show, text) {
   const isOn = !!show;
+  setFormEnabled(!isOn);
   if (form) {
     form.classList.toggle('is-loading', isOn);
     form.setAttribute('aria-busy', String(isOn));
   }
   if (submitBtn) {
-    submitBtn.disabled = isOn;
     submitBtn.setAttribute('aria-busy', String(isOn));
     setText(submitBtn, isOn ? MSG.SUBMITTING_BTN : MSG.BTN_SUBMIT);
   }
@@ -690,19 +770,34 @@ function setOverlayLoading(show, text) {
 }
 
 function clearLoadingState() {
-  setOverlayLoading(false);
+  setOverlayLoading(false, '');
   setLoadingState(false, '');
+  setFormEnabled(true);
 }
 
-/** Centralized error display: message, scroll to top, remove loading. Keeps form data. */
+/** Enable/disable form inputs and buttons. Preserves permanently disabled fields (e.g. funded amount). */
+function setFormEnabled(enabled) {
+  form?.querySelectorAll('input, select, button').forEach((el) => {
+    if (el.id === 'project-funded-amount-toman') return;
+    el.disabled = !enabled;
+  });
+}
+
+/** Centralized error display. Keeps form data. Supports stepName, projectId, technicalDetails, retryAttachCallback. */
 function showError(message, opts) {
   clearLoadingState();
-  const { requestId } = opts || {};
+  submitState = STATE.ERROR;
+  setFormEnabled(true);
+  const { requestId, stepName, projectId, technicalDetails, retryAttachCallback } = opts || {};
   showGlobalError({
     type: 'system',
     message: message || MSG.SUBMIT_ERROR,
     requestId: requestId || null,
     clearFields: false,
+    stepName,
+    projectId,
+    technicalDetails,
+    retryAttachCallback,
   });
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -848,93 +943,184 @@ function applyAppMode() {
 
 // ——— Submit handler ———
 
-let isSubmitting = false;
-
 async function handleSubmit(e) {
   e.preventDefault();
-  if (isSubmitting) return;
-  isSubmitting = true;
+  if (submitState !== STATE.IDLE && submitState !== STATE.ERROR) return;
 
-  setOverlayLoading(true, MSG.LOADING_OVERLAY);
+  submitState = STATE.VALIDATING;
+  setOverlayLoading(true, MSG.PROGRESS_VALIDATE);
   const model = collectFormData();
   const { isValid, errors } = await validateForm(model);
 
   if (!isValid) {
+    submitState = STATE.ERROR;
     clearLoadingState();
     renderClientErrors(errors);
     scrollToFirstError(errors);
-    isSubmitting = false;
     return;
   }
 
   clearErrors();
   successBannerEl.hidden = true;
+  lastSuccessfulProjectId = null;
+  lastUploadResult = null;
+  lastErrorStep = null;
 
   try {
-    // 1) Create API
+    // 1) Create
+    submitState = STATE.CREATING;
+    setOverlayLoading(true, MSG.PROGRESS_CREATE);
     const formData = buildCreateFormData(model.owner, model.project);
     const createRes = await callCreateProject(formData);
-    console.log('[CREATE]', createRes);
+    console.log('[CREATE]', { projectId: createRes.data?.id, result: createRes });
 
     if (createRes.kind === 'validation') {
-      showError(MSG.VALIDATION_FIX);
+      lastErrorStep = MSG.STEP_CREATE;
+      showError(MSG.VALIDATION_FIX, { stepName: MSG.STEP_CREATE, technicalDetails: { url: CONFIG.CREATE_URL, errors: createRes.errors } });
       showFieldErrors(createRes.errors);
       scrollToFirstError(createRes.errors);
       return;
     }
 
     if (createRes.kind === 'system') {
-      showError(createRes.message || MSG.SYSTEM_ERROR, { requestId: createRes.requestId });
+      lastErrorStep = MSG.STEP_CREATE;
+      showError(createRes.message || MSG.SYSTEM_ERROR, {
+        stepName: MSG.STEP_CREATE,
+        requestId: createRes.requestId,
+        technicalDetails: { url: CONFIG.CREATE_URL, raw: createRes.raw },
+      });
       return;
     }
 
     const created = createRes.data;
     const projectId = created?.id ?? created?.opportunity_id ?? created?.project?.id ?? null;
     if (!projectId) {
-      showError(MSG.INVALID_RESPONSE);
+      lastErrorStep = MSG.STEP_CREATE;
+      showError(MSG.INVALID_RESPONSE, { stepName: MSG.STEP_CREATE, technicalDetails: { response: createRes } });
       return;
     }
 
+    lastSuccessfulProjectId = projectId;
     const file = model.file || form.querySelector('#project-image')?.files?.[0] || null;
     console.log('[FILE]', file ? { name: file.name, size: file.size } : null);
 
-    // 2) Upload + 3) Attach cover — ALWAYS call attach after successful upload
-    let finalOpportunity = created;
-    if (file) {
-      const uploadResult = await requestUploadCover({ entityId: projectId, file });
-      console.log('[UPLOAD]', uploadResult);
+    if (!file) {
+      submitState = STATE.DONE;
+      lastErrorStep = null;
+      clearLoadingState();
+      renderSuccess({ ...model.project, ...created });
+      clearForm(true);
+      if (imageInput) imageInput.value = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      submitState = STATE.IDLE;
+      return;
+    }
 
-      if (!uploadResult.success || !uploadResult.url) {
-        showError(`${MSG.CREATE_OK_UPLOAD_FAIL} (شناسه پروژه: ${projectId})`);
-        return;
-      }
+    // 2) Upload
+    submitState = STATE.UPLOADING;
+    setOverlayLoading(true, MSG.PROGRESS_UPLOAD);
+    const uploadResult = await requestUploadCover({ entityId: projectId, file });
+    console.log('[UPLOAD]', { projectId, success: uploadResult.success, url: uploadResult.url, result: uploadResult });
 
-      const attachPayload = { entity_id: projectId, image_url: uploadResult.url };
-      console.log('[ATTACH payload]', attachPayload);
+    if (!uploadResult.success || !uploadResult.url) {
+      lastErrorStep = MSG.STEP_UPLOAD;
+      showError(MSG.CREATE_OK_UPLOAD_FAIL, {
+        stepName: MSG.STEP_UPLOAD,
+        projectId,
+        technicalDetails: { url: CONFIG.UPLOAD_URL, status: uploadResult.status, raw: (uploadResult.raw || '').slice(0, 500) },
+      });
+      return;
+    }
 
-      const attachResult = await requestAttachCover({ entityId: projectId, imageUrl: uploadResult.url });
-      console.log('[ATTACH]', attachResult);
+    lastUploadResult = { url: uploadResult.url, key: uploadResult.key };
 
-      if (!attachResult.success) {
-        showError(`${MSG.UPLOAD_OK_ATTACH_FAIL} (شناسه پروژه: ${projectId})`);
-        return;
-      }
+    // 3) Attach — ALWAYS call after successful upload
+    submitState = STATE.ATTACHING;
+    setOverlayLoading(true, MSG.PROGRESS_ATTACH);
+    const attachPayload = { entity_id: projectId, image_url: uploadResult.url };
+    console.log('[ATTACH payload]', attachPayload);
 
-      finalOpportunity = normalizeResponse(attachResult.json?.opportunity ?? attachResult.json ?? created);
+    const attachResult = await requestAttachCover({ entityId: projectId, imageUrl: uploadResult.url });
+    console.log('[ATTACH]', { projectId, success: attachResult.success, result: attachResult });
+
+    if (!attachResult.success) {
+      lastErrorStep = MSG.STEP_ATTACH;
+      const retryAttach = () => doRetryAttach(projectId, uploadResult.url);
+      showError(MSG.UPLOAD_OK_ATTACH_FAIL, {
+        stepName: MSG.STEP_ATTACH,
+        projectId,
+        technicalDetails: { url: CONFIG.ATTACH_COVER_URL, status: attachResult.status, raw: (attachResult.raw || '').slice(0, 500) },
+        retryAttachCallback: retryAttach,
+      });
+      return;
     }
 
     // All steps succeeded
+    submitState = STATE.DONE;
+    lastErrorStep = null;
     clearLoadingState();
+    const finalOpportunity = normalizeResponse(attachResult.json?.opportunity ?? attachResult.json ?? created);
     renderSuccess({ ...model.project, ...finalOpportunity });
     clearForm(true);
     if (imageInput) imageInput.value = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    submitState = STATE.IDLE;
   } catch (err) {
-    console.error(err);
-    showError(err.message || MSG.SUBMIT_ERROR);
-  } finally {
+    console.error('[SUBMIT]', err);
+    lastErrorStep = submitState;
+    showError(err.message || MSG.SUBMIT_ERROR, {
+      stepName: lastErrorStep,
+      projectId: lastSuccessfulProjectId,
+      technicalDetails: { error: err.message, stack: err.stack },
+    });
+  }
+}
+
+/** Retry only attach-cover. No re-upload. Uses stored projectId and cleanUrl. */
+async function doRetryAttach(projectId, cleanUrl) {
+  if (submitState !== STATE.ERROR) return;
+  if (!projectId || !cleanUrl) return;
+
+  const model = collectFormData();
+  submitState = STATE.ATTACHING;
+  setOverlayLoading(true, MSG.PROGRESS_ATTACH);
+  if (globalErrorEl) globalErrorEl.hidden = true;
+
+  try {
+    const attachResult = await requestAttachCover({ entityId: projectId, imageUrl: cleanUrl });
+    console.log('[ATTACH retry]', { projectId, success: attachResult.success, result: attachResult });
+
+    if (!attachResult.success) {
+      lastErrorStep = MSG.STEP_ATTACH;
+      const retryAttach = () => doRetryAttach(projectId, cleanUrl);
+      showError(MSG.UPLOAD_OK_ATTACH_FAIL, {
+        stepName: MSG.STEP_ATTACH,
+        projectId,
+        technicalDetails: { url: CONFIG.ATTACH_COVER_URL, status: attachResult.status, raw: (attachResult.raw || '').slice(0, 500) },
+        retryAttachCallback: retryAttach,
+      });
+      return;
+    }
+
+    submitState = STATE.DONE;
     clearLoadingState();
-    isSubmitting = false;
+    const created = { id: projectId, image_url: cleanUrl };
+    const finalOpportunity = normalizeResponse(attachResult.json?.opportunity ?? attachResult.json ?? created);
+    renderSuccess({ ...model.project, ...finalOpportunity });
+    clearForm(true);
+    if (imageInput) imageInput.value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    submitState = STATE.IDLE;
+  } catch (err) {
+    console.error('[ATTACH retry]', err);
+    lastErrorStep = MSG.STEP_ATTACH;
+    const retryAttach = () => doRetryAttach(projectId, cleanUrl);
+    showError(err.message || MSG.SUBMIT_ERROR, {
+      stepName: MSG.STEP_ATTACH,
+      projectId,
+      technicalDetails: { error: err.message },
+      retryAttachCallback: retryAttach,
+    });
   }
 }
 
