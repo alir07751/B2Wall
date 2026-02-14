@@ -76,7 +76,6 @@
     .card-amounts .funded { color: var(--primary); }
     .card-amounts .required { color: var(--gray-text); }
 
-    .search-input { width: 100%; max-width: 320px; padding: var(--space-12); font-family: inherit; font-size: 0.95rem; border: 1px solid var(--gray-border); border-radius: 8px; }
     .empty-state { grid-column: 1 / -1; }
 
     .footer { padding: var(--space-16); text-align: center; font-size: 0.8rem; color: var(--gray-text); border-top: 1px solid var(--gray-border); }
@@ -110,9 +109,6 @@
   <div class="main-wrap">
     <p id="loading" style="display:none; text-align:center; padding:2rem; color:var(--gray-text);">در حال بارگذاری…</p>
     <p id="error" style="display:none; text-align:center; padding:2rem; color:#b91c1c;"></p>
-    <div class="search-wrap" style="padding:0 var(--space-16) var(--space-12);">
-      <input type="text" id="search" class="search-input" placeholder="جستجو در عنوان و مکان..." aria-label="جستجو">
-    </div>
     <main class="grid" id="grid" aria-live="polite"></main>
     <p id="empty-state" class="empty-state" style="display:none; text-align:center; padding:2rem; color:var(--gray-text);">فرصتی یافت نشد.</p>
   </div>
@@ -346,22 +342,11 @@
       return card;
     }
 
-    function matchesSearch(item, q) {
-      if (!q) return true;
-      var t = (item.title || '').toLowerCase();
-      var loc = (item.location || '').toLowerCase();
-      var ql = q.toLowerCase();
-      return t.indexOf(ql) !== -1 || loc.indexOf(ql) !== -1;
-    }
-
     function applyFilterSort() {
       var activeBtn = document.querySelector('.tabs button.active');
       var statusFilter = activeBtn ? (activeBtn.dataset.status || '') : '';
-      var searchEl = document.getElementById('search');
-      var searchQ = searchEl ? (searchEl.value || '').trim() : '';
       var list = DATA.slice();
       if (statusFilter) list = list.filter(function(i) { return i.status === statusFilter; });
-      if (searchQ) list = list.filter(function(i) { return matchesSearch(i, searchQ); });
       list.sort(function(a, b) {
         var order = (STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0);
         if (order !== 0) return order;
@@ -398,9 +383,6 @@
         render();
       });
     });
-
-    var searchEl = document.getElementById('search');
-    if (searchEl) searchEl.addEventListener('input', render);
 
     loadData(function(ok) { render(ok); });
   </script>
