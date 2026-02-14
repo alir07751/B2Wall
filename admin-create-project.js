@@ -11,7 +11,14 @@ const CONFIG = {
   get CREATE_URL() { return `${this.N8N_BASE}/webhook/create`; },
   get UPLOAD_URL() { return `${this.N8N_BASE}/webhook/upload`; },
   get ATTACH_COVER_URL() { return `${this.N8N_BASE}/webhook/attach-cover`; },
-  FILE_MAX_BYTES: 2 * 1024 * 1024, // 2MB
+  FILE_MAX_BYTES: 3 * 1024 * 1024, // 3MB
+  IMAGE_MIN_WIDTH: 400,
+  IMAGE_MIN_HEIGHT: 300,
+  IMAGE_MAX_DIMENSION: 6000,
+  IMAGE_ALLOWED_MIMES: ['image/jpeg', 'image/png', 'image/webp'],
+  IMAGE_ALLOWED_EXT: ['.jpg', '.jpeg', '.png', '.webp'],
+  REQUIRED_AMOUNT_MIN: 100000,
+  REQUIRED_AMOUNT_MAX: 1e15,
   CLEAR_OWNER_ON_SUCCESS: false,
   IMAGE_BASE: 'https://b2wall.storage.c2.liara.space/',
   REQUEST_TIMEOUT_MS: 20000,
@@ -27,11 +34,21 @@ const MSG = {
   TRACKING_CODE: 'کد پیگیری',
   COPY: 'کپی',
   COPIED: 'کپی شد',
+  PROGRESS_VALIDATE: 'در حال بررسی...',
   PROGRESS_CREATE: 'در حال ایجاد پروژه...',
   PROGRESS_UPLOAD: 'در حال آپلود تصویر...',
   PROGRESS_ATTACH: 'در حال ثبت تصویر...',
   CREATE_OK_UPLOAD_FAIL: 'پروژه ایجاد شد اما آپلود تصویر انجام نشد. لطفاً دوباره تلاش کنید.',
   UPLOAD_OK_ATTACH_FAIL: 'آپلود انجام شد اما ثبت تصویر روی پروژه انجام نشد. لطفاً دوباره تلاش کنید.',
+  IMAGE_INVALID_FORMAT: 'فرمت تصویر نامعتبر است. فقط JPG، PNG و WebP مجاز است.',
+  IMAGE_TOO_LARGE: 'حجم فایل بیش از حد مجاز است. حداکثر ۳ مگابایت.',
+  IMAGE_TOO_SMALL: 'ابعاد تصویر کمتر از حد مجاز است. حداقل ۴۰۰×۳۰۰ پیکسل.',
+  IMAGE_DANGEROUS_EXT: 'نام فایل نامعتبر است.',
+  LOADING_OVERLAY: 'در حال ثبت اطلاعات، لطفاً صبر کنید...',
+  SUBMITTING_BTN: 'در حال ثبت...',
+  SUCCESS_MESSAGE: 'پروژه با موفقیت ثبت شد.',
+  SUBMIT_ERROR: 'خطا در ثبت پروژه. لطفاً بررسی و دوباره تلاش کنید.',
+  BTN_SUBMIT: 'ایجاد پروژه',
 };
 
 // Persian digits for display
@@ -71,6 +88,7 @@ const ownerSection = document.getElementById('owner-section');
 const imageInput = document.getElementById('project-image');
 const imagePreviewWrap = document.getElementById('image-preview-wrap');
 const imagePreview = document.getElementById('image-preview');
+const loadingOverlayEl = document.getElementById('loading-overlay');
 
 // Client-side validation field mapping (legacy)
 const FIELD_IDS = {
@@ -88,22 +106,103 @@ const FIELD_IDS = {
   project_image: 'project-image',
 };
 
-// ——— Utilities ———
+// ——— Validation helpers ———
 
-function toLatinDigits(str) {
-  if (str == null) return '';
-  const map = {
-    '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
-    '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
-    '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
-    '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
-  };
-  return String(str).replace(/[۰-۹٠-٩]/g, (c) => map[c] || c);
+const DIGIT_MAP = {
+  '۰': '0', '۱': '1', '۲': '2', '۳': '3', '۴': '4',
+  '۵': '5', '۶': '6', '۷': '7', '۸': '8', '۹': '9',
+  '٠': '0', '١': '1', '٢': '2', '٣': '3', '٤': '4',
+  '٥': '5', '٦': '6', '٧': '7', '٨': '8', '٩': '9',
+};
+
+/** Convert Persian/Arabic digits to Latin only. Keeps punctuation. For text fields. */
+function convertDigitsToLatin(value) {
+  if (value == null) return '';
+  return String(value).trim().replace(/[۰-۹٠-٩]/g, (c) => DIGIT_MAP[c] || c);
 }
+
+/** Convert Persian/Arabic digits to English, remove thousands separators, trim. "۱۲۳,۴۵۶" → "123456". For numeric inputs. */
+function normalizeDigits(value) {
+  if (value == null) return '';
+  const s = convertDigitsToLatin(value);
+  return s.replace(/[,،٬]/g, '');
+}
+
+const toLatinDigits = convertDigitsToLatin;
+
+function sanitizeText(str) {
+  if (str == null) return '';
+  let s = String(str)
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<[^>]*>/g, '')
+    .replace(/[<>{}]/g, '');
+  return s.replace(/\s+/g, ' ').trim();
+}
+
+function validateNumberRange(val, min, max, options) {
+  const { integer = false, decimals = null } = options || {};
+  if (val == null || val === '' || (typeof val === 'number' && isNaN(val))) return { valid: false };
+  const n = typeof val === 'number' ? val : parseFloat(String(val).replace(/,/g, ''));
+  if (isNaN(n)) return { valid: false };
+  if (n < min || n > max) return { valid: false };
+  if (integer && !Number.isInteger(n)) return { valid: false };
+  if (decimals != null) {
+    const str = String(n);
+    const dot = str.indexOf('.');
+    if (dot !== -1 && str.length - dot - 1 > decimals) return { valid: false };
+  }
+  return { valid: true, value: integer ? Math.floor(n) : n };
+}
+
+const DANGEROUS_TITLE = /[<>{}]|<script|script>|javascript:/i;
+const ONLY_NUMBERS = /^\d+$/;
+
+/** Validates image file: mime, extension, size, dimensions. Returns { valid, message } or { valid: true }. */
+function validateImageFile(file) {
+  if (!file || !(file instanceof File)) return { valid: false, message: MSG.IMAGE_INVALID_FORMAT };
+
+  const name = (file.name || '').toLowerCase();
+  const dangerousExt = /\.(exe|bat|cmd|sh|php|js|svg)$/;
+  if (dangerousExt.test(name)) return { valid: false, message: MSG.IMAGE_DANGEROUS_EXT };
+  if (/\.(jpg|jpeg|png|webp)\.(exe|bat|cmd|sh|php|js)$/i.test(name)) return { valid: false, message: MSG.IMAGE_DANGEROUS_EXT };
+
+  const ext = name.lastIndexOf('.') >= 0 ? name.slice(name.lastIndexOf('.')) : '';
+  if (!CONFIG.IMAGE_ALLOWED_EXT.includes(ext)) return { valid: false, message: MSG.IMAGE_INVALID_FORMAT };
+  if (!CONFIG.IMAGE_ALLOWED_MIMES.includes(file.type)) return { valid: false, message: MSG.IMAGE_INVALID_FORMAT };
+
+  if (file.size > CONFIG.FILE_MAX_BYTES) return { valid: false, message: MSG.IMAGE_TOO_LARGE };
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (w < CONFIG.IMAGE_MIN_WIDTH || h < CONFIG.IMAGE_MIN_HEIGHT) {
+        resolve({ valid: false, message: MSG.IMAGE_TOO_SMALL });
+        return;
+      }
+      if (w > CONFIG.IMAGE_MAX_DIMENSION || h > CONFIG.IMAGE_MAX_DIMENSION) {
+        resolve({ valid: false, message: `ابعاد تصویر بیش از ${CONFIG.IMAGE_MAX_DIMENSION} پیکسل مجاز نیست.` });
+        return;
+      }
+      resolve({ valid: true });
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      resolve({ valid: false, message: MSG.IMAGE_INVALID_FORMAT });
+    };
+    img.src = url;
+  });
+}
+
+// ——— Utilities ———
 
 function parseNumericInput(str) {
   if (str == null || String(str).trim() === '') return NaN;
-  const s = toLatinDigits(String(str).trim()).replace(/,/g, '');
+  const s = normalizeDigits(String(str).trim());
+  if (/[eE]/.test(s)) return NaN;
   const n = parseFloat(s);
   return isNaN(n) ? NaN : n;
 }
@@ -142,31 +241,51 @@ function toPublicImageUrl(url) {
   return CONFIG.IMAGE_BASE.replace(/\/$/, '') + '/' + u.replace(/^\//, '');
 }
 
-// ——— Data collection ———
+// ——— Data collection & normalization ———
 
 function collectFormData() {
+  const rawTitle = (form.querySelector('#project-title')?.value || '').replace(/\s+/g, ' ').trim();
+  const title = sanitizeText(convertDigitsToLatin(rawTitle));
+  const rawGuarantee = (form.querySelector('#project-guarantee-type')?.value || '').replace(/\s+/g, ' ').trim();
+  const guarantee_type = sanitizeText(convertDigitsToLatin(rawGuarantee));
+
   const owner = {
-    phone: toLatinDigits(form.querySelector('#owner-phone')?.value || '').trim(),
-    full_name: (form.querySelector('#owner-full-name')?.value || '').trim(),
+    phone: convertDigitsToLatin((form.querySelector('#owner-phone')?.value || '').replace(/\s+/g, ' ').trim()),
+    full_name: sanitizeText((form.querySelector('#owner-full-name')?.value || '').replace(/\s+/g, ' ').trim()),
   };
 
-  const fundedRaw = form.querySelector('#project-funded-amount-toman')?.value;
-  const funded = parseNumericInput(fundedRaw);
-  const fundedNum = !isNaN(funded) ? funded : 0;
+  const fundedRaw = parseNumericInput(form.querySelector('#project-funded-amount-toman')?.value);
+  const fundedNum = !isNaN(fundedRaw) && fundedRaw >= 0 ? Math.floor(fundedRaw) : 0;
+
+  const mpRaw = parseNumericInput(form.querySelector('#project-monthly-profit-percent')?.value);
+  const monthly_profit_percent = !isNaN(mpRaw) ? Number(Number(mpRaw).toFixed(2)) : NaN;
 
   const durRaw = parseNumericInput(form.querySelector('#project-duration-months')?.value);
+  const duration_months = !isNaN(durRaw) ? Math.floor(durRaw) : NaN;
+
+  const ppRaw = parseNumericInput(form.querySelector('#project-profit-payout-interval-days')?.value);
+  const profit_payout_interval_days = !isNaN(ppRaw) ? Math.floor(ppRaw) : NaN;
+
+  const prRaw = parseNumericInput(form.querySelector('#project-principal-payout-interval-days')?.value);
+  const principal_payout_interval_days = !isNaN(prRaw) ? Math.floor(prRaw) : NaN;
+
   const reqRaw = parseNumericInput(form.querySelector('#project-required-amount-toman')?.value);
+  const required_amount_toman = !isNaN(reqRaw) ? Math.floor(reqRaw) : NaN;
+
+  const statusRaw = (form.querySelector('#project-status')?.value || 'REVIEW').trim().toUpperCase();
+  const visibility = (form.querySelector('#project-visibility')?.value || 'PRIVATE').trim();
+
   const project = {
-    title: (form.querySelector('#project-title')?.value || '').trim(),
-    status: (form.querySelector('#project-status')?.value || 'REVIEW').trim(),
-    monthly_profit_percent: parseNumericInput(form.querySelector('#project-monthly-profit-percent')?.value),
-    duration_months: Number.isInteger(durRaw) ? durRaw : (isNaN(durRaw) ? NaN : Math.floor(durRaw)),
-    profit_payout_interval_days: parseNumericInput(form.querySelector('#project-profit-payout-interval-days')?.value),
-    principal_payout_interval_days: parseNumericInput(form.querySelector('#project-principal-payout-interval-days')?.value),
-    guarantee_type: (form.querySelector('#project-guarantee-type')?.value || '').trim(),
+    title,
+    status: statusRaw,
+    monthly_profit_percent,
+    duration_months,
+    profit_payout_interval_days,
+    principal_payout_interval_days,
+    guarantee_type,
     funded_amount_toman: fundedNum,
-    required_amount_toman: Number.isInteger(reqRaw) ? reqRaw : (isNaN(reqRaw) ? NaN : Math.floor(reqRaw)),
-    visibility: (form.querySelector('#project-visibility')?.value || 'PRIVATE').trim(),
+    required_amount_toman,
+    visibility,
   };
 
   const fileInput = form.querySelector('#project-image');
@@ -175,9 +294,42 @@ function collectFormData() {
   return { owner, project, file };
 }
 
+/** Ensure numeric value is sent; never send NaN. */
+function safeNumber(val, fallback) {
+  const n = Number(val);
+  return isNaN(n) ? (fallback !== undefined ? fallback : 0) : n;
+}
+
+/** Normalize payload for backend: trim strings, convert numbers, remove empty optional, no NaN. */
+function normalizePayload(owner, project) {
+  const o = {
+    phone: String(owner.phone || '').trim(),
+    full_name: String(owner.full_name || '').trim(),
+  };
+  const p = {
+    title: String(project.title || '').trim(),
+    status: ['REVIEW', 'ACTIVE', 'COMPLETED'].includes(project.status) ? project.status : 'REVIEW',
+    monthly_profit_percent: safeNumber(project.monthly_profit_percent),
+    duration_months: Math.floor(safeNumber(project.duration_months, 1)),
+    profit_payout_interval_days: Math.floor(safeNumber(project.profit_payout_interval_days, 1)),
+    principal_payout_interval_days: Math.floor(safeNumber(project.principal_payout_interval_days, 1)),
+    guarantee_type: String(project.guarantee_type || '').trim(),
+    funded_amount_toman: Math.floor(safeNumber(project.funded_amount_toman, 0)),
+    required_amount_toman: Math.floor(safeNumber(project.required_amount_toman)),
+    visibility: project.visibility === 'PUBLIC' ? 'PUBLIC' : 'PRIVATE',
+  };
+  return { owner: o, project: p };
+}
+
 // ——— Validation (client-side) ———
 
-function validateForm(model) {
+const ALLOWED_STATUS = ['REVIEW', 'ACTIVE', 'COMPLETED'];
+
+/**
+ * Validates form data. Returns { isValid, errors }.
+ * Async when file is present (image dimension check).
+ */
+async function validateForm(model) {
   const errors = [];
   const { owner, project, file } = model;
 
@@ -186,52 +338,70 @@ function validateForm(model) {
     if (!owner.full_name) errors.push({ field: 'owner_full_name', message: 'نام و نام خانوادگی الزامی است.' });
   }
 
-  const titleLen = (project.title || '').length;
-  if (!project.title) errors.push({ field: 'project_title', message: 'عنوان الزامی است.' });
-  else if (titleLen < 3 || titleLen > 120) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۱۲۰ کاراکتر باشد.' });
-  if (!project.status) errors.push({ field: 'project_status', message: 'وضعیت الزامی است.' });
-  const mp = project.monthly_profit_percent;
-  if (mp == null || isNaN(mp) || mp < 1 || mp > 100) {
-    errors.push({ field: 'project_monthly_profit_percent', message: 'سود ماهانه باید بین ۱ تا ۱۰۰ درصد باشد.' });
+  const title = project.title || '';
+  if (!title) errors.push({ field: 'project_title', message: 'عنوان الزامی است.' });
+  else {
+    if (title.length < 3 || title.length > 120) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۱۲۰ کاراکتر باشد.' });
+    else if (ONLY_NUMBERS.test(title)) errors.push({ field: 'project_title', message: 'عنوان نمی‌تواند فقط عدد باشد.' });
+    else if (DANGEROUS_TITLE.test(title)) errors.push({ field: 'project_title', message: 'عنوان شامل کاراکترهای نامعتبر است.' });
   }
-  const dm = project.duration_months;
-  if (dm == null || isNaN(dm) || dm < 1 || dm > 120 || !Number.isInteger(dm)) {
-    errors.push({ field: 'project_duration_months', message: 'مدت باید عدد صحیح و بین ۱ تا ۱۲۰ ماه باشد.' });
+
+  if (!ALLOWED_STATUS.includes(project.status)) {
+    errors.push({ field: 'project_status', message: 'وضعیت نامعتبر است.' });
   }
-  const pp = project.profit_payout_interval_days;
-  if (pp == null || isNaN(pp) || pp < 1) {
-    errors.push({ field: 'project_profit_payout_interval_days', message: 'فاصله پرداخت سود الزامی است.' });
+
+  const mp = validateNumberRange(project.monthly_profit_percent, 1, 100, { decimals: 2 });
+  if (!mp.valid) errors.push({ field: 'project_monthly_profit_percent', message: 'سود ماهانه باید بین ۱ تا ۱۰۰ درصد باشد (حداکثر ۲ رقم اعشار).' });
+
+  const dm = validateNumberRange(project.duration_months, 1, 120, { integer: true });
+  if (!dm.valid) errors.push({ field: 'project_duration_months', message: 'مدت باید عدد صحیح بین ۱ تا ۱۲۰ ماه باشد.' });
+
+  const pp = validateNumberRange(project.profit_payout_interval_days, 1, 3650, { integer: true });
+  if (!pp.valid) errors.push({ field: 'project_profit_payout_interval_days', message: 'فاصله پرداخت سود الزامی است (عدد صحیح).' });
+
+  const pr = validateNumberRange(project.principal_payout_interval_days, 1, 36500, { integer: true });
+  if (!pr.valid) errors.push({ field: 'project_principal_payout_interval_days', message: 'فاصله پرداخت اصل سرمایه الزامی است (عدد صحیح).' });
+
+  if (!project.guarantee_type || project.guarantee_type.length > 120) {
+    errors.push({ field: 'project_guarantee_type', message: 'نوع ضمانت الزامی است (حداکثر ۱۲۰ کاراکتر).' });
   }
-  const pr = project.principal_payout_interval_days;
-  if (pr == null || isNaN(pr) || pr < 1) {
-    errors.push({ field: 'project_principal_payout_interval_days', message: 'فاصله پرداخت اصل سرمایه الزامی است.' });
+
+  const funded = project.funded_amount_toman;
+  const required = project.required_amount_toman;
+  const reqVal = validateNumberRange(required, CONFIG.REQUIRED_AMOUNT_MIN, CONFIG.REQUIRED_AMOUNT_MAX, { integer: true });
+  if (!reqVal.valid) errors.push({ field: 'project_required_amount_toman', message: 'مبلغ مورد نیاز باید عدد صحیح و حداقل ۱۰۰٬۰۰۰ تومان باشد.' });
+  if (funded > required) errors.push({ field: 'project_required_amount_toman', message: 'مبلغ تأمین‌شده نمی‌تواند بیشتر از مبلغ مورد نیاز باشد.' });
+
+  if (!project.visibility || !['PRIVATE', 'PUBLIC'].includes(project.visibility)) {
+    errors.push({ field: 'project_visibility', message: 'نمایش الزامی است.' });
   }
-  if (!project.guarantee_type) errors.push({ field: 'project_guarantee_type', message: 'نوع ضمانت الزامی است.' });
-  const req = project.required_amount_toman;
-  if (req == null || isNaN(req) || req < 1 || !Number.isInteger(req)) {
-    errors.push({ field: 'project_required_amount_toman', message: 'مبلغ مورد نیاز باید عدد صحیح و بیشتر از صفر باشد.' });
-  }
-  if (!project.visibility) errors.push({ field: 'project_visibility', message: 'نمایش الزامی است.' });
 
   if (file) {
-    if (!file.type.startsWith('image/')) {
-      errors.push({ field: 'project_image', message: 'فایل باید تصویر باشد.' });
-    }
-    if (file.size > CONFIG.FILE_MAX_BYTES) {
-      errors.push({ field: 'project_image', message: `حداکثر حجم فایل ${CONFIG.FILE_MAX_BYTES / 1024 / 1024} مگابایت است.` });
-    }
+    const imgResult = await validateImageFile(file);
+    if (!imgResult.valid) errors.push({ field: 'project_image', message: imgResult.message });
   }
 
-  return errors;
+  return { isValid: errors.length === 0, errors };
+}
+
+function scrollToFirstError(errors) {
+  if (!errors || errors.length === 0) return;
+  const first = errors[0];
+  const inputId = FIELD_PATH_TO_ID[first.field] || FIELD_IDS[first.field];
+  if (inputId) {
+    const el = document.getElementById(inputId);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
 }
 
 // ——— FormData builder ———
 
 /** FormData for create endpoint (owner + project only; file sent separately via upload). */
 function buildCreateFormData(owner, project) {
+  const { owner: o, project: p } = normalizePayload(owner, project);
   const fd = new FormData();
-  fd.append('owner', JSON.stringify(owner));
-  fd.append('project', JSON.stringify(project));
+  fd.append('owner', JSON.stringify(o));
+  fd.append('project', JSON.stringify(p));
   return fd;
 }
 
@@ -487,6 +657,54 @@ function setLoadingState(isLoading, progressText) {
   }
 }
 
+/** Full loading overlay: block interaction, show Persian text. */
+function setOverlayLoading(show, text) {
+  const isOn = !!show;
+  if (form) {
+    form.classList.toggle('is-loading', isOn);
+    form.setAttribute('aria-busy', String(isOn));
+  }
+  if (submitBtn) {
+    submitBtn.disabled = isOn;
+    submitBtn.setAttribute('aria-busy', String(isOn));
+    setText(submitBtn, isOn ? MSG.SUBMITTING_BTN : MSG.BTN_SUBMIT);
+  }
+  if (loadingOverlayEl) {
+    const txt = loadingOverlayEl.querySelector('.loading-overlay-text');
+    if (txt) setText(txt, text || MSG.LOADING_OVERLAY);
+    loadingOverlayEl.hidden = !isOn;
+    loadingOverlayEl.setAttribute('aria-busy', String(isOn));
+  }
+}
+
+function clearLoadingState() {
+  setOverlayLoading(false);
+  setLoadingState(false, '');
+}
+
+/** Centralized error display: message, scroll to top, remove loading. Keeps form data. */
+function showError(message, opts) {
+  clearLoadingState();
+  const { requestId } = opts || {};
+  showGlobalError({
+    type: 'system',
+    message: message || MSG.SUBMIT_ERROR,
+    requestId: requestId || null,
+    clearFields: false,
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/** Success banner. Green message. Auto-hide after 5 seconds. */
+function showSuccess(message) {
+  clearErrors();
+  successBannerEl.hidden = false;
+  setText(successBannerEl, message || MSG.SUCCESS_MESSAGE);
+  setTimeout(() => {
+    successBannerEl.hidden = true;
+  }, 5000);
+}
+
 // ——— UI ———
 
 function renderClientErrors(errors) {
@@ -501,7 +719,9 @@ const STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'د�
 function renderSuccess(resp) {
   clearErrors();
   successBannerEl.hidden = false;
-  setText(successBannerEl, `پروژه با موفقیت ایجاد شد. شناسه: ${escapeHtml(resp.id)}`);
+  const idPart = resp?.id ? ` شناسه: ${escapeHtml(resp.id)}` : '';
+  setText(successBannerEl, MSG.SUCCESS_MESSAGE + idPart);
+  setTimeout(() => { successBannerEl.hidden = true; }, 5000);
 
   const imgUrl = resp.image_url ? toPublicImageUrl(resp.image_url) : '';
 
@@ -578,7 +798,7 @@ function setupImagePreview() {
 
   imageInput.addEventListener('change', () => {
     const file = imageInput.files?.[0];
-    if (!file || !file.type.startsWith('image/')) {
+    if (!file || !CONFIG.IMAGE_ALLOWED_MIMES.includes(file.type)) {
       imagePreviewWrap.hidden = true;
       imagePreview.src = '';
       return;
@@ -616,89 +836,80 @@ function applyAppMode() {
 
 // ——— Submit handler ———
 
+let isSubmitting = false;
+
 async function handleSubmit(e) {
   e.preventDefault();
+  if (isSubmitting) return;
+  isSubmitting = true;
 
+  setOverlayLoading(true, MSG.LOADING_OVERLAY);
   const model = collectFormData();
-  const clientErrors = validateForm(model);
+  const { isValid, errors } = await validateForm(model);
 
-  if (clientErrors.length > 0) {
-    renderClientErrors(clientErrors);
+  if (!isValid) {
+    clearLoadingState();
+    renderClientErrors(errors);
+    scrollToFirstError(errors);
+    isSubmitting = false;
     return;
   }
 
   clearErrors();
   successBannerEl.hidden = true;
-  setLoadingState(true, MSG.PROGRESS_CREATE);
 
   try {
+    // 1) Create API
     const formData = buildCreateFormData(model.owner, model.project);
     const result = await callCreateProject(formData);
 
     if (result.kind === 'validation') {
-      setLoadingState(false, '');
+      showError(MSG.VALIDATION_FIX);
       showFieldErrors(result.errors);
-      showGlobalError({ type: 'validation', message: MSG.VALIDATION_FIX });
+      scrollToFirstError(result.errors);
       return;
     }
 
     if (result.kind === 'system') {
-      setLoadingState(false, '');
-      showGlobalError({
-        type: 'system',
-        message: result.message || MSG.SYSTEM_ERROR,
-        requestId: result.requestId || null,
-        clearFields: true,
-      });
+      showError(result.message || MSG.SYSTEM_ERROR, { requestId: result.requestId });
       return;
     }
 
     const created = result.data;
     const opportunityId = created?.id;
     if (!opportunityId) {
-      setLoadingState(false, '');
-      showGlobalError({ type: 'system', message: MSG.INVALID_RESPONSE, clearFields: true });
+      showError(MSG.INVALID_RESPONSE);
       return;
     }
 
-    if (!model.file) {
-      setLoadingState(false, '');
-      renderSuccess({ ...model.project, ...created });
-      clearForm(true);
-      return;
+    // 2) Upload + 3) Attach cover (if image selected)
+    let finalOpportunity = created;
+    if (model.file) {
+      const uploadResult = await requestUploadCover({ opportunityId, file: model.file });
+      if (!uploadResult.success) {
+        showError(`${MSG.CREATE_OK_UPLOAD_FAIL} (شناسه پروژه: ${opportunityId})`);
+        return;
+      }
+
+      const attachResult = await requestAttachCover({ opportunityId, imageUrl: uploadResult.url });
+      if (!attachResult.success) {
+        showError(`${MSG.UPLOAD_OK_ATTACH_FAIL} (شناسه پروژه: ${opportunityId})`);
+        return;
+      }
+      finalOpportunity = normalizeResponse(attachResult.opportunity || created);
     }
 
-    setLoadingState(true, MSG.PROGRESS_UPLOAD);
-    const uploadResult = await requestUploadCover({ opportunityId, file: model.file });
-
-    if (!uploadResult.success) {
-      setLoadingState(false, '');
-      const msgWithId = `${MSG.CREATE_OK_UPLOAD_FAIL} (شناسه پروژه: ${opportunityId})`;
-      showGlobalError({ type: 'system', message: msgWithId, clearFields: true });
-      return;
-    }
-
-    setLoadingState(true, MSG.PROGRESS_ATTACH);
-    const attachResult = await requestAttachCover({ opportunityId, imageUrl: uploadResult.url });
-
-    setLoadingState(false, '');
-
-    if (!attachResult.success) {
-      const attachFailMsg = `${MSG.UPLOAD_OK_ATTACH_FAIL} (شناسه پروژه: ${opportunityId})`;
-      showGlobalError({ type: 'system', message: attachFailMsg, clearFields: true });
-      return;
-    }
-
-    const finalOpportunity = normalizeResponse(attachResult.opportunity || created);
+    // All steps succeeded
+    clearLoadingState();
     renderSuccess({ ...model.project, ...finalOpportunity });
     clearForm(true);
+    if (imageInput) imageInput.value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch (err) {
-    setLoadingState(false, '');
-    showGlobalError({
-      type: 'system',
-      message: err.message || MSG.REQUEST_FAILED,
-      clearFields: true,
-    });
+    showError(err.message || MSG.SUBMIT_ERROR);
+  } finally {
+    clearLoadingState();
+    isSubmitting = false;
   }
 }
 
