@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل ایجاد پروژه</title>
+  <link rel="stylesheet" href="admin-create-project.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>پنل ایجاد پروژه</h1>
+  </header>
+
+  <main class="main-wrap">
+    <div id="top-errors" class="top-errors" role="alert" aria-live="polite" hidden></div>
+    <div id="success-banner" class="success-banner" role="status" aria-live="polite" hidden></div>
+    <div id="summary-card" class="summary-card-wrap" hidden></div>
+
+    <form id="create-project-form" class="create-form" novalidate>
+      <!-- مالک پروژه: برای حالت SELF_SERVICE مخفی می‌شود و از نشست گرفته می‌شود -->
+      <section id="owner-section" class="form-section">
+        <h2 class="form-section-title">مالک پروژه</h2>
+        <div class="form-row">
+          <label for="owner-phone">شماره موبایل <span class="required">*</span></label>
+          <input type="text" id="owner-phone" name="owner_phone" required
+                 placeholder="۰۹۱۲۰۰۰۰۰۰۰" autocomplete="tel" inputmode="tel">
+          <span class="field-error" id="owner-phone-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="owner-full-name">نام و نام خانوادگی <span class="required">*</span></label>
+          <input type="text" id="owner-full-name" name="owner_full_name" required
+                 placeholder="نام مالک" autocomplete="name">
+          <span class="field-error" id="owner-full-name-error" role="alert"></span>
+        </div>
+      </section>
+
+      <!-- پروژه -->
+      <section class="form-section">
+        <h2 class="form-section-title">پروژه</h2>
+        <div class="form-row">
+          <label for="project-title">عنوان <span class="required">*</span></label>
+          <input type="text" id="project-title" name="project_title" required
+                 placeholder="تست پروژه">
+          <span class="field-error" id="project-title-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-status">وضعیت <span class="required">*</span></label>
+          <select id="project-status" name="project_status" required>
+            <option value="REVIEW">در حال کارشناسی</option>
+            <option value="ACTIVE">فعال</option>
+            <option value="COMPLETED">تکمیل‌شده</option>
+          </select>
+          <span class="field-error" id="project-status-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-monthly-profit-percent">سود ماهانه (درصد) <span class="required">*</span></label>
+          <input type="text" id="project-monthly-profit-percent" name="project_monthly_profit_percent"
+                 required min="0" max="1000" step="0.01" placeholder="۱۸" inputmode="decimal" autocomplete="off">
+          <span class="field-error" id="project-monthly-profit-percent-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-duration-months">مدت (ماه) <span class="required">*</span></label>
+          <input type="text" id="project-duration-months" name="project_duration_months"
+                 required min="1" max="120" placeholder="۱۲" inputmode="numeric" autocomplete="off">
+          <span class="field-error" id="project-duration-months-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-profit-payout-interval-days">فاصله پرداخت سود (روز) <span class="required">*</span></label>
+          <input type="text" id="project-profit-payout-interval-days" name="project_profit_payout_interval_days"
+                 required min="1" placeholder="۹۰" inputmode="numeric" autocomplete="off">
+          <span class="field-error" id="project-profit-payout-interval-days-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-principal-payout-interval-days">فاصله پرداخت اصل سرمایه (روز) <span class="required">*</span></label>
+          <input type="text" id="project-principal-payout-interval-days" name="project_principal_payout_interval_days"
+                 required min="1" placeholder="۳۶۰" inputmode="numeric" autocomplete="off">
+          <span class="field-error" id="project-principal-payout-interval-days-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-guarantee-type">نوع ضمانت <span class="required">*</span></label>
+          <input type="text" id="project-guarantee-type" name="project_guarantee_type" required
+                 placeholder="وثیقه ملکی">
+          <span class="field-error" id="project-guarantee-type-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-funded-amount-toman">مبلغ تأمین‌شده (تومان)</label>
+          <input type="text" id="project-funded-amount-toman" name="project_funded_amount_toman"
+                 value="۰" min="0" disabled title="برای پروژه جدید همیشه صفر است">
+          <span class="field-hint">غیرفعال؛ برای پروژه‌های جدید همیشه صفر است.</span>
+        </div>
+        <div class="form-row">
+          <label for="project-required-amount-toman">مبلغ مورد نیاز (تومان) <span class="required">*</span></label>
+          <input type="text" id="project-required-amount-toman" name="project_required_amount_toman"
+                 required min="0" placeholder="۲۰۰۰۰۰۰۰۰۰۰" inputmode="numeric" autocomplete="off">
+          <span class="field-error" id="project-required-amount-toman-error" role="alert"></span>
+        </div>
+        <div class="form-row">
+          <label for="project-visibility">نمایش <span class="required">*</span></label>
+          <select id="project-visibility" name="project_visibility" required>
+            <option value="PRIVATE">خصوصی</option>
+            <option value="PUBLIC">عمومی</option>
+          </select>
+          <span class="field-error" id="project-visibility-error" role="alert"></span>
+        </div>
+      </section>
+
+      <!-- تصویر پروژه -->
+      <section class="form-section">
+        <h2 class="form-section-title">تصویر پروژه</h2>
+        <div class="form-row">
+          <label for="project-image">تصویر (اختیاری)</label>
+          <input type="file" id="project-image" name="project_image" accept="image/*">
+          <span class="field-hint">حداکثر ۲ مگابایت. فرمت: تصویر</span>
+          <span class="field-error" id="project-image-error" role="alert"></span>
+        </div>
+        <div id="image-preview-wrap" class="image-preview-wrap" hidden>
+          <img id="image-preview" src="" alt="پیش‌نمایش" class="image-preview">
+        </div>
+      </section>
+
+      <div class="form-actions">
+        <button type="submit" id="submit-btn" class="btn btn-primary">ایجاد پروژه</button>
+        <button type="reset" id="reset-btn" class="btn btn-secondary">پاک کردن</button>
+      </div>
+    </form>
+  </main>
+
+  <footer class="footer">پنل ایجاد پروژه — B2Wall</footer>
+
+  <script src="admin-create-project.js"></script>
+</body>
+</html>
