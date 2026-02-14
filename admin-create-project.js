@@ -8,19 +8,56 @@
 const CONFIG = {
   APP_MODE: 'WITH_OWNER', // or 'SELF_SERVICE'
   N8N_BASE: 'https://n8nb2wall.darkube.app',
-  get WEBHOOK_URL() { return `${this.N8N_BASE}/webhook/create`; },
+  get CREATE_URL() { return `${this.N8N_BASE}/webhook/create`; },
+  get UPLOAD_URL() { return `${this.N8N_BASE}/webhook/upload`; },
+  get ATTACH_COVER_URL() { return `${this.N8N_BASE}/webhook/opportunities/attach-cover`; },
   FILE_MAX_BYTES: 2 * 1024 * 1024, // 2MB
   CLEAR_OWNER_ON_SUCCESS: false,
   IMAGE_BASE: 'https://b2wall.storage.c2.liara.space/',
+  REQUEST_TIMEOUT_MS: 20000,
+};
+
+// ——— UI strings (Persian) ———
+const MSG = {
+  VALIDATION_FIX: 'لطفاً فیلدهای ضروری را تکمیل کنید.',
+  SYSTEM_ERROR: 'مشکلی در سرور رخ داد. لطفاً دوباره تلاش کنید.',
+  REQUEST_FAILED: 'ارسال درخواست ناموفق بود.',
+  REQUEST_TIMEOUT: 'زمان درخواست به پایان رسید. لطفاً دوباره تلاش کنید.',
+  INVALID_RESPONSE: 'پاسخ سرور نامعتبر است.',
+  TRACKING_CODE: 'کد پیگیری',
+  COPY: 'کپی',
+  COPIED: 'کپی شد',
+  PROGRESS_CREATE: 'در حال ایجاد پروژه...',
+  PROGRESS_UPLOAD: 'در حال آپلود تصویر...',
+  PROGRESS_ATTACH: 'در حال ثبت تصویر...',
+  CREATE_OK_UPLOAD_FAIL: 'پروژه ایجاد شد اما آپلود تصویر انجام نشد. لطفاً دوباره تلاش کنید.',
+  UPLOAD_OK_ATTACH_FAIL: 'آپلود انجام شد اما ثبت تصویر روی پروژه انجام نشد. لطفاً دوباره تلاش کنید.',
 };
 
 // Persian digits for display
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
 
+// Server field path → input element ID
+const FIELD_PATH_TO_ID = {
+  'owner.phone': 'owner-phone',
+  'owner.full_name': 'owner-full-name',
+  'project.title': 'project-title',
+  'project.status': 'project-status',
+  'project.monthly_profit_percent': 'project-monthly-profit-percent',
+  'project.duration_months': 'project-duration-months',
+  'project.profit_payout_interval_days': 'project-profit-payout-interval-days',
+  'project.principal_payout_interval_days': 'project-principal-payout-interval-days',
+  'project.guarantee_type': 'project-guarantee-type',
+  'project.required_amount_toman': 'project-required-amount-toman',
+  'project.visibility': 'project-visibility',
+  'project.image': 'project-image',
+};
+
 // ——— DOM refs ———
 const form = document.getElementById('create-project-form');
 const submitBtn = document.getElementById('submit-btn');
-const topErrorsEl = document.getElementById('top-errors');
+const progressTextEl = document.getElementById('progress-text');
+const globalErrorEl = document.getElementById('global-error');
 const successBannerEl = document.getElementById('success-banner');
 const summaryCardWrap = document.getElementById('summary-card');
 const ownerSection = document.getElementById('owner-section');
@@ -28,6 +65,7 @@ const imageInput = document.getElementById('project-image');
 const imagePreviewWrap = document.getElementById('image-preview-wrap');
 const imagePreview = document.getElementById('image-preview');
 
+// Client-side validation field mapping (legacy)
 const FIELD_IDS = {
   owner_phone: 'owner-phone',
   owner_full_name: 'owner-full-name',
@@ -45,7 +83,6 @@ const FIELD_IDS = {
 
 // ——— Utilities ———
 
-/** Convert Persian/Arabic digits to Latin for parsing. */
 function toLatinDigits(str) {
   if (str == null) return '';
   const map = {
@@ -57,7 +94,6 @@ function toLatinDigits(str) {
   return String(str).replace(/[۰-۹٠-٩]/g, (c) => map[c] || c);
 }
 
-/** Parse numeric input (Persian/English digits) to number. */
 function parseNumericInput(str) {
   if (str == null || String(str).trim() === '') return NaN;
   const s = toLatinDigits(String(str).trim()).replace(/,/g, '');
@@ -65,7 +101,6 @@ function parseNumericInput(str) {
   return isNaN(n) ? NaN : n;
 }
 
-/** Escape text for safe display (XSS prevention). */
 function escapeHtml(str) {
   if (str == null) return '';
   const div = document.createElement('div');
@@ -78,13 +113,11 @@ function setText(el, text) {
   el.textContent = text != null ? String(text) : '';
 }
 
-/** Format number with Persian digits for display. */
 function toPersianDigits(n) {
   if (n == null || n === '') return '—';
   return String(n).replace(/\d/g, (d) => PERSIAN_DIGITS[+d]);
 }
 
-/** Format toman for display. */
 function formatToman(num) {
   if (num == null || isNaN(num)) return '—';
   const n = Number(num);
@@ -133,7 +166,7 @@ function collectFormData() {
   return { owner, project, file };
 }
 
-// ——— Validation ———
+// ——— Validation (client-side) ———
 
 function validateForm(model) {
   const errors = [];
@@ -183,15 +216,164 @@ function validateForm(model) {
 
 // ——— FormData builder ———
 
-function buildFormData(owner, project, file) {
+/** FormData for create endpoint (owner + project only; file sent separately via upload). */
+function buildCreateFormData(owner, project) {
   const fd = new FormData();
   fd.append('owner', JSON.stringify(owner));
   fd.append('project', JSON.stringify(project));
-  if (file) fd.append('file', file);
   return fd;
 }
 
-// ——— API ———
+// ——— Centralized request wrapper ———
+
+/**
+ * Calls the create webhook. Returns normalized result:
+ * - { kind: "success", data }
+ * - { kind: "validation", errors }
+ * - { kind: "system", message, requestId?, raw? }
+ */
+async function callCreateProject(formData) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(CONFIG.CREATE_URL, {
+      method: 'POST',
+      body: formData,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    let bodyText;
+    try {
+      bodyText = await res.text();
+    } catch {
+      return { kind: 'system', message: MSG.INVALID_RESPONSE, raw: null };
+    }
+
+    let json = null;
+    try {
+      json = bodyText ? JSON.parse(bodyText) : null;
+    } catch {
+      return {
+        kind: 'system',
+        message: MSG.INVALID_RESPONSE,
+        requestId: null,
+        raw: bodyText,
+      };
+    }
+
+    // HTTP 400 + errors[] → validation
+    if (res.status === 400 && json && Array.isArray(json.errors)) {
+      return { kind: 'validation', errors: json.errors };
+    }
+
+    // ok:false + error object → system
+    if (json && json.ok === false && json.error && typeof json.error === 'object') {
+      const err = json.error;
+      return {
+        kind: 'system',
+        message: err.message || MSG.SYSTEM_ERROR,
+        requestId: err.request_id || null,
+        raw: bodyText,
+      };
+    }
+
+    // Success (2xx)
+    if (res.ok) {
+      const raw = json?.opportunity ?? json ?? {};
+      const data = normalizeCreateResponse(raw, json);
+      return { kind: 'success', data };
+    }
+
+    // Other HTTP errors
+    const msg = json?.message || json?.error || (typeof json?.error === 'string' ? json.error : null) || `HTTP ${res.status}`;
+    const reqId = json?.error?.request_id || json?.request_id || null;
+    return {
+      kind: 'system',
+      message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR,
+      requestId: reqId,
+      raw: bodyText,
+    };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      return { kind: 'system', message: MSG.REQUEST_TIMEOUT };
+    }
+    return {
+      kind: 'system',
+      message: err.message || MSG.REQUEST_FAILED,
+      requestId: null,
+      raw: null,
+    };
+  }
+}
+
+function normalizeCreateResponse(opportunity, fullJson) {
+  if (!opportunity) return { id: null, image_url: '' };
+  const id = opportunity.id ?? opportunity.project_id ?? fullJson?.id ?? null;
+  const imageUrl = opportunity.image_url ?? opportunity.imageUrl ?? '';
+  return { ...opportunity, id, image_url: imageUrl };
+}
+
+/** Generic fetch with timeout. Returns { ok, status, json, text } or throws. */
+async function fetchWithTimeout(url, opts) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(url, { ...opts, signal: controller.signal });
+    clearTimeout(timeoutId);
+    const text = await res.text();
+    let json = null;
+    try {
+      json = text ? JSON.parse(text) : null;
+    } catch { /* ignore */ }
+    return { ok: res.ok, status: res.status, json, text };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    throw err;
+  }
+}
+
+/** Upload cover image. Returns { success: true, url } or { success: false, message }. */
+async function requestUploadCover({ opportunityId, file }) {
+  const fd = new FormData();
+  fd.append('entity_id', opportunityId);
+  fd.append('context', 'projects');
+  fd.append('entity_type', 'opportunity');
+  fd.append('file_type', 'cover');
+  fd.append('visibility', 'PUBLIC');
+  fd.append('file', file);
+  try {
+    const { ok, status, json } = await fetchWithTimeout(CONFIG.UPLOAD_URL, {
+      method: 'POST',
+      body: fd,
+    });
+    if (ok && json?.url) return { success: true, url: json.url };
+    const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
+    return { success: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
+  } catch (err) {
+    if (err.name === 'AbortError') return { success: false, message: MSG.REQUEST_TIMEOUT };
+    return { success: false, message: err.message || MSG.REQUEST_FAILED };
+  }
+}
+
+/** Attach cover URL to opportunity. Returns { success: true, opportunity } or { success: false, message }. */
+async function requestAttachCover({ opportunityId, imageUrl }) {
+  try {
+    const { ok, json } = await fetchWithTimeout(CONFIG.ATTACH_COVER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ opportunity_id: opportunityId, image_url: imageUrl }),
+    });
+    if (ok && json?.opportunity) return { success: true, opportunity: json.opportunity };
+    const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
+    return { success: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR };
+  } catch (err) {
+    if (err.name === 'AbortError') return { success: false, message: MSG.REQUEST_TIMEOUT };
+    return { success: false, message: err.message || MSG.REQUEST_FAILED };
+  }
+}
 
 function normalizeResponse(resp) {
   if (!resp) return { id: null, image_url: '' };
@@ -200,72 +382,115 @@ function normalizeResponse(resp) {
   return { ...resp, id, image_url: imageUrl };
 }
 
-async function submitCreateProject(formData) {
-  const res = await fetch(CONFIG.WEBHOOK_URL, {
-    method: 'POST',
-    body: formData,
-  });
+// ——— Error / loading helpers ———
 
-  if (!res.ok) {
-    let msg = `خطای HTTP ${res.status}`;
-    try {
-      const body = await res.text();
-      const parsed = JSON.parse(body);
-      msg = parsed.message || parsed.error || body || msg;
-    } catch {
-      msg = (await res.text()) || msg;
+function clearErrors() {
+  document.querySelectorAll('.field-error').forEach((el) => { setText(el, ''); });
+  document.querySelectorAll('.is-invalid').forEach((el) => el.classList.remove('is-invalid'));
+  document.querySelectorAll('.error').forEach((el) => el.classList.remove('error'));
+  if (globalErrorEl) {
+    globalErrorEl.hidden = true;
+    globalErrorEl.innerHTML = '';
+  }
+}
+
+function showFieldErrors(errors) {
+  clearErrors();
+  if (!errors || errors.length === 0) return;
+
+  errors.forEach((item) => {
+    const field = item.field;
+    const message = item.message || '';
+    const inputId = FIELD_PATH_TO_ID[field] || FIELD_IDS[field];
+    if (inputId) {
+      const input = document.getElementById(inputId);
+      const errorEl = document.getElementById(inputId + '-error');
+      if (input) {
+        input.classList.add('is-invalid', 'error');
+      }
+      if (errorEl) setText(errorEl, message);
     }
-    throw new Error(msg);
+  });
+}
+
+function clearFieldErrorsOnly() {
+  document.querySelectorAll('.field-error').forEach((el) => { setText(el, ''); });
+  document.querySelectorAll('.is-invalid, .error').forEach((el) => el.classList.remove('is-invalid', 'error'));
+}
+
+function showGlobalError(opts) {
+  const { type, message, requestId, clearFields } = opts || {};
+  if (!globalErrorEl) return;
+  if (!message) {
+    globalErrorEl.hidden = true;
+    globalErrorEl.innerHTML = '';
+    return;
+  }
+  if (clearFields) clearFieldErrorsOnly();
+
+  const msgSpan = document.createElement('span');
+  msgSpan.className = 'alert-message';
+  msgSpan.textContent = message;
+
+  const container = document.createElement('div');
+  container.className = 'alert-content';
+  container.appendChild(msgSpan);
+
+  if (requestId) {
+    const reqRow = document.createElement('div');
+    reqRow.className = 'alert-request-id';
+    const reqLabel = document.createElement('span');
+    reqLabel.textContent = `${MSG.TRACKING_CODE}: `;
+    const reqVal = document.createElement('code');
+    reqVal.textContent = requestId;
+    const copyBtn = document.createElement('button');
+    copyBtn.type = 'button';
+    copyBtn.className = 'btn-copy';
+    copyBtn.textContent = MSG.COPY;
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(requestId).then(() => {
+        copyBtn.textContent = MSG.COPIED;
+        copyBtn.disabled = true;
+        setTimeout(() => {
+          copyBtn.textContent = MSG.COPY;
+          copyBtn.disabled = false;
+        }, 2000);
+      });
+    });
+    reqRow.appendChild(reqLabel);
+    reqRow.appendChild(reqVal);
+    reqRow.appendChild(copyBtn);
+    container.appendChild(reqRow);
   }
 
-  let json;
-  try {
-    json = await res.json();
-  } catch {
-    throw new Error('پاسخ سرور نامعتبر است.');
-  }
+  globalErrorEl.innerHTML = '';
+  globalErrorEl.appendChild(container);
+  globalErrorEl.hidden = false;
+}
 
-  return normalizeResponse(json);
+function setLoadingState(isLoading, progressText) {
+  if (submitBtn) submitBtn.disabled = !!isLoading;
+  if (progressTextEl) {
+    setText(progressTextEl, progressText || '');
+    progressTextEl.hidden = !progressText;
+  }
 }
 
 // ——— UI ———
 
-function clearFieldErrors() {
-  document.querySelectorAll('.field-error').forEach((el) => { setText(el, ''); });
-  document.querySelectorAll('.error').forEach((el) => el.classList.remove('error'));
-}
-
-function renderErrors(errors) {
-  clearFieldErrors();
-
-  if (!errors || errors.length === 0) {
-    topErrorsEl.hidden = true;
-    setText(topErrorsEl, '');
-    return;
+function renderClientErrors(errors) {
+  showFieldErrors(errors);
+  if (errors && errors.length > 0) {
+    showGlobalError({ type: 'validation', message: MSG.VALIDATION_FIX });
   }
-
-  const messages = [];
-  errors.forEach(({ field, message }) => {
-    const inputId = FIELD_IDS[field];
-    if (inputId) {
-      const input = document.getElementById(inputId);
-      const errorEl = document.getElementById(inputId + '-error');
-      if (input) input.classList.add('error');
-      if (errorEl) setText(errorEl, message);
-    }
-    messages.push(message);
-  });
-
-  setText(topErrorsEl, messages.join(' '));
-  topErrorsEl.hidden = false;
 }
 
 const STATUS_LABELS = { REVIEW: 'در حال کارشناسی', ACTIVE: 'فعال', COMPLETED: 'تکمیل‌شده' };
 
 function renderSuccess(resp) {
+  clearErrors();
   successBannerEl.hidden = false;
   setText(successBannerEl, `پروژه با موفقیت ایجاد شد. شناسه: ${escapeHtml(resp.id)}`);
-  topErrorsEl.hidden = true;
 
   const imgUrl = resp.image_url ? toPublicImageUrl(resp.image_url) : '';
 
@@ -326,8 +551,7 @@ function clearForm(keepOwner) {
     if (savedName != null) form.querySelector('#owner-full-name').value = savedName;
   }
 
-  clearFieldErrors();
-  topErrorsEl.hidden = true;
+  clearErrors();
   successBannerEl.hidden = true;
   summaryCardWrap.hidden = true;
   summaryCardWrap.innerHTML = '';
@@ -355,6 +579,22 @@ function setupImagePreview() {
   });
 }
 
+function setupClearErrorsOnInput() {
+  const inputs = form.querySelectorAll('input, select');
+  inputs.forEach((input) => {
+    input.addEventListener('input', clearFieldErrorForInput);
+    input.addEventListener('change', clearFieldErrorForInput);
+  });
+}
+
+function clearFieldErrorForInput(e) {
+  const input = e.target;
+  if (!input || !input.id) return;
+  input.classList.remove('is-invalid', 'error');
+  const errorEl = document.getElementById(input.id + '-error');
+  if (errorEl) setText(errorEl, '');
+}
+
 function applyAppMode() {
   if (CONFIG.APP_MODE === 'SELF_SERVICE' && ownerSection) {
     ownerSection.hidden = true;
@@ -363,36 +603,99 @@ function applyAppMode() {
   }
 }
 
+// ——— Submit handler ———
+
 async function handleSubmit(e) {
   e.preventDefault();
 
   const model = collectFormData();
-  const errors = validateForm(model);
+  const clientErrors = validateForm(model);
 
-  if (errors.length > 0) {
-    renderErrors(errors);
+  if (clientErrors.length > 0) {
+    renderClientErrors(clientErrors);
     return;
   }
 
-  renderErrors([]);
-  submitBtn.disabled = true;
+  clearErrors();
   successBannerEl.hidden = true;
+  setLoadingState(true, MSG.PROGRESS_CREATE);
 
   try {
-    const formData = buildFormData(model.owner, model.project, model.file);
-    const resp = await submitCreateProject(formData);
-    renderSuccess({ ...model.project, ...resp });
+    const formData = buildCreateFormData(model.owner, model.project);
+    const result = await callCreateProject(formData);
+
+    if (result.kind === 'validation') {
+      setLoadingState(false, '');
+      showFieldErrors(result.errors);
+      showGlobalError({ type: 'validation', message: MSG.VALIDATION_FIX });
+      return;
+    }
+
+    if (result.kind === 'system') {
+      setLoadingState(false, '');
+      showGlobalError({
+        type: 'system',
+        message: result.message || MSG.SYSTEM_ERROR,
+        requestId: result.requestId || null,
+        clearFields: true,
+      });
+      return;
+    }
+
+    const created = result.data;
+    const opportunityId = created?.id;
+    if (!opportunityId) {
+      setLoadingState(false, '');
+      showGlobalError({ type: 'system', message: MSG.INVALID_RESPONSE, clearFields: true });
+      return;
+    }
+
+    if (!model.file) {
+      setLoadingState(false, '');
+      renderSuccess({ ...model.project, ...created });
+      clearForm(true);
+      return;
+    }
+
+    setLoadingState(true, MSG.PROGRESS_UPLOAD);
+    const uploadResult = await requestUploadCover({ opportunityId, file: model.file });
+
+    if (!uploadResult.success) {
+      setLoadingState(false, '');
+      const msgWithId = `${MSG.CREATE_OK_UPLOAD_FAIL} (شناسه پروژه: ${opportunityId})`;
+      showGlobalError({ type: 'system', message: msgWithId, clearFields: true });
+      return;
+    }
+
+    setLoadingState(true, MSG.PROGRESS_ATTACH);
+    const attachResult = await requestAttachCover({ opportunityId, imageUrl: uploadResult.url });
+
+    setLoadingState(false, '');
+
+    if (!attachResult.success) {
+      showGlobalError({ type: 'system', message: MSG.UPLOAD_OK_ATTACH_FAIL, clearFields: true });
+      return;
+    }
+
+    const finalOpportunity = normalizeResponse(attachResult.opportunity || created);
+    renderSuccess({ ...model.project, ...finalOpportunity });
     clearForm(true);
   } catch (err) {
-    renderErrors([{ field: null, message: err.message || 'ارسال درخواست ناموفق بود.' }]);
-  } finally {
-    submitBtn.disabled = false;
+    setLoadingState(false, '');
+    showGlobalError({
+      type: 'system',
+      message: err.message || MSG.REQUEST_FAILED,
+      clearFields: true,
+    });
   }
 }
+
+// ——— Init ———
 
 function init() {
   applyAppMode();
   setupImagePreview();
+  setupClearErrorsOnInput();
 
   if (form) {
     form.addEventListener('submit', handleSubmit);

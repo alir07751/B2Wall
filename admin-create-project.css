@@ -69,17 +69,69 @@ body {
 }
 
 /* Top-level messages */
-.top-errors,
 .success-banner {
   padding: var(--space-12) var(--space-16);
   border-radius: var(--radius);
   margin-bottom: var(--space-16);
 }
 
-.top-errors {
+/* Alert banner (global errors) */
+.alert {
+  padding: var(--space-12) var(--space-16);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-16);
+}
+
+.alert-error {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: var(--error);
+}
+
+.alert-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.alert-message {
+  display: block;
+}
+
+.alert-request-id {
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+  font-size: 0.9rem;
+}
+
+.alert-request-id code {
+  font-family: ui-monospace, monospace;
+  font-size: 0.85rem;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.btn-copy {
+  padding: 4px 10px;
+  font-family: inherit;
+  font-size: 0.8rem;
+  border: 1px solid var(--gray-border);
+  border-radius: 6px;
+  background: var(--white);
+  color: var(--primary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-copy:hover {
+  background: var(--gray-bg);
+}
+
+.btn-copy:disabled {
+  opacity: 0.7;
+  cursor: default;
 }
 
 .success-banner {
@@ -159,11 +211,14 @@ body {
 }
 
 .form-row input.error,
-.form-row select.error {
+.form-row select.error,
+.form-row input.is-invalid,
+.form-row select.is-invalid {
   border-color: var(--error);
 }
 
-.field-error {
+.field-error,
+.error-text {
   display: block;
   margin-top: var(--space-8);
   font-size: 0.8rem;
@@ -193,8 +248,16 @@ body {
 /* Form actions */
 .form-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-12);
   margin-top: var(--space-24);
+}
+
+.progress-text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--gray-text);
+  flex-basis: 100%;
 }
 
 .btn {

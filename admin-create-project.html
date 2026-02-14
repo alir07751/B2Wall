@@ -12,7 +12,7 @@
   </header>
 
   <main class="main-wrap">
-    <div id="top-errors" class="top-errors" role="alert" aria-live="polite" hidden></div>
+    <div id="global-error" class="alert alert-error" role="alert" aria-live="polite" hidden></div>
     <div id="success-banner" class="success-banner" role="status" aria-live="polite" hidden></div>
     <div id="summary-card" class="summary-card-wrap" hidden></div>
 
@@ -119,6 +119,7 @@
       </section>
 
       <div class="form-actions">
+        <p id="progress-text" class="progress-text" aria-live="polite" hidden></p>
         <button type="submit" id="submit-btn" class="btn btn-primary">ایجاد پروژه</button>
         <button type="reset" id="reset-btn" class="btn btn-secondary">پاک کردن</button>
       </div>
