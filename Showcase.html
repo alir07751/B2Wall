@@ -31,23 +31,25 @@
     }
 
     *, *::before, *::after { box-sizing: border-box; }
-    body { margin: 0; font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif; background: var(--gray-bg); color: var(--primary); line-height: 1.45; min-height: 100vh; }
+    html { overflow-x: hidden; }
+    body { margin: 0; font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif; background: var(--gray-bg); color: var(--primary); line-height: 1.45; min-height: 100vh; overflow-x: hidden; }
 
     .page-header { padding: var(--space-24) var(--space-16); text-align: center; background: var(--white); border-bottom: 1px solid var(--gray-border); }
     .page-header h1 { margin: 0; font-size: 1.75rem; font-weight: 700; color: var(--primary); }
     .page-header p { margin: var(--space-8) 0 0; font-size: 0.95rem; color: var(--gray-text); }
 
-    .tabs-wrap { padding: var(--space-16); background: var(--white); border-bottom: 1px solid var(--gray-border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    .tabs { display: inline-flex; gap: 0; min-width: min-content; border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 3px; background: var(--gray-bg); }
+    .tabs-wrap { padding: var(--space-12) var(--space-16); background: var(--white); border-bottom: 1px solid var(--gray-border); overflow-x: auto; -webkit-overflow-scrolling: touch; overflow-y: hidden; }
+    .tabs-wrap::-webkit-scrollbar { height: 4px; }
+    .tabs { display: inline-flex; gap: 0; min-width: min-content; border: 1px solid var(--gray-border); border-radius: var(--radius); padding: 3px; background: var(--gray-bg); padding-inline-end: var(--space-16); }
     .tabs button { font-family: "Vazirmatn", "Segoe UI", Tahoma, sans-serif; padding: var(--space-8) var(--space-16); border: none; border-radius: 12px; background: transparent; color: var(--gray-text); font-size: 0.9rem; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background .15s, color .15s; }
     .tabs button:hover { color: var(--primary); background: var(--white); }
     .tabs button.active { background: var(--white); color: var(--primary); box-shadow: var(--shadow); }
     .tabs button:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-    .main-wrap { max-width: 1200px; margin: 0 auto; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: var(--space-16); padding: var(--space-16); }
+    .main-wrap { max-width: 1200px; margin: 0 auto; width: 100%; padding-inline: 0; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 360px), 1fr)); gap: var(--space-16); padding: var(--space-16); justify-items: center; }
 
-    .card { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: box-shadow .2s, border-color .2s; display: flex; flex-direction: column; min-height: 0; }
+    .card { background: var(--white); border: 1px solid var(--gray-border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); transition: box-shadow .2s, border-color .2s; display: flex; flex-direction: column; min-height: 0; width: 100%; max-width: 100%; }
     .card:hover { box-shadow: var(--shadow-hover); border-color: var(--gray-text); }
     .card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
@@ -74,7 +76,20 @@
     .card-amounts .funded { color: var(--primary); }
     .card-amounts .required { color: var(--gray-text); }
 
+    .search-input { width: 100%; max-width: 320px; padding: var(--space-12); font-family: inherit; font-size: 0.95rem; border: 1px solid var(--gray-border); border-radius: 8px; }
+    .empty-state { grid-column: 1 / -1; }
+
     .footer { padding: var(--space-16); text-align: center; font-size: 0.8rem; color: var(--gray-text); border-top: 1px solid var(--gray-border); }
+
+    @media (max-width: 768px) {
+      .page-header { padding: var(--space-16) var(--space-12); }
+      .page-header h1 { font-size: 1.35rem; }
+      .page-header p { font-size: 0.875rem; }
+      .tabs-wrap { padding-inline: var(--space-12); }
+      .tabs button { padding: var(--space-8) var(--space-12); font-size: 0.85rem; }
+      .grid { grid-template-columns: 1fr; padding: var(--space-12); justify-items: center; gap: var(--space-12); }
+      .card { max-width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -95,7 +110,11 @@
   <div class="main-wrap">
     <p id="loading" style="display:none; text-align:center; padding:2rem; color:var(--gray-text);">در حال بارگذاری…</p>
     <p id="error" style="display:none; text-align:center; padding:2rem; color:#b91c1c;"></p>
+    <div class="search-wrap" style="padding:0 var(--space-16) var(--space-12);">
+      <input type="text" id="search" class="search-input" placeholder="جستجو در عنوان و مکان..." aria-label="جستجو">
+    </div>
     <main class="grid" id="grid" aria-live="polite"></main>
+    <p id="empty-state" class="empty-state" style="display:none; text-align:center; padding:2rem; color:var(--gray-text);">فرصتی یافت نشد.</p>
   </div>
 
   <footer class="footer">ویترین فرصت‌های سرمایه‌گذاری</footer>
@@ -143,7 +162,17 @@
     }
 
     var API_URL = 'https://n8nb2wall.darkube.app/webhook/opportunities';
+    var IMAGE_BASE = 'https://b2wall.storage.c2.liara.space/';
     var DATA = [];
+
+    function normalizeStatus(raw) {
+      var s = (raw || '').toString().toUpperCase();
+      if (s === 'ACTIVE') return 'FUNDING';
+      if (s === 'FUNDING' || s === 'REVIEW' || s === 'COMPLETED') return s;
+      var lower = (raw || '').toString().toLowerCase();
+      var map = { open: 'FUNDING', funding: 'FUNDING', active: 'FUNDING', review: 'REVIEW', completed: 'COMPLETED', close: 'COMPLETED', closed: 'COMPLETED' };
+      return map[lower] || 'FUNDING';
+    }
 
     function toPublicUrl(u) {
       if (!u) return '';
@@ -156,16 +185,13 @@
         }
         return url;
       }
-      if (url.indexOf('drive.google.com') === 0) return 'https://' + url;
-      if (url.indexOf('//') === 0) return 'https:' + url;
-      if (url.indexOf('/') === 0) return window.location.origin + url;
-      return window.location.origin + '/' + url.replace(/^\//, '');
+      var base = IMAGE_BASE.replace(/\/$/, '');
+      var path = url.replace(/^\//, '');
+      return base + (path ? '/' + path : '');
     }
 
     function normalizeItem(raw, index) {
-      var s = (raw.status || '').toString().toLowerCase();
-      var statusMap = { open: 'FUNDING', funding: 'FUNDING', review: 'REVIEW', completed: 'COMPLETED', close: 'COMPLETED', closed: 'COMPLETED', coming_soon: 'COMING_SOON' };
-      var status = raw.status && /^[A-Z_]+$/.test(raw.status) ? raw.status : (statusMap[s] || 'FUNDING');
+      var status = normalizeStatus(raw.status);
 
       var funded = raw.fundedAmountToman != null ? Number(raw.fundedAmountToman) : (raw.capital_raised != null ? Number(raw.capital_raised) : 0);
       var required = raw.requiredAmountToman != null ? Number(raw.requiredAmountToman) : (raw.capital_required != null ? Number(raw.capital_required) : 0);
@@ -186,9 +212,12 @@
       var principalDays = raw.principalPayoutIntervalDays != null ? Number(raw.principalPayoutIntervalDays) : (dur * 30);
       var guarantee = raw.guaranteeType || (Array.isArray(raw.guarantees) ? raw.guarantees.join('، ') : (raw.guarantees || '—'));
 
+      var locParts = [raw.state, raw.city, raw.country].filter(Boolean);
+      var location = locParts.length ? locParts.join(' ') : '';
       return {
         id: raw.id != null ? raw.id : index + 1,
         title: raw.title || '—',
+        location: location,
         status: status,
         monthlyProfitPercent: profitPct,
         planProfitPercent: raw.planProfitPercent != null ? Number(raw.planProfitPercent) : null,
@@ -229,7 +258,7 @@
           var arr = extractArray(json);
           DATA = arr.map(function(item, i) { return normalizeItem(item, i); });
           if (loading) loading.style.display = 'none';
-          if (callback) callback();
+          if (callback) callback(true);
         })
         .catch(function(err) {
           if (loading) loading.style.display = 'none';
@@ -238,7 +267,7 @@
             error.style.display = 'block';
           }
           DATA = [];
-          if (callback) callback();
+          if (callback) callback(false);
         });
     }
 
@@ -317,11 +346,22 @@
       return card;
     }
 
+    function matchesSearch(item, q) {
+      if (!q) return true;
+      var t = (item.title || '').toLowerCase();
+      var loc = (item.location || '').toLowerCase();
+      var ql = q.toLowerCase();
+      return t.indexOf(ql) !== -1 || loc.indexOf(ql) !== -1;
+    }
+
     function applyFilterSort() {
       var activeBtn = document.querySelector('.tabs button.active');
-      var statusFilter = activeBtn ? (activeBtn.dataset.status ?? '') : '';
+      var statusFilter = activeBtn ? (activeBtn.dataset.status || '') : '';
+      var searchEl = document.getElementById('search');
+      var searchQ = searchEl ? (searchEl.value || '').trim() : '';
       var list = DATA.slice();
       if (statusFilter) list = list.filter(function(i) { return i.status === statusFilter; });
+      if (searchQ) list = list.filter(function(i) { return matchesSearch(i, searchQ); });
       list.sort(function(a, b) {
         var order = (STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0);
         if (order !== 0) return order;
@@ -330,11 +370,21 @@
       return list;
     }
 
-    function render() {
+    var loadOk = false;
+
+    function render(loadedOk) {
+      if (loadedOk !== undefined) loadOk = loadedOk;
       var grid = document.getElementById('grid');
+      var emptyEl = document.getElementById('empty-state');
+      var errorEl = document.getElementById('error');
       var list = applyFilterSort();
       grid.innerHTML = '';
-      list.forEach(function(item) { grid.appendChild(buildCard(item)); });
+      if (list.length === 0 && loadOk && (!errorEl || errorEl.style.display === 'none')) {
+        if (emptyEl) emptyEl.style.display = 'block';
+      } else {
+        if (emptyEl) emptyEl.style.display = 'none';
+        list.forEach(function(item) { grid.appendChild(buildCard(item)); });
+      }
     }
 
     document.querySelectorAll('.tabs button').forEach(function(btn) {
@@ -349,7 +399,10 @@
       });
     });
 
-    loadData(function() { render(); });
+    var searchEl = document.getElementById('search');
+    if (searchEl) searchEl.addEventListener('input', render);
+
+    loadData(function(ok) { render(ok); });
   </script>
 </body>
 </html>

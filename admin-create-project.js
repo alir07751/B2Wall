@@ -10,7 +10,7 @@ const CONFIG = {
   N8N_BASE: 'https://n8nb2wall.darkube.app',
   get CREATE_URL() { return `${this.N8N_BASE}/webhook/create`; },
   get UPLOAD_URL() { return `${this.N8N_BASE}/webhook/upload`; },
-  get ATTACH_COVER_URL() { return `${this.N8N_BASE}/webhook/opportunities/attach-cover`; },
+  get ATTACH_COVER_URL() { return `${this.N8N_BASE}/webhook/attach-cover`; },
   FILE_MAX_BYTES: 2 * 1024 * 1024, // 2MB
   CLEAR_OWNER_ON_SUCCESS: false,
   IMAGE_BASE: 'https://b2wall.storage.c2.liara.space/',
@@ -36,6 +36,13 @@ const MSG = {
 
 // Persian digits for display
 const PERSIAN_DIGITS = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+
+function normalizeStatus(raw) {
+  const s = (raw || '').toString().toUpperCase();
+  if (s === 'ACTIVE') return 'FUNDING';
+  if (['FUNDING', 'REVIEW', 'COMPLETED'].indexOf(s) !== -1) return s;
+  return 'FUNDING';
+}
 
 // Server field path → input element ID
 const FIELD_PATH_TO_ID = {
@@ -147,16 +154,18 @@ function collectFormData() {
   const funded = parseNumericInput(fundedRaw);
   const fundedNum = !isNaN(funded) ? funded : 0;
 
+  const durRaw = parseNumericInput(form.querySelector('#project-duration-months')?.value);
+  const reqRaw = parseNumericInput(form.querySelector('#project-required-amount-toman')?.value);
   const project = {
     title: (form.querySelector('#project-title')?.value || '').trim(),
     status: (form.querySelector('#project-status')?.value || 'REVIEW').trim(),
     monthly_profit_percent: parseNumericInput(form.querySelector('#project-monthly-profit-percent')?.value),
-    duration_months: parseNumericInput(form.querySelector('#project-duration-months')?.value),
+    duration_months: Number.isInteger(durRaw) ? durRaw : (isNaN(durRaw) ? NaN : Math.floor(durRaw)),
     profit_payout_interval_days: parseNumericInput(form.querySelector('#project-profit-payout-interval-days')?.value),
     principal_payout_interval_days: parseNumericInput(form.querySelector('#project-principal-payout-interval-days')?.value),
     guarantee_type: (form.querySelector('#project-guarantee-type')?.value || '').trim(),
     funded_amount_toman: fundedNum,
-    required_amount_toman: parseNumericInput(form.querySelector('#project-required-amount-toman')?.value),
+    required_amount_toman: Number.isInteger(reqRaw) ? reqRaw : (isNaN(reqRaw) ? NaN : Math.floor(reqRaw)),
     visibility: (form.querySelector('#project-visibility')?.value || 'PRIVATE').trim(),
   };
 
@@ -177,15 +186,17 @@ function validateForm(model) {
     if (!owner.full_name) errors.push({ field: 'owner_full_name', message: 'نام و نام خانوادگی الزامی است.' });
   }
 
+  const titleLen = (project.title || '').length;
   if (!project.title) errors.push({ field: 'project_title', message: 'عنوان الزامی است.' });
+  else if (titleLen < 3 || titleLen > 120) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۱۲۰ کاراکتر باشد.' });
   if (!project.status) errors.push({ field: 'project_status', message: 'وضعیت الزامی است.' });
   const mp = project.monthly_profit_percent;
-  if (mp == null || isNaN(mp) || mp < 0 || mp > 1000) {
-    errors.push({ field: 'project_monthly_profit_percent', message: 'سود ماهانه باید بین ۰ تا ۱۰۰۰ باشد.' });
+  if (mp == null || isNaN(mp) || mp < 1 || mp > 100) {
+    errors.push({ field: 'project_monthly_profit_percent', message: 'سود ماهانه باید بین ۱ تا ۱۰۰ درصد باشد.' });
   }
   const dm = project.duration_months;
-  if (dm == null || isNaN(dm) || dm < 1 || dm > 120) {
-    errors.push({ field: 'project_duration_months', message: 'مدت باید بین ۱ تا ۱۲۰ ماه باشد.' });
+  if (dm == null || isNaN(dm) || dm < 1 || dm > 120 || !Number.isInteger(dm)) {
+    errors.push({ field: 'project_duration_months', message: 'مدت باید عدد صحیح و بین ۱ تا ۱۲۰ ماه باشد.' });
   }
   const pp = project.profit_payout_interval_days;
   if (pp == null || isNaN(pp) || pp < 1) {
@@ -197,8 +208,8 @@ function validateForm(model) {
   }
   if (!project.guarantee_type) errors.push({ field: 'project_guarantee_type', message: 'نوع ضمانت الزامی است.' });
   const req = project.required_amount_toman;
-  if (req == null || isNaN(req) || req < 0) {
-    errors.push({ field: 'project_required_amount_toman', message: 'مبلغ مورد نیاز الزامی است.' });
+  if (req == null || isNaN(req) || req < 1 || !Number.isInteger(req)) {
+    errors.push({ field: 'project_required_amount_toman', message: 'مبلغ مورد نیاز باید عدد صحیح و بیشتر از صفر باشد.' });
   }
   if (!project.visibility) errors.push({ field: 'project_visibility', message: 'نمایش الزامی است.' });
 
@@ -281,8 +292,7 @@ async function callCreateProject(formData) {
 
     // Success (2xx)
     if (res.ok) {
-      const raw = json?.opportunity ?? json ?? {};
-      const data = normalizeCreateResponse(raw, json);
+      const data = normalizeCreateResponse(json?.opportunity, json);
       return { kind: 'success', data };
     }
 
@@ -310,10 +320,10 @@ async function callCreateProject(formData) {
 }
 
 function normalizeCreateResponse(opportunity, fullJson) {
-  if (!opportunity) return { id: null, image_url: '' };
-  const id = opportunity.id ?? opportunity.project_id ?? fullJson?.id ?? null;
-  const imageUrl = opportunity.image_url ?? opportunity.imageUrl ?? '';
-  return { ...opportunity, id, image_url: imageUrl };
+  const raw = opportunity || fullJson || {};
+  const id = raw.id ?? raw.opportunity_id ?? fullJson?.opportunity_id ?? fullJson?.id ?? null;
+  const imageUrl = raw.image_url ?? raw.imageUrl ?? '';
+  return { ...raw, id, image_url: imageUrl };
 }
 
 /** Generic fetch with timeout. Returns { ok, status, json, text } or throws. */
@@ -361,10 +371,11 @@ async function requestUploadCover({ opportunityId, file }) {
 /** Attach cover URL to opportunity. Returns { success: true, opportunity } or { success: false, message }. */
 async function requestAttachCover({ opportunityId, imageUrl }) {
   try {
+    const oid = Number(opportunityId) || opportunityId;
     const { ok, json } = await fetchWithTimeout(CONFIG.ATTACH_COVER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ opportunity_id: opportunityId, image_url: imageUrl }),
+      body: JSON.stringify({ opportunity_id: oid, image_url: imageUrl }),
     });
     if (ok && json?.opportunity) return { success: true, opportunity: json.opportunity };
     const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
@@ -485,7 +496,7 @@ function renderClientErrors(errors) {
   }
 }
 
-const STATUS_LABELS = { REVIEW: 'در حال کارشناسی', ACTIVE: 'فعال', COMPLETED: 'تکمیل‌شده' };
+const STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'در حال کارشناسی', COMPLETED: 'تکمیل‌شده' };
 
 function renderSuccess(resp) {
   clearErrors();
@@ -510,7 +521,7 @@ function renderSuccess(resp) {
   }
   card.appendChild(imgWrap);
 
-  const statusVal = resp.status ? (STATUS_LABELS[resp.status] || resp.status) : '—';
+  const statusVal = resp.status ? (STATUS_LABELS[normalizeStatus(resp.status)] || resp.status) : '—';
   const durationVal = (resp.duration_months ?? resp.durationMonths) != null
     ? toPersianDigits(resp.duration_months ?? resp.durationMonths) + ' ماه'
     : '—';
@@ -673,7 +684,8 @@ async function handleSubmit(e) {
     setLoadingState(false, '');
 
     if (!attachResult.success) {
-      showGlobalError({ type: 'system', message: MSG.UPLOAD_OK_ATTACH_FAIL, clearFields: true });
+      const attachFailMsg = `${MSG.UPLOAD_OK_ATTACH_FAIL} (شناسه پروژه: ${opportunityId})`;
+      showGlobalError({ type: 'system', message: attachFailMsg, clearFields: true });
       return;
     }
 
