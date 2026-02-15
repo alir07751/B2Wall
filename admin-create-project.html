@@ -51,15 +51,22 @@
       <section class="form-section">
         <h2 class="form-section-title">پروژه</h2>
         <div class="form-row">
-          <label for="project-title">عنوان <span class="required">*</span></label>
-          <input type="text" id="project-title" name="project_title" required
-                 placeholder="تأمین مالی برای ساخت واحد مسکونی">
-          <div id="title-helper" class="title-helper">
-            <p class="title-helper-pattern">الگو: تأمین مالی برای + [هدف پروژه]</p>
-            <p class="title-helper-examples">نمونه: تأمین مالی برای ساخت واحد مسکونی | تأمین مالی جهت خرید دستگاه | تأمین مالی برای راه‌اندازی کسب‌وکار</p>
-            <div id="title-feedback" class="title-feedback" aria-live="polite"></div>
-            <button type="button" id="title-apply-btn" class="btn-helper">اعمال عنوان پیشنهادی</button>
+          <label for="project-title" class="label-with-info">
+            عنوان <span class="required">*</span>
+            <span id="title-info-icon" class="info-icon" role="button" tabindex="0" aria-label="راهنمای عنوان">ℹ</span>
+          </label>
+          <div class="title-input-row">
+            <input type="text" id="project-title" name="project_title" required
+                   placeholder="تأمین مالی برای ساخت واحد مسکونی">
+            <button type="button" id="title-apply-btn" class="btn-helper" title="اعمال عنوان پیشنهادی">اعمال عنوان پیشنهادی</button>
           </div>
+          <div id="title-tooltip" class="tooltip-box" role="tooltip" hidden>
+            <p class="tooltip-pattern">الگو: تأمین مالی برای + [هدف پروژه]</p>
+            <p class="tooltip-examples">نمونه: تأمین مالی برای ساخت واحد مسکونی، تأمین مالی جهت خرید دستگاه، تأمین مالی برای راه‌اندازی کسب‌وکار</p>
+            <p class="tooltip-note">یکدست بودن عنوان‌ها در ویترین نمایش پروژه‌ها اهمیت دارد.</p>
+            <button type="button" class="btn-helper btn-helper-inline" id="title-apply-tooltip-btn">اعمال عنوان پیشنهادی</button>
+          </div>
+          <span id="title-feedback" class="title-feedback-inline" aria-live="polite"></span>
           <span class="field-error" id="project-title-error" role="alert"></span>
         </div>
         <div class="form-row">
@@ -96,30 +103,29 @@
           <span class="field-error" id="project-principal-payout-interval-days-error" role="alert"></span>
         </div>
         <div class="form-row">
-          <label for="project-guarantee-type">نوع ضمانت <span class="required">*</span></label>
-          <select id="project-guarantee-type" name="project_guarantee_type">
-            <option value="">انتخاب نوع ضمانت</option>
-            <option value="وثیقه ملکی">وثیقه ملکی</option>
-            <option value="ضامن معتبر">ضامن معتبر</option>
-            <option value="دستگاه">دستگاه</option>
-            <option value="خودرو">خودرو</option>
-            <option value="طلا">طلا</option>
-            <option value="سفته">سفته</option>
-          </select>
+          <label>نوع ضمانت <span class="required">*</span></label>
+          <div id="guarantee-checkboxes" class="guarantee-checkboxes" role="group" aria-label="نوع ضمانت"></div>
+          <div id="guarantee-chips" class="guarantee-chips" hidden></div>
           <span class="field-error" id="project-guarantee-type-error" role="alert"></span>
         </div>
         <div class="form-row">
           <label for="project-funded-amount-toman">مبلغ تأمین‌شده (تومان)</label>
           <input type="text" id="project-funded-amount-toman" name="project_funded_amount_toman"
                  value="۰" min="0" disabled title="برای پروژه جدید همیشه صفر است">
-          <span id="funded-amount-words" class="amount-words" aria-live="polite"></span>
+          <div id="funded-amount-readable" class="amount-readable" hidden>
+            <span id="funded-amount-formatted"></span>
+            <span id="funded-amount-words"></span>
+          </div>
           <span class="field-hint">غیرفعال؛ برای پروژه‌های جدید همیشه صفر است.</span>
         </div>
         <div class="form-row">
           <label for="project-required-amount-toman">مبلغ مورد نیاز (تومان) <span class="required">*</span></label>
           <input type="text" id="project-required-amount-toman" name="project_required_amount_toman"
-                 required min="0" placeholder="۲٬۰۰۰٬۰۰۰٬۰۰۰" inputmode="numeric" autocomplete="off">
-          <span id="required-amount-words" class="amount-words" aria-live="polite"></span>
+                 required min="0" placeholder="2000000000" inputmode="numeric" autocomplete="off">
+          <div id="required-amount-readable" class="amount-readable" hidden>
+            <span id="required-amount-formatted"></span>
+            <span id="required-amount-words"></span>
+          </div>
           <span class="field-error" id="project-required-amount-toman-error" role="alert"></span>
         </div>
         <div class="form-row">

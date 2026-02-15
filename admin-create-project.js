@@ -352,7 +352,10 @@ function toPublicImageUrl(url) {
 function collectFormData() {
   const rawTitle = (form.querySelector('#project-title')?.value || '').replace(/\s+/g, ' ').trim();
   const title = sanitizeText(convertDigitsToLatin(rawTitle));
-  const guarantee_type = (form.querySelector('#project-guarantee-type')?.value || '').trim();
+  const guaranteeSelected = Array.from(form.querySelectorAll('#guarantee-checkboxes input[type="checkbox"]:checked'))
+    .map((cb) => cb.value)
+    .filter(Boolean);
+  const guarantee_type = guaranteeSelected.join('، ');
 
   const owner = {
     phone: convertDigitsToLatin((form.querySelector('#owner-phone')?.value || '').replace(/\s+/g, ' ').trim()),
@@ -485,8 +488,9 @@ async function validateForm(model) {
   if (!pr.valid) errors.push({ field: 'project_principal_payout_interval_days', message: 'فاصله پرداخت اصل سرمایه الزامی است (عدد صحیح).' });
 
   const strictGuarantee = (project.visibility === PUBLISH_STATUS.PUBLISHED || project.status === 'FUNDING');
-  if (!project.guarantee_type || !GUARANTEE_OPTIONS.includes(project.guarantee_type)) {
-    if (strictGuarantee) errors.push({ field: 'project_guarantee_type', message: 'نوع ضمانت الزامی است.' });
+  const hasGuarantee = project.guarantee_type && project.guarantee_type.trim().length > 0;
+  if (strictGuarantee && !hasGuarantee) {
+    errors.push({ field: 'project_guarantee_type', message: 'حداقل یک نوع ضمانت باید انتخاب شود.' });
   }
 
   const funded = project.funded_amount_toman;
@@ -514,9 +518,9 @@ async function validateForm(model) {
 function scrollToFirstError(errors) {
   if (!errors || errors.length === 0) return;
   const first = errors[0];
-  const inputId = FIELD_PATH_TO_ID[first.field] || FIELD_IDS[first.field];
-  if (inputId) {
-    const el = document.getElementById(inputId);
+  const scrollId = first.field === 'project_guarantee_type' ? 'guarantee-checkboxes' : (FIELD_PATH_TO_ID[first.field] || FIELD_IDS[first.field]);
+  if (scrollId) {
+    const el = document.getElementById(scrollId);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 }
@@ -729,6 +733,13 @@ function showFieldErrors(errors) {
     const field = item.field;
     const message = item.message || '';
     const inputId = FIELD_PATH_TO_ID[field] || FIELD_IDS[field];
+    if (field === 'project_guarantee_type') {
+      const container = document.getElementById('guarantee-checkboxes');
+      const errorEl = document.getElementById('project-guarantee-type-error');
+      if (container) container.classList.add('is-invalid', 'error');
+      if (errorEl) setText(errorEl, message);
+      return;
+    }
     if (inputId) {
       const input = document.getElementById(inputId);
       const errorEl = document.getElementById(inputId + '-error');
@@ -1012,25 +1023,78 @@ function setupClearErrorsOnInput() {
   });
 }
 
+function setupGuaranteeCheckboxes() {
+  const container = document.getElementById('guarantee-checkboxes');
+  const chipsEl = document.getElementById('guarantee-chips');
+  if (!container) return;
+
+  container.innerHTML = '';
+
+  GUARANTEE_OPTIONS.forEach((opt) => {
+    const id = 'guarantee-' + opt.replace(/\s+/g, '-');
+    const label = document.createElement('label');
+    label.htmlFor = id;
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.value = opt;
+    cb.id = id;
+    cb.name = 'guarantee_type';
+    label.appendChild(cb);
+    label.appendChild(document.createTextNode(opt));
+    container.appendChild(label);
+  });
+
+  function updateChips() {
+    const checked = Array.from(container.querySelectorAll('input:checked')).map((c) => c.value);
+    if (!chipsEl) return;
+    if (checked.length === 0) {
+      chipsEl.hidden = true;
+      chipsEl.innerHTML = '';
+      return;
+    }
+    chipsEl.hidden = false;
+    chipsEl.innerHTML = checked.map((v) => `<span class="chip">${escapeHtml(v)}</span>`).join('');
+  }
+
+  container.querySelectorAll('input').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      updateChips();
+      clearFieldErrorForInput({ target: cb });
+    });
+  });
+  updateChips();
+}
+
 function setupTitleHelper() {
   const titleInput = document.getElementById('project-title');
   const feedbackEl = document.getElementById('title-feedback');
   const applyBtn = document.getElementById('title-apply-btn');
+  const applyTooltipBtn = document.getElementById('title-apply-tooltip-btn');
+  const infoIcon = document.getElementById('title-info-icon');
+  const tooltip = document.getElementById('title-tooltip');
 
   function updateTitleFeedback() {
     if (!feedbackEl || !titleInput) return;
     const val = titleInput.value.trim();
     if (!val) {
       feedbackEl.textContent = '';
-      feedbackEl.className = 'title-feedback';
+      feedbackEl.className = 'title-feedback-inline';
       return;
     }
     if (titleHasPrefix(val)) {
       feedbackEl.textContent = '✓ عنوان مطابق الگو است.';
-      feedbackEl.className = 'title-feedback is-ok';
+      feedbackEl.className = 'title-feedback-inline is-ok';
     } else {
       feedbackEl.textContent = '⚠ عنوان باید با «تأمین مالی برای» یا «تأمین مالی جهت» آغاز شود.';
-      feedbackEl.className = 'title-feedback is-warning';
+      feedbackEl.className = 'title-feedback-inline is-warning';
+    }
+  }
+
+  function applyTitle() {
+    if (titleInput) {
+      titleInput.value = applyTitlePrefix(titleInput.value);
+      updateTitleFeedback();
+      titleInput.focus();
     }
   }
 
@@ -1038,57 +1102,72 @@ function setupTitleHelper() {
     titleInput.addEventListener('input', updateTitleFeedback);
     titleInput.addEventListener('blur', updateTitleFeedback);
   }
-  if (applyBtn) {
-    applyBtn.addEventListener('click', () => {
-      if (titleInput) {
-        titleInput.value = applyTitlePrefix(titleInput.value);
-        updateTitleFeedback();
-        titleInput.focus();
-      }
+  if (applyBtn) applyBtn.addEventListener('click', applyTitle);
+  if (applyTooltipBtn) applyTooltipBtn.addEventListener('click', applyTitle);
+
+  if (infoIcon && tooltip) {
+    const showTooltip = () => { tooltip.hidden = false; };
+    const hideTooltip = () => { tooltip.hidden = true; };
+    infoIcon.addEventListener('mouseenter', showTooltip);
+    infoIcon.addEventListener('mouseleave', hideTooltip);
+    infoIcon.addEventListener('focus', showTooltip);
+    infoIcon.addEventListener('blur', hideTooltip);
+    infoIcon.addEventListener('click', (e) => {
+      e.preventDefault();
+      tooltip.hidden = !tooltip.hidden;
     });
+    tooltip.addEventListener('mouseenter', showTooltip);
+    tooltip.addEventListener('mouseleave', hideTooltip);
   }
+
   updateTitleFeedback();
 }
 
 function setupAmountFormatting() {
   const requiredInput = document.getElementById('project-required-amount-toman');
   const fundedInput = document.getElementById('project-funded-amount-toman');
+  const requiredReadable = document.getElementById('required-amount-readable');
+  const requiredFormatted = document.getElementById('required-amount-formatted');
   const requiredWordsEl = document.getElementById('required-amount-words');
+  const fundedReadable = document.getElementById('funded-amount-readable');
+  const fundedFormatted = document.getElementById('funded-amount-formatted');
   const fundedWordsEl = document.getElementById('funded-amount-words');
 
-  function updateWords(el, val) {
-    if (!el) return;
+  function updateReadable(container, formattedEl, wordsEl, val) {
+    if (!container || !formattedEl || !wordsEl) return;
     const n = parseNumericInput(val);
-    if (isNaN(n) || n <= 0) { setText(el, ''); return; }
-    setText(el, numberToPersianWords(n));
+    if (isNaN(n) || n <= 0) {
+      container.hidden = true;
+      setText(formattedEl, '');
+      setText(wordsEl, '');
+      return;
+    }
+    container.hidden = false;
+    const raw = normalizeDigits(String(val || ''));
+    setText(formattedEl, raw ? toPersianDigits(formatAmountWithSeparators(raw)) + ' تومان' : '');
+    setText(wordsEl, numberToPersianWords(n));
   }
 
-  function setupAmountInput(input, wordsEl) {
+  function digitsOnly(val) {
+    return normalizeDigits(String(val || '')).replace(/\D/g, '');
+  }
+
+  function setupAmountInput(input, container, formattedEl, wordsEl) {
     if (!input) return;
-    const formatAndUpdate = () => {
-      const raw = normalizeDigits(input.value);
-      const digitsBeforeCursor = (input.value.slice(0, input.selectionStart).replace(/[^0-9۰-۹]/g, '').length;
-      const formatted = raw ? formatAmountWithSeparators(raw) : '';
-      input.value = formatted;
-      let pos = 0;
-      let digitCount = 0;
-      for (let i = 0; i < formatted.length; i++) {
-        if (/[0-9۰-۹]/.test(formatted[i])) digitCount++;
-        if (digitCount >= digitsBeforeCursor) { pos = i + 1; break; }
-        pos = i + 1;
-      }
-      input.setSelectionRange(pos, pos);
-      updateWords(wordsEl, raw || input.value);
+    const sync = () => {
+      const raw = digitsOnly(input.value);
+      input.value = raw;
+      updateReadable(container, formattedEl, wordsEl, raw);
     };
-    input.addEventListener('blur', formatAndUpdate);
-    input.addEventListener('input', formatAndUpdate);
+    input.addEventListener('input', sync);
+    input.addEventListener('blur', sync);
   }
 
   if (requiredInput) {
-    setupAmountInput(requiredInput, requiredWordsEl);
+    setupAmountInput(requiredInput, requiredReadable, requiredFormatted, requiredWordsEl);
   }
-  if (fundedWordsEl) {
-    setText(fundedWordsEl, '');
+  if (fundedInput && fundedReadable) {
+    updateReadable(fundedReadable, fundedFormatted, fundedWordsEl, '0');
   }
 }
 
@@ -1098,6 +1177,12 @@ function clearFieldErrorForInput(e) {
   input.classList.remove('is-invalid', 'error');
   const errorEl = document.getElementById(input.id + '-error');
   if (errorEl) setText(errorEl, '');
+  if (input.closest('#guarantee-checkboxes')) {
+    const container = document.getElementById('guarantee-checkboxes');
+    const err = document.getElementById('project-guarantee-type-error');
+    if (container) container.classList.remove('is-invalid', 'error');
+    if (err) setText(err, '');
+  }
 }
 
 function applyAppMode() {
@@ -1117,9 +1202,7 @@ async function handleSubmit(e) {
   submitState = STATE.VALIDATING;
   setOverlayLoading(true, MSG.PROGRESS_VALIDATE);
   const titleEl = form.querySelector('#project-title');
-  const vis = form.querySelector('#project-visibility')?.value;
-  const st = form.querySelector('#project-status')?.value;
-  if (titleEl && (vis === PUBLISH_STATUS.PUBLISHED || st === 'FUNDING') && !titleHasPrefix(titleEl.value)) {
+  if (titleEl && !titleHasPrefix(titleEl.value)) {
     titleEl.value = applyTitlePrefix(titleEl.value);
   }
   const model = collectFormData();
@@ -1301,14 +1384,21 @@ function init() {
   setupTitleHelper();
   setupAmountFormatting();
 
+  setupGuaranteeCheckboxes();
+
   if (form) {
     form.addEventListener('submit', handleSubmit);
     form.addEventListener('reset', () => {
       clearForm(false);
       setTimeout(() => {
-        document.getElementById('title-feedback')?.classList.remove('is-ok', 'is-warning');
-        setText(document.getElementById('title-feedback'), '');
-        setText(document.getElementById('required-amount-words'), '');
+        const fb = document.getElementById('title-feedback');
+        if (fb) { fb.className = 'title-feedback-inline'; setText(fb, ''); }
+        const reqRead = document.getElementById('required-amount-readable');
+        if (reqRead) reqRead.hidden = true;
+        document.getElementById('guarantee-checkboxes')?.classList.remove('is-invalid', 'error');
+        setText(document.getElementById('project-guarantee-type-error'), '');
+        const chips = document.getElementById('guarantee-chips');
+        if (chips) { chips.hidden = true; chips.innerHTML = ''; }
       }, 0);
     });
   }
