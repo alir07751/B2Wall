@@ -239,6 +239,39 @@ body {
   font-weight: 500;
 }
 
+/* Success panel (after all 3 steps) */
+.success-panel {
+  background: var(--white);
+  border: 1px solid #a7f3d0;
+  border-radius: var(--radius);
+  padding: var(--space-24);
+  margin-bottom: var(--space-24);
+  box-shadow: var(--shadow);
+}
+
+.success-panel-title {
+  margin: 0 0 var(--space-12);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--success);
+}
+
+.success-panel-text {
+  margin: 0 0 var(--space-16);
+  font-size: 0.95rem;
+  color: var(--primary);
+}
+
+.success-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-12);
+}
+
+.success-panel-actions .btn {
+  min-width: 140px;
+}
+
 /* Form sections */
 .form-section {
   background: var(--white);

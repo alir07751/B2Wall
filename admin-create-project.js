@@ -22,6 +22,7 @@ const CONFIG = {
   CLEAR_OWNER_ON_SUCCESS: false,
   IMAGE_BASE: 'https://b2wall.storage.c2.liara.space/',
   REQUEST_TIMEOUT_MS: 20000,
+  SHOWCASE_URL: 'https://b2wall.darkube.app/',
 };
 
 // ——— UI strings (Persian) ———
@@ -121,6 +122,7 @@ const submitBtn = document.getElementById('submit-btn');
 const progressTextEl = document.getElementById('progress-text');
 const globalErrorEl = document.getElementById('global-error');
 const successBannerEl = document.getElementById('success-banner');
+const successPanelEl = document.getElementById('success-panel');
 const summaryCardWrap = document.getElementById('summary-card');
 const ownerSection = document.getElementById('owner-section');
 const imageInput = document.getElementById('project-image');
@@ -694,7 +696,13 @@ async function requestAttachCover({ entityId, imageUrl }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-    if (ok) return { success: true, ok: true, json, status, raw: text };
+    if (ok) {
+      if (json && json.ok === false) {
+        const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
+        return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, status, raw: text };
+      }
+      return { success: true, ok: true, json, status, raw: text };
+    }
     const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
     return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, status, raw: text };
   } catch (err) {
@@ -920,75 +928,33 @@ const VISIBILITY_LABELS = { PUBLIC: 'منتشر شده', PRIVATE: 'منتشر ن
 
 function renderSuccess(resp) {
   clearErrors();
-  successBannerEl.hidden = false;
-  const idPart = resp?.id ? ` شناسه: ${escapeHtml(resp.id)}` : '';
-  setText(successBannerEl, MSG.SUCCESS_MESSAGE + idPart);
-  setTimeout(() => { successBannerEl.hidden = true; }, 5000);
-
-  const imgUrl = resp.image_url ? toPublicImageUrl(resp.image_url) : '';
-
-  const card = document.createElement('div');
-  card.className = 'summary-card';
-
-  const imgWrap = document.createElement('div');
-  imgWrap.className = 'summary-card-img-wrap';
-  if (imgUrl) {
-    const img = document.createElement('img');
-    img.src = imgUrl;
-    img.alt = '';
-    img.onerror = () => { imgWrap.textContent = 'بدون تصویر'; };
-    imgWrap.appendChild(img);
-  } else {
-    imgWrap.textContent = 'بدون تصویر';
+  successBannerEl.hidden = true;
+  summaryCardWrap.hidden = true;
+  if (form) form.hidden = true;
+  if (successPanelEl) {
+    successPanelEl.hidden = false;
+    successPanelEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
-  card.appendChild(imgWrap);
-
-  const statusVal = resp.status ? (STATUS_LABELS[normalizeStatus(resp.status)] || resp.status) : '—';
-  const visibilityVal = resp.visibility ? (VISIBILITY_LABELS[resp.visibility] || resp.visibility) : '—';
-  const durationVal = (resp.duration_months ?? resp.durationMonths) != null
-    ? toPersianDigits(resp.duration_months ?? resp.durationMonths) + ' ماه'
-    : '—';
-  const profitVal = (resp.monthly_profit_percent ?? resp.monthlyProfitPercent) != null
-    ? toPersianDigits(resp.monthly_profit_percent ?? resp.monthlyProfitPercent) + '٪'
-    : '—';
-
-  const body = document.createElement('div');
-  body.className = 'summary-card-body';
-  body.innerHTML = `
-    <h3 class="summary-card-title">${escapeHtml(resp.title || '—')}</h3>
-    <div class="summary-card-meta">
-      <span class="key">شناسه</span><span class="val">${escapeHtml(resp.id)}</span>
-      <span class="key">وضعیت</span><span class="val">${escapeHtml(statusVal)}</span>
-      <span class="key">وضعیت انتشار</span><span class="val">${escapeHtml(visibilityVal)}</span>
-      <span class="key">نوع ضمانت</span><span class="val">${escapeHtml(resp.guarantee_type || '—')}</span>
-      <span class="key">سود ماهانه</span><span class="val">${escapeHtml(profitVal)}</span>
-      <span class="key">مدت</span><span class="val">${escapeHtml(durationVal)}</span>
-      <span class="key">مبلغ مورد نیاز</span><span class="val">${escapeHtml(formatToman(resp.required_amount_toman ?? resp.requiredAmountToman))}</span>
-    </div>
-  `;
-  card.appendChild(body);
-
-  summaryCardWrap.innerHTML = '';
-  summaryCardWrap.appendChild(card);
-  summaryCardWrap.hidden = false;
-
-  summaryCardWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
 function clearForm(keepOwner) {
   const savedPhone = keepOwner && !CONFIG.CLEAR_OWNER_ON_SUCCESS ? form.querySelector('#owner-phone')?.value : null;
   const savedName = keepOwner && !CONFIG.CLEAR_OWNER_ON_SUCCESS ? form.querySelector('#owner-full-name')?.value : null;
 
-  if (keepOwner) {
-    form.reset();
-    const fundedEl = form.querySelector('#project-funded-amount-toman');
-    if (fundedEl) fundedEl.value = '۰';
-    if (savedPhone != null) form.querySelector('#owner-phone').value = savedPhone;
-    if (savedName != null) form.querySelector('#owner-full-name').value = savedName;
+  if (form) {
+    form.hidden = false;
+    if (keepOwner) {
+      form.reset();
+      const fundedEl = form.querySelector('#project-funded-amount-toman');
+      if (fundedEl) fundedEl.value = '۰';
+      if (savedPhone != null) form.querySelector('#owner-phone').value = savedPhone;
+      if (savedName != null) form.querySelector('#owner-full-name').value = savedName;
+    }
   }
 
   clearErrors();
   successBannerEl.hidden = true;
+  successPanelEl.hidden = true;
   summaryCardWrap.hidden = true;
   summaryCardWrap.innerHTML = '';
 
@@ -996,6 +962,32 @@ function clearForm(keepOwner) {
     imagePreviewWrap.hidden = true;
     if (imagePreview) imagePreview.src = '';
   }
+}
+
+function resetToCreateNew() {
+  submitState = STATE.IDLE;
+  if (form) {
+    form.reset();
+    form.hidden = false;
+    const fundedEl = form.querySelector('#project-funded-amount-toman');
+    if (fundedEl) fundedEl.value = '۰';
+  }
+  clearErrors();
+  successBannerEl.hidden = true;
+  successPanelEl.hidden = true;
+  summaryCardWrap.hidden = true;
+  summaryCardWrap.innerHTML = '';
+  if (imagePreviewWrap) {
+    imagePreviewWrap.hidden = true;
+    if (imagePreview) imagePreview.src = '';
+  }
+  if (imageInput) imageInput.value = '';
+  setFormEnabled(true);
+  setupGuaranteeCheckboxes();
+  const fb = document.getElementById('title-feedback');
+  if (fb) { fb.className = 'title-feedback-inline'; setText(fb, ''); }
+  const reqRead = document.getElementById('required-amount-readable');
+  if (reqRead) reqRead.hidden = true;
 }
 
 function setupImagePreview() {
@@ -1108,13 +1100,19 @@ function setupTitleHelper() {
   if (infoIcon && tooltip) {
     const showTooltip = () => { tooltip.hidden = false; };
     const hideTooltip = () => { tooltip.hidden = true; };
+    const handleOutsideClick = (e) => {
+      if (tooltip.hidden) return;
+      if (!tooltip.contains(e.target) && !infoIcon.contains(e.target)) hideTooltip();
+    };
     infoIcon.addEventListener('mouseenter', showTooltip);
     infoIcon.addEventListener('mouseleave', hideTooltip);
     infoIcon.addEventListener('focus', showTooltip);
-    infoIcon.addEventListener('blur', hideTooltip);
+    infoIcon.addEventListener('blur', () => setTimeout(hideTooltip, 200));
     infoIcon.addEventListener('click', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       tooltip.hidden = !tooltip.hidden;
+      if (!tooltip.hidden) document.addEventListener('click', handleOutsideClick, { once: true });
     });
     tooltip.addEventListener('mouseenter', showTooltip);
     tooltip.addEventListener('mouseleave', hideTooltip);
@@ -1312,9 +1310,6 @@ async function handleSubmit(e) {
     clearLoadingState();
     const finalOpportunity = normalizeResponse(attachResult.json?.opportunity ?? attachResult.json ?? created);
     renderSuccess({ ...model.project, ...finalOpportunity });
-    clearForm(true);
-    if (imageInput) imageInput.value = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     submitState = STATE.IDLE;
   } catch (err) {
     console.error('[SUBMIT]', err);
@@ -1358,9 +1353,6 @@ async function doRetryAttach(projectId, cleanUrl) {
     const created = { id: projectId, image_url: cleanUrl };
     const finalOpportunity = normalizeResponse(attachResult.json?.opportunity ?? attachResult.json ?? created);
     renderSuccess({ ...model.project, ...finalOpportunity });
-    clearForm(true);
-    if (imageInput) imageInput.value = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
     submitState = STATE.IDLE;
   } catch (err) {
     console.error('[ATTACH retry]', err);
@@ -1385,6 +1377,9 @@ function init() {
   setupAmountFormatting();
 
   setupGuaranteeCheckboxes();
+
+  const btnCreateNew = document.getElementById('btn-create-new');
+  if (btnCreateNew) btnCreateNew.addEventListener('click', resetToCreateNew);
 
   if (form) {
     form.addEventListener('submit', handleSubmit);
