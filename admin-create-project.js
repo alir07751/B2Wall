@@ -200,6 +200,26 @@ const ONLY_NUMBERS = /^\d+$/;
 /** Iranian mobile: 09xxxxxxxxx (11 digits, starts with 09) */
 const IRANIAN_MOBILE = /^09\d{9}$/;
 
+/** Title prefix: acceptable prefixes. Default for auto-apply. */
+const TITLE_PREFIXES = ['تأمین مالی برای', 'تامین مالی برای', 'تأمین مالی جهت', 'تامین مالی جهت'];
+const TITLE_DEFAULT_PREFIX = 'تأمین مالی برای ';
+
+/** Guarantee type options (controlled vocabulary). */
+const GUARANTEE_OPTIONS = ['وثیقه ملکی', 'ضامن معتبر', 'دستگاه', 'خودرو', 'طلا', 'سفته'];
+
+function titleHasPrefix(title) {
+  const t = String(title || '').trim();
+  if (!t) return false;
+  return TITLE_PREFIXES.some((p) => t.startsWith(p));
+}
+
+function applyTitlePrefix(title) {
+  const t = String(title || '').replace(/\s+/g, ' ').trim();
+  if (!t) return TITLE_DEFAULT_PREFIX.trim();
+  if (titleHasPrefix(t)) return t;
+  return (TITLE_DEFAULT_PREFIX + t).replace(/\s+/g, ' ').trim();
+}
+
 /** Validates image file: mime, extension, size, dimensions. Returns { valid, message } or { valid: true }. */
 function validateImageFile(file) {
   if (!file || !(file instanceof File)) return { valid: false, message: MSG.IMAGE_INVALID_FORMAT };
@@ -267,6 +287,49 @@ function toPersianDigits(n) {
   return String(n).replace(/\d/g, (d) => PERSIAN_DIGITS[+d]);
 }
 
+/** Convert number to Persian words (for amounts). Supports up to billions. */
+function numberToPersianWords(n) {
+  if (n == null || isNaN(n) || n < 0) return '';
+  const num = Math.floor(Number(n));
+  if (num === 0) return '';
+  const ones = ['', 'یک', 'دو', 'سه', 'چهار', 'پنج', 'شش', 'هفت', 'هشت', 'نه'];
+  const tens = ['', 'ده', 'بیست', 'سی', 'چهل', 'پنجاه', 'شصت', 'هفتاد', 'هشتاد', 'نود'];
+  const hundreds = ['', 'صد', 'دویست', 'سیصد', 'چهارصد', 'پانصد', 'ششصد', 'هفتصد', 'هشتصد', 'نهصد'];
+  const teens = ['ده', 'یازده', 'دوازده', 'سیزده', 'چهارده', 'پانزده', 'شانزده', 'هفده', 'هجده', 'نوزده'];
+
+  function upTo999(x) {
+    if (x === 0) return '';
+    let s = '';
+    if (x >= 100) { s += hundreds[Math.floor(x / 100)] + ' و '; x %= 100; }
+    if (x >= 20) { s += tens[Math.floor(x / 10)] + (x % 10 ? ' و ' + ones[x % 10] : ''); return s.trim(); }
+    if (x >= 10) return (s + teens[x - 10]).trim();
+    return (s + ones[x]).trim();
+  }
+
+  if (num >= 1e9) {
+    const b = Math.floor(num / 1e9);
+    const r = num % 1e9;
+    return (upTo999(b) + ' میلیارد' + (r > 0 ? ' و ' + numberToPersianWords(r) : '') + ' تومان').trim();
+  }
+  if (num >= 1e6) {
+    const m = Math.floor(num / 1e6);
+    const r = num % 1e6;
+    return (upTo999(m) + ' میلیون' + (r > 0 ? ' و ' + numberToPersianWords(r) : '') + ' تومان').trim();
+  }
+  if (num >= 1000) {
+    const t = Math.floor(num / 1000);
+    const r = num % 1000;
+    return (upTo999(t) + ' هزار' + (r > 0 ? ' و ' + upTo999(r) : '') + ' تومان').trim();
+  }
+  return upTo999(num) + ' تومان';
+}
+
+function formatAmountWithSeparators(val) {
+  const s = normalizeDigits(String(val || '').trim());
+  if (!s || /[^\d]/.test(s)) return val;
+  return s.replace(/\B(?=(\d{3})+(?!\d))/g, '،');
+}
+
 function formatToman(num) {
   if (num == null || isNaN(num)) return '—';
   const n = Number(num);
@@ -289,8 +352,7 @@ function toPublicImageUrl(url) {
 function collectFormData() {
   const rawTitle = (form.querySelector('#project-title')?.value || '').replace(/\s+/g, ' ').trim();
   const title = sanitizeText(convertDigitsToLatin(rawTitle));
-  const rawGuarantee = (form.querySelector('#project-guarantee-type')?.value || '').replace(/\s+/g, ' ').trim();
-  const guarantee_type = sanitizeText(convertDigitsToLatin(rawGuarantee));
+  const guarantee_type = (form.querySelector('#project-guarantee-type')?.value || '').trim();
 
   const owner = {
     phone: convertDigitsToLatin((form.querySelector('#owner-phone')?.value || '').replace(/\s+/g, ' ').trim()),
@@ -398,6 +460,12 @@ async function validateForm(model) {
     if (title.length < 3 || title.length > 80) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۸۰ کاراکتر باشد.' });
     else if (ONLY_NUMBERS.test(title)) errors.push({ field: 'project_title', message: 'عنوان نمی‌تواند فقط عدد باشد.' });
     else if (DANGEROUS_TITLE.test(title)) errors.push({ field: 'project_title', message: 'عنوان شامل کاراکترهای نامعتبر است.' });
+    else {
+      const strictTitle = (project.visibility === PUBLISH_STATUS.PUBLISHED || project.status === 'FUNDING');
+      if (strictTitle && !titleHasPrefix(title)) {
+        errors.push({ field: 'project_title', message: 'برای انتشار، عنوان باید با «تأمین مالی برای» یا «تأمین مالی جهت» آغاز شود.' });
+      }
+    }
   }
 
   if (!ALLOWED_STATUS.includes(project.status)) {
@@ -416,15 +484,18 @@ async function validateForm(model) {
   const pr = validateNumberRange(project.principal_payout_interval_days, 1, 36500, { integer: true });
   if (!pr.valid) errors.push({ field: 'project_principal_payout_interval_days', message: 'فاصله پرداخت اصل سرمایه الزامی است (عدد صحیح).' });
 
-  if (!project.guarantee_type || project.guarantee_type.length > 120) {
-    errors.push({ field: 'project_guarantee_type', message: 'نوع ضمانت الزامی است (حداکثر ۱۲۰ کاراکتر).' });
+  const strictGuarantee = (project.visibility === PUBLISH_STATUS.PUBLISHED || project.status === 'FUNDING');
+  if (!project.guarantee_type || !GUARANTEE_OPTIONS.includes(project.guarantee_type)) {
+    if (strictGuarantee) errors.push({ field: 'project_guarantee_type', message: 'نوع ضمانت الزامی است.' });
   }
 
   const funded = project.funded_amount_toman;
   const required = project.required_amount_toman;
   const reqVal = validateNumberRange(required, CONFIG.REQUIRED_AMOUNT_MIN, CONFIG.REQUIRED_AMOUNT_MAX, { integer: true });
   if (!reqVal.valid) errors.push({ field: 'project_required_amount_toman', message: 'مبلغ مورد نیاز باید عدد صحیح و حداقل ۱۰۰٬۰۰۰ تومان باشد.' });
-  if (funded > required) errors.push({ field: 'project_required_amount_toman', message: 'مبلغ تأمین‌شده نمی‌تواند بیشتر از مبلغ مورد نیاز باشد.' });
+  if (!isNaN(required) && required > 0 && !isNaN(funded) && funded > required) {
+    errors.push({ field: 'project_required_amount_toman', message: 'مبلغ تأمین‌شده نمی‌تواند بیشتر از مبلغ مورد نیاز باشد.' });
+  }
 
   if (!project.visibility || !PUBLISH_STATUS_VALUES.includes(project.visibility)) {
     errors.push({ field: 'project_visibility', message: 'وضعیت انتشار الزامی است.' });
@@ -878,6 +949,7 @@ function renderSuccess(resp) {
       <span class="key">شناسه</span><span class="val">${escapeHtml(resp.id)}</span>
       <span class="key">وضعیت</span><span class="val">${escapeHtml(statusVal)}</span>
       <span class="key">وضعیت انتشار</span><span class="val">${escapeHtml(visibilityVal)}</span>
+      <span class="key">نوع ضمانت</span><span class="val">${escapeHtml(resp.guarantee_type || '—')}</span>
       <span class="key">سود ماهانه</span><span class="val">${escapeHtml(profitVal)}</span>
       <span class="key">مدت</span><span class="val">${escapeHtml(durationVal)}</span>
       <span class="key">مبلغ مورد نیاز</span><span class="val">${escapeHtml(formatToman(resp.required_amount_toman ?? resp.requiredAmountToman))}</span>
@@ -940,6 +1012,86 @@ function setupClearErrorsOnInput() {
   });
 }
 
+function setupTitleHelper() {
+  const titleInput = document.getElementById('project-title');
+  const feedbackEl = document.getElementById('title-feedback');
+  const applyBtn = document.getElementById('title-apply-btn');
+
+  function updateTitleFeedback() {
+    if (!feedbackEl || !titleInput) return;
+    const val = titleInput.value.trim();
+    if (!val) {
+      feedbackEl.textContent = '';
+      feedbackEl.className = 'title-feedback';
+      return;
+    }
+    if (titleHasPrefix(val)) {
+      feedbackEl.textContent = '✓ عنوان مطابق الگو است.';
+      feedbackEl.className = 'title-feedback is-ok';
+    } else {
+      feedbackEl.textContent = '⚠ عنوان باید با «تأمین مالی برای» یا «تأمین مالی جهت» آغاز شود.';
+      feedbackEl.className = 'title-feedback is-warning';
+    }
+  }
+
+  if (titleInput) {
+    titleInput.addEventListener('input', updateTitleFeedback);
+    titleInput.addEventListener('blur', updateTitleFeedback);
+  }
+  if (applyBtn) {
+    applyBtn.addEventListener('click', () => {
+      if (titleInput) {
+        titleInput.value = applyTitlePrefix(titleInput.value);
+        updateTitleFeedback();
+        titleInput.focus();
+      }
+    });
+  }
+  updateTitleFeedback();
+}
+
+function setupAmountFormatting() {
+  const requiredInput = document.getElementById('project-required-amount-toman');
+  const fundedInput = document.getElementById('project-funded-amount-toman');
+  const requiredWordsEl = document.getElementById('required-amount-words');
+  const fundedWordsEl = document.getElementById('funded-amount-words');
+
+  function updateWords(el, val) {
+    if (!el) return;
+    const n = parseNumericInput(val);
+    if (isNaN(n) || n <= 0) { setText(el, ''); return; }
+    setText(el, numberToPersianWords(n));
+  }
+
+  function setupAmountInput(input, wordsEl) {
+    if (!input) return;
+    const formatAndUpdate = () => {
+      const raw = normalizeDigits(input.value);
+      const digitsBeforeCursor = (input.value.slice(0, input.selectionStart).replace(/[^0-9۰-۹]/g, '').length;
+      const formatted = raw ? formatAmountWithSeparators(raw) : '';
+      input.value = formatted;
+      let pos = 0;
+      let digitCount = 0;
+      for (let i = 0; i < formatted.length; i++) {
+        if (/[0-9۰-۹]/.test(formatted[i])) digitCount++;
+        if (digitCount >= digitsBeforeCursor) { pos = i + 1; break; }
+        pos = i + 1;
+      }
+      input.setSelectionRange(pos, pos);
+      updateWords(wordsEl, raw || input.value);
+    };
+    input.addEventListener('blur', formatAndUpdate);
+    input.addEventListener('input', formatAndUpdate);
+  }
+
+  if (requiredInput) {
+    setupAmountInput(requiredInput, requiredWordsEl);
+  }
+  if (fundedWordsEl) {
+    setText(fundedWordsEl, '');
+  }
+}
+
 function clearFieldErrorForInput(e) {
   const input = e.target;
   if (!input || !input.id) return;
@@ -964,6 +1116,12 @@ async function handleSubmit(e) {
 
   submitState = STATE.VALIDATING;
   setOverlayLoading(true, MSG.PROGRESS_VALIDATE);
+  const titleEl = form.querySelector('#project-title');
+  const vis = form.querySelector('#project-visibility')?.value;
+  const st = form.querySelector('#project-status')?.value;
+  if (titleEl && (vis === PUBLISH_STATUS.PUBLISHED || st === 'FUNDING') && !titleHasPrefix(titleEl.value)) {
+    titleEl.value = applyTitlePrefix(titleEl.value);
+  }
   const model = collectFormData();
   const { isValid, errors } = await validateForm(model);
 
@@ -1140,10 +1298,19 @@ function init() {
   applyAppMode();
   setupImagePreview();
   setupClearErrorsOnInput();
+  setupTitleHelper();
+  setupAmountFormatting();
 
   if (form) {
     form.addEventListener('submit', handleSubmit);
-    form.addEventListener('reset', () => clearForm(false));
+    form.addEventListener('reset', () => {
+      clearForm(false);
+      setTimeout(() => {
+        document.getElementById('title-feedback')?.classList.remove('is-ok', 'is-warning');
+        setText(document.getElementById('title-feedback'), '');
+        setText(document.getElementById('required-amount-words'), '');
+      }, 0);
+    });
   }
 }
 

@@ -53,7 +53,13 @@
         <div class="form-row">
           <label for="project-title">عنوان <span class="required">*</span></label>
           <input type="text" id="project-title" name="project_title" required
-                 placeholder="تست پروژه">
+                 placeholder="تأمین مالی برای ساخت واحد مسکونی">
+          <div id="title-helper" class="title-helper">
+            <p class="title-helper-pattern">الگو: تأمین مالی برای + [هدف پروژه]</p>
+            <p class="title-helper-examples">نمونه: تأمین مالی برای ساخت واحد مسکونی | تأمین مالی جهت خرید دستگاه | تأمین مالی برای راه‌اندازی کسب‌وکار</p>
+            <div id="title-feedback" class="title-feedback" aria-live="polite"></div>
+            <button type="button" id="title-apply-btn" class="btn-helper">اعمال عنوان پیشنهادی</button>
+          </div>
           <span class="field-error" id="project-title-error" role="alert"></span>
         </div>
         <div class="form-row">
@@ -91,20 +97,29 @@
         </div>
         <div class="form-row">
           <label for="project-guarantee-type">نوع ضمانت <span class="required">*</span></label>
-          <input type="text" id="project-guarantee-type" name="project_guarantee_type" required
-                 placeholder="وثیقه ملکی">
+          <select id="project-guarantee-type" name="project_guarantee_type">
+            <option value="">انتخاب نوع ضمانت</option>
+            <option value="وثیقه ملکی">وثیقه ملکی</option>
+            <option value="ضامن معتبر">ضامن معتبر</option>
+            <option value="دستگاه">دستگاه</option>
+            <option value="خودرو">خودرو</option>
+            <option value="طلا">طلا</option>
+            <option value="سفته">سفته</option>
+          </select>
           <span class="field-error" id="project-guarantee-type-error" role="alert"></span>
         </div>
         <div class="form-row">
           <label for="project-funded-amount-toman">مبلغ تأمین‌شده (تومان)</label>
           <input type="text" id="project-funded-amount-toman" name="project_funded_amount_toman"
                  value="۰" min="0" disabled title="برای پروژه جدید همیشه صفر است">
+          <span id="funded-amount-words" class="amount-words" aria-live="polite"></span>
           <span class="field-hint">غیرفعال؛ برای پروژه‌های جدید همیشه صفر است.</span>
         </div>
         <div class="form-row">
           <label for="project-required-amount-toman">مبلغ مورد نیاز (تومان) <span class="required">*</span></label>
           <input type="text" id="project-required-amount-toman" name="project_required_amount_toman"
-                 required min="0" placeholder="۲۰۰۰۰۰۰۰۰۰۰" inputmode="numeric" autocomplete="off">
+                 required min="0" placeholder="۲٬۰۰۰٬۰۰۰٬۰۰۰" inputmode="numeric" autocomplete="off">
+          <span id="required-amount-words" class="amount-words" aria-live="polite"></span>
           <span class="field-error" id="project-required-amount-toman-error" role="alert"></span>
         </div>
         <div class="form-row">
