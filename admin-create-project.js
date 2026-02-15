@@ -351,7 +351,7 @@ function normalizePayload(owner, project) {
   };
   const p = {
     title: String(project.title || '').trim(),
-    status: ['REVIEW', 'ACTIVE', 'COMPLETED'].includes(project.status) ? project.status : 'REVIEW',
+    status: normalizeStatusForPayload(project.status),
     monthly_profit_percent: safeNumber(project.monthly_profit_percent),
     duration_months: Math.floor(safeNumber(project.duration_months, 1)),
     profit_payout_interval_days: Math.floor(safeNumber(project.profit_payout_interval_days, 1)),
@@ -366,7 +366,14 @@ function normalizePayload(owner, project) {
 
 // ——— Validation (client-side) ———
 
-const ALLOWED_STATUS = ['REVIEW', 'ACTIVE', 'COMPLETED'];
+const ALLOWED_STATUS = ['REVIEW', 'FUNDING', 'COMPLETED'];
+
+/** Normalize status for backend: only REVIEW, FUNDING, COMPLETED. Map legacy ACTIVE→FUNDING. */
+function normalizeStatusForPayload(status) {
+  const s = (status || '').toString().toUpperCase();
+  if (s === 'ACTIVE') return 'FUNDING';
+  return ALLOWED_STATUS.includes(s) ? s : 'REVIEW';
+}
 
 /**
  * Validates form data. Returns { isValid, errors }.
@@ -565,13 +572,14 @@ async function fetchWithTimeout(url, opts) {
 }
 
 /** Upload cover image. Returns { success, url, key, status, raw } or { success: false, message }. URL is trimmed. */
-async function requestUploadCover({ entityId, file }) {
+async function requestUploadCover({ entityId, file, visibility }) {
+  const vis = visibility === 'PRIVATE' ? 'PRIVATE' : 'PUBLIC';
   const fd = new FormData();
   fd.append('entity_id', String(entityId || ''));
   fd.append('context', 'projects');
   fd.append('entity_type', 'opportunity');
   fd.append('file_type', 'cover');
-  fd.append('visibility', 'PUBLIC');
+  fd.append('visibility', vis);
   fd.append('file', file);
   try {
     const { ok, status, json, text } = await fetchWithTimeout(CONFIG.UPLOAD_URL, {
@@ -826,6 +834,7 @@ function renderClientErrors(errors) {
 }
 
 const STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'در حال کارشناسی', COMPLETED: 'تکمیل‌شده' };
+const VISIBILITY_LABELS = { PUBLIC: 'منتشر شده', PRIVATE: 'منتشر نشده', PUBLISHED: 'منتشر شده', UNPUBLISHED: 'منتشر نشده' };
 
 function renderSuccess(resp) {
   clearErrors();
@@ -853,6 +862,7 @@ function renderSuccess(resp) {
   card.appendChild(imgWrap);
 
   const statusVal = resp.status ? (STATUS_LABELS[normalizeStatus(resp.status)] || resp.status) : '—';
+  const visibilityVal = resp.visibility ? (VISIBILITY_LABELS[resp.visibility] || resp.visibility) : '—';
   const durationVal = (resp.duration_months ?? resp.durationMonths) != null
     ? toPersianDigits(resp.duration_months ?? resp.durationMonths) + ' ماه'
     : '—';
@@ -867,6 +877,7 @@ function renderSuccess(resp) {
     <div class="summary-card-meta">
       <span class="key">شناسه</span><span class="val">${escapeHtml(resp.id)}</span>
       <span class="key">وضعیت</span><span class="val">${escapeHtml(statusVal)}</span>
+      <span class="key">وضعیت انتشار</span><span class="val">${escapeHtml(visibilityVal)}</span>
       <span class="key">سود ماهانه</span><span class="val">${escapeHtml(profitVal)}</span>
       <span class="key">مدت</span><span class="val">${escapeHtml(durationVal)}</span>
       <span class="key">مبلغ مورد نیاز</span><span class="val">${escapeHtml(formatToman(resp.required_amount_toman ?? resp.requiredAmountToman))}</span>
@@ -1017,7 +1028,8 @@ async function handleSubmit(e) {
     // 2) Upload
     submitState = STATE.UPLOADING;
     setOverlayLoading(true, MSG.PROGRESS_UPLOAD);
-    const uploadResult = await requestUploadCover({ entityId: projectId, file });
+    const visibility = publishStatusToBackend(model.project.visibility);
+    const uploadResult = await requestUploadCover({ entityId: projectId, file, visibility });
     console.log('[UPLOAD]', { projectId, success: uploadResult.success, url: uploadResult.url, result: uploadResult });
 
     if (!uploadResult.success || !uploadResult.url) {
