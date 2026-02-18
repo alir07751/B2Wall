@@ -10,7 +10,7 @@ const CONFIG = {
   N8N_BASE: 'https://n8nb2wall.darkube.app',
   get CREATE_URL() { return `${this.N8N_BASE}/webhook/create`; },
   get OPPORTUNITIES_URL() { return `${this.N8N_BASE}/webhook/allopportunities`; },
-  get UPDATE_URL() { return `${this.N8N_BASE}/webhook/opportunities/update`; },
+  get UPDATE_URL() { return `${this.N8N_BASE}/webhook/update`; },
   get UPLOAD_URL() { return `${this.N8N_BASE}/webhook/upload`; },
   get ATTACH_COVER_URL() { return `${this.N8N_BASE}/webhook/attach-cover`; },
   FILE_MAX_BYTES: 3 * 1024 * 1024, // 3MB
@@ -1191,26 +1191,31 @@ function setupClearErrorsOnInput() {
 function setupGuaranteeCheckboxes() {
   const container = document.getElementById('guarantee-checkboxes');
   const chipsEl = document.getElementById('guarantee-chips');
+  // #region agent log
+  _dbg({location:'admin-create-project.js:setupGuaranteeCheckboxes',message:'guarantee setup',data:{containerFound:!!container,chipsFound:!!chipsEl,existingCount:container?container.querySelectorAll('input[type="checkbox"][name="guarantee_type"]').length:-1},hypothesisId:'H2'});
+  // #endregion
   if (!container) return;
 
-  container.innerHTML = '';
-
-  GUARANTEE_OPTIONS.forEach((opt) => {
-    const id = 'guarantee-' + opt.replace(/\s+/g, '-');
-    const label = document.createElement('label');
-    label.htmlFor = id;
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.value = opt;
-    cb.id = id;
-    cb.name = 'guarantee_type';
-    label.appendChild(cb);
-    label.appendChild(document.createTextNode(opt));
-    container.appendChild(label);
-  });
+  const existingCheckboxes = container.querySelectorAll('input[type="checkbox"][name="guarantee_type"]');
+  if (existingCheckboxes.length === 0) {
+    container.innerHTML = '';
+    GUARANTEE_OPTIONS.forEach((opt) => {
+      const id = 'guarantee-' + opt.replace(/\s+/g, '-');
+      const label = document.createElement('label');
+      label.htmlFor = id;
+      const cb = document.createElement('input');
+      cb.type = 'checkbox';
+      cb.value = opt;
+      cb.id = id;
+      cb.name = 'guarantee_type';
+      label.appendChild(cb);
+      label.appendChild(document.createTextNode(opt));
+      container.appendChild(label);
+    });
+  }
 
   function updateChips() {
-    const checked = Array.from(container.querySelectorAll('input:checked')).map((c) => c.value);
+    const checked = Array.from(container.querySelectorAll('input[type="checkbox"]:checked')).map((c) => c.value);
     if (!chipsEl) return;
     if (checked.length === 0) {
       chipsEl.hidden = true;
@@ -1221,13 +1226,18 @@ function setupGuaranteeCheckboxes() {
     chipsEl.innerHTML = checked.map((v) => `<span class="chip">${escapeHtml(v)}</span>`).join('');
   }
 
-  container.querySelectorAll('input').forEach((cb) => {
-    cb.addEventListener('change', () => {
+  container.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.removeEventListener('change', cb._guaranteeChange);
+    cb._guaranteeChange = () => {
       updateChips();
       clearFieldErrorForInput({ target: cb });
-    });
+    };
+    cb.addEventListener('change', cb._guaranteeChange);
   });
   updateChips();
+  // #region agent log
+  _dbg({location:'admin-create-project.js:setupGuaranteeCheckboxes:end',message:'guarantee checkboxes attached',data:{totalCheckboxes:container.querySelectorAll('input[type="checkbox"]').length},hypothesisId:'H2'});
+  // #endregion
 }
 
 function prefillDefaultTitlePrefix() {
@@ -1311,11 +1321,15 @@ function setupAmountFormatting() {
   const fundedReadable = document.getElementById('funded-amount-readable');
   const fundedFormatted = document.getElementById('funded-amount-formatted');
   const fundedWordsEl = document.getElementById('funded-amount-words');
+  // #region agent log
+  var _reqVal = requiredInput ? requiredInput.value : '';
+  _dbg({location:'admin-create-project.js:setupAmountFormatting',message:'amount formatting',data:{requiredInputFound:!!requiredInput,requiredReadableFound:!!requiredReadable,requiredWordsElFound:!!requiredWordsEl,requiredValue:_reqVal,requiredValueLen:_reqVal.length},hypothesisId:'H3'});
+  // #endregion
 
   function updateReadable(container, formattedEl, wordsEl, val) {
     if (!container || !wordsEl) return;
     const n = parseNumericInput(val);
-    if (isNaN(n) || n <= 0) {
+    if (isNaN(n) || n < 0) {
       container.hidden = true;
       if (formattedEl) setText(formattedEl, '');
       setText(wordsEl, '');
@@ -1323,9 +1337,9 @@ function setupAmountFormatting() {
     }
     container.hidden = false;
     const raw = normalizeDigits(String(val || ''));
-    if (formattedEl) setText(formattedEl, raw ? toPersianDigits(formatAmountWithSeparators(raw)) + ' تومان' : '');
-    const words = numberToPersianWords(n);
-    setText(wordsEl, words ? words : '');
+    if (formattedEl) setText(formattedEl, raw ? toPersianDigits(formatAmountWithSeparators(raw)) + ' تومان' : (n === 0 ? '۰ تومان' : ''));
+    const words = n === 0 ? 'صفر تومان' : numberToPersianWords(n);
+    setText(wordsEl, words || '');
   }
 
   function digitsOnly(val) {
@@ -1345,9 +1359,13 @@ function setupAmountFormatting() {
 
   if (requiredInput) {
     setupAmountInput(requiredInput, requiredReadable, requiredFormatted, requiredWordsEl);
+    updateReadable(requiredReadable, requiredFormatted, requiredWordsEl, requiredInput.value || '');
+    // #region agent log
+    _dbg({location:'admin-create-project.js:setupAmountFormatting:afterRequired',message:'after required updateReadable',data:{requiredReadableHidden:requiredReadable?requiredReadable.hidden:null},hypothesisId:'H3'});
+    // #endregion
   }
   if (fundedInput && fundedReadable) {
-    updateReadable(fundedReadable, fundedFormatted, fundedWordsEl, '0');
+    updateReadable(fundedReadable, fundedFormatted, fundedWordsEl, fundedInput.value || '0');
   }
 }
 
@@ -1620,7 +1638,27 @@ async function doRetryAttach(projectId, cleanUrl) {
 
 // ——— Init ———
 
+// #region agent log
+function _dbg(payload) {
+  try {
+    window.__debugLog = window.__debugLog || [];
+    window.__debugLog.push(payload);
+    fetch('http://127.0.0.1:7242/ingest/ce3493c5-1f95-4a86-a76a-4ad725b2e630',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,timestamp:Date.now()})}).catch(function(){});
+  } catch (e) {}
+}
+// #endregion
+
 function init() {
+  // #region agent log
+  try {
+    var _form = document.getElementById('create-project-form');
+    var _guar = document.getElementById('guarantee-checkboxes');
+    _dbg({location:'admin-create-project.js:init',message:'init started',data:{readyState:document.readyState,formFound:!!_form,guaranteeContainerFound:!!_guar,guaranteeChildCount:_guar?_guar.children.length:-1},hypothesisId:'H1'});
+  } catch (e) {
+    _dbg({location:'admin-create-project.js:init',message:'init log error',data:{error:String(e.message)},hypothesisId:'H4'});
+  }
+  // #endregion
+  setupGuaranteeCheckboxes();
   const { mode, id } = getEditParams();
   if (mode === 'edit' && id) {
     editMode = true;
@@ -1638,8 +1676,6 @@ function init() {
       fundedInput.removeAttribute('title');
     }
     setOverlayLoading(true, MSG.LOADING_EDIT);
-    // Ensure guarantee checkboxes are set up before prefilling
-    setupGuaranteeCheckboxes();
     fetchProjectForEdit(id).then((project) => {
       setOverlayLoading(false, '');
       if (project) {
@@ -1682,13 +1718,12 @@ function init() {
     });
   }
 
-  if (!editMode) {
-    setupGuaranteeCheckboxes();
-  }
-
   const btnCreateNew = document.getElementById('btn-create-new');
   if (btnCreateNew) btnCreateNew.addEventListener('click', resetToCreateNew);
 
+  // #region agent log
+  _dbg({location:'admin-create-project.js:init:formCheck',message:'form ref at init end',data:{formRefExists:!!form},hypothesisId:'H5'});
+  // #endregion
   if (!form) {
     console.error('[init] form #create-project-form not found');
     showGlobalError({ type: 'system', message: 'فرم یافت نشد. لطفاً صفحه را مجدداً بارگذاری کنید.' });
@@ -1714,8 +1749,18 @@ function init() {
   }
 }
 
+function initWrapper() {
+  try {
+    init();
+  } catch (err) {
+    // #region agent log
+    _dbg({location:'admin-create-project.js:initWrapper',message:'init threw',data:{error:String(err&&err.message),stack:(err&&err.stack)?String(err.stack).slice(0,500):''},hypothesisId:'H4'});
+    // #endregion
+    throw err;
+  }
+}
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', initWrapper);
 } else {
-  init();
+  initWrapper();
 }

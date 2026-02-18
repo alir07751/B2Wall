@@ -310,6 +310,10 @@ body {
   box-shadow: var(--shadow);
 }
 
+.form-section-image {
+  margin-top: var(--space-24);
+}
+
 .form-section-title {
   margin: 0 0 var(--space-16);
   font-size: 1.1rem;

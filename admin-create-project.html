@@ -104,7 +104,14 @@
         </div>
         <div class="form-row">
           <label>نوع ضمانت <span class="required">*</span></label>
-          <div id="guarantee-checkboxes" class="guarantee-checkboxes" role="group" aria-label="نوع ضمانت"></div>
+          <div id="guarantee-checkboxes" class="guarantee-checkboxes" role="group" aria-label="نوع ضمانت">
+            <label for="guarantee-وثیقه-ملکی"><input type="checkbox" id="guarantee-وثیقه-ملکی" name="guarantee_type" value="وثیقه ملکی"> وثیقه ملکی</label>
+            <label for="guarantee-ضامن-معتبر"><input type="checkbox" id="guarantee-ضامن-معتبر" name="guarantee_type" value="ضامن معتبر"> ضامن معتبر</label>
+            <label for="guarantee-دستگاه"><input type="checkbox" id="guarantee-دستگاه" name="guarantee_type" value="دستگاه"> دستگاه</label>
+            <label for="guarantee-خودرو"><input type="checkbox" id="guarantee-خودرو" name="guarantee_type" value="خودرو"> خودرو</label>
+            <label for="guarantee-طلا"><input type="checkbox" id="guarantee-طلا" name="guarantee_type" value="طلا"> طلا</label>
+            <label for="guarantee-سفته"><input type="checkbox" id="guarantee-سفته" name="guarantee_type" value="سفته"> سفته</label>
+          </div>
           <div id="guarantee-chips" class="guarantee-chips" hidden></div>
           <span class="field-error" id="project-guarantee-type-error" role="alert"></span>
         </div>
@@ -112,9 +119,9 @@
           <label for="project-funded-amount-toman">مبلغ تأمین‌شده (تومان)</label>
           <input type="text" id="project-funded-amount-toman" name="project_funded_amount_toman"
                  value="۰" min="0" disabled title="برای پروژه جدید همیشه صفر است">
-          <div id="funded-amount-readable" class="amount-readable" hidden>
+          <div id="funded-amount-readable" class="amount-readable" hidden aria-live="polite">
             <span id="funded-amount-formatted"></span>
-            <span id="funded-amount-words"></span>
+            <span class="amount-words-line"><span class="amount-words-label">به حروف:</span> <span id="funded-amount-words"></span></span>
           </div>
           <span class="field-hint">غیرفعال؛ برای پروژه‌های جدید همیشه صفر است.</span>
         </div>
@@ -139,8 +146,14 @@
         </div>
       </section>
 
-      <!-- تصویر پروژه -->
-      <section class="form-section">
+      <div class="form-actions">
+        <p id="progress-text" class="progress-text" aria-live="polite" hidden></p>
+        <button type="submit" id="submit-btn" class="btn btn-primary">ایجاد پروژه</button>
+        <button type="reset" id="reset-btn" class="btn btn-secondary">پاک کردن</button>
+      </div>
+
+      <!-- تصویر پروژه — آپلود و به‌روزرسانی آدرس تصویر پس از کلیک روی «ایجاد پروژه» انجام می‌شود -->
+      <section class="form-section form-section-image">
         <h2 class="form-section-title">تصویر پروژه</h2>
         <div class="form-row">
           <label for="project-image">تصویر <span class="required">*</span></label>
@@ -152,12 +165,6 @@
           <img id="image-preview" src="" alt="پیش‌نمایش" class="image-preview">
         </div>
       </section>
-
-      <div class="form-actions">
-        <p id="progress-text" class="progress-text" aria-live="polite" hidden></p>
-        <button type="submit" id="submit-btn" class="btn btn-primary">ایجاد پروژه</button>
-        <button type="reset" id="reset-btn" class="btn btn-secondary">پاک کردن</button>
-      </div>
     </form>
   </main>
 
