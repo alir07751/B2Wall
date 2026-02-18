@@ -593,7 +593,6 @@ async function validateForm(model) {
     if (title.length < 3 || title.length > 80) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۸۰ کاراکتر باشد.' });
     else if (ONLY_NUMBERS.test(title)) errors.push({ field: 'project_title', message: 'عنوان نمی‌تواند فقط عدد باشد.' });
     else if (DANGEROUS_TITLE.test(title)) errors.push({ field: 'project_title', message: 'عنوان شامل کاراکترهای نامعتبر است.' });
-    }
   }
 
   if (!ALLOWED_STATUS.includes(project.status)) {
