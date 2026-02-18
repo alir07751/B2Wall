@@ -8,7 +8,10 @@
 </head>
 <body>
   <header class="page-header">
-    <h1>پنل ایجاد پروژه</h1>
+    <div class="header-top-bar">
+      <h1 id="page-title">پنل ایجاد پروژه</h1>
+      <a href="admin-dashboard.html" id="back-to-dashboard" class="back-link" hidden>← بازگشت به داشبورد</a>
+    </div>
   </header>
 
   <main class="main-wrap">
@@ -32,6 +35,7 @@
       <p class="success-panel-text">می‌توانید برای مشاهده به لینک زیر بروید:</p>
       <div class="success-panel-actions">
         <a id="btn-view-showcase" href="https://b2wall.darkube.app/" target="_blank" rel="noopener noreferrer" class="btn btn-primary">مشاهده ویترین</a>
+        <a id="btn-back-dashboard" href="admin-dashboard.html" class="btn btn-secondary" hidden>بازگشت به داشبورد</a>
         <button type="button" id="btn-create-new" class="btn btn-secondary">ایجاد پروژه جدید</button>
       </div>
     </div>
@@ -59,22 +63,9 @@
       <section class="form-section">
         <h2 class="form-section-title">پروژه</h2>
         <div class="form-row">
-          <label for="project-title" class="label-with-info">
-            عنوان <span class="required">*</span>
-            <span id="title-info-icon" class="info-icon" role="button" tabindex="0" aria-label="راهنمای عنوان">ℹ</span>
-          </label>
-          <div class="title-input-row">
-            <input type="text" id="project-title" name="project_title" required
-                   placeholder="تأمین مالی برای ساخت واحد مسکونی">
-            <button type="button" id="title-apply-btn" class="btn-helper" title="اعمال عنوان پیشنهادی">اعمال عنوان پیشنهادی</button>
-          </div>
-          <div id="title-tooltip" class="tooltip-box" role="tooltip" hidden>
-            <p class="tooltip-pattern">الگو: تأمین مالی برای + [هدف پروژه]</p>
-            <p class="tooltip-examples">نمونه: تأمین مالی برای خرید مواد اولیه، تأمین مالی برای توسعه خط تولید، تأمین مالی برای سرمایه در گردش</p>
-            <p class="tooltip-note">یکدست بودن عنوان‌ها در ویترین نمایش پروژه‌ها اهمیت دارد.</p>
-            <button type="button" class="btn-helper btn-helper-inline" id="title-apply-tooltip-btn">اعمال عنوان پیشنهادی</button>
-          </div>
-          <span id="title-feedback" class="title-feedback-inline" aria-live="polite"></span>
+          <label for="project-title">عنوان <span class="required">*</span></label>
+          <input type="text" id="project-title" name="project_title" required
+                 placeholder="تأمین مالی برای ساخت واحد مسکونی">
           <span class="field-error" id="project-title-error" role="alert"></span>
         </div>
         <div class="form-row">
@@ -139,8 +130,8 @@
         <div class="form-row">
           <label for="project-visibility">وضعیت انتشار <span class="required">*</span></label>
           <select id="project-visibility" name="project_visibility" required>
-            <option value="PUBLISHED">منتشر شود</option>
-            <option value="UNPUBLISHED">منتشر نشود</option>
+            <option value="PUBLISHED">منتشر شده</option>
+            <option value="UNPUBLISHED">منتشر نشده</option>
           </select>
           <span class="field-hint">در صورت انتخاب منتشر شود، پروژه در ویترین نمایش داده خواهد شد.</span>
           <span class="field-error" id="project-visibility-error" role="alert"></span>

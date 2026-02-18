@@ -9,6 +9,8 @@ const CONFIG = {
   APP_MODE: 'WITH_OWNER', // or 'SELF_SERVICE'
   N8N_BASE: 'https://n8nb2wall.darkube.app',
   get CREATE_URL() { return `${this.N8N_BASE}/webhook/create`; },
+  get OPPORTUNITIES_URL() { return `${this.N8N_BASE}/webhook/allopportunities`; },
+  get UPDATE_URL() { return `${this.N8N_BASE}/webhook/opportunities/update`; },
   get UPLOAD_URL() { return `${this.N8N_BASE}/webhook/upload`; },
   get ATTACH_COVER_URL() { return `${this.N8N_BASE}/webhook/attach-cover`; },
   FILE_MAX_BYTES: 3 * 1024 * 1024, // 3MB
@@ -54,6 +56,10 @@ const MSG = {
   SUCCESS_MESSAGE: 'پروژه با موفقیت ثبت شد.',
   SUBMIT_ERROR: 'خطا در ثبت پروژه. لطفاً بررسی و دوباره تلاش کنید.',
   BTN_SUBMIT: 'ایجاد پروژه',
+  BTN_UPDATE: 'ثبت ویرایش',
+  EDIT_TITLE: 'ویرایش پروژه',
+  LOADING_EDIT: 'در حال بارگذاری پروژه...',
+  EDIT_LOAD_FAIL: 'بارگذاری پروژه برای ویرایش ناموفق بود.',
 };
 
 // Persian digits for display
@@ -99,6 +105,8 @@ let submitState = STATE.IDLE;
 let lastSuccessfulProjectId = null;
 let lastUploadResult = null;
 let lastErrorStep = null;
+let editMode = false;
+let editProjectId = null;
 
 // Server field path → input element ID
 const FIELD_PATH_TO_ID = {
@@ -148,6 +156,112 @@ const FIELD_IDS = {
   project_visibility: 'project-visibility',
   project_image: 'project-image',
 };
+
+// ——— Edit mode ———
+function getEditParams() {
+  const params = new URLSearchParams(document.location.search || '');
+  const mode = (params.get('mode') || '').toLowerCase();
+  const id = (params.get('id') || '').trim();
+  return { mode, id };
+}
+
+/** Fetch all opportunities and return the project with given id, or null. */
+async function fetchProjectForEdit(id) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
+  try {
+    const res = await fetch(CONFIG.OPPORTUNITIES_URL, { signal: controller.signal });
+    clearTimeout(timeoutId);
+    const text = await res.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (_) {
+      return null;
+    }
+    const list = Array.isArray(data) ? data : (data?.opportunities ?? data?.data ?? []);
+    if (!Array.isArray(list)) return null;
+    const found = list.find((p) => (p.id ?? p.opportunity_id ?? p.project_id) == id);
+    return found || null;
+  } catch (_) {
+    clearTimeout(timeoutId);
+    return null;
+  }
+}
+
+function prefillForm(project) {
+  if (!project || !form) return;
+  const p = project.project || project;
+  const o = project.owner || {};
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val != null && val !== '') el.value = String(val);
+  };
+  // Owner fields: support multiple name variations
+  const ownerPhone = o.phone ?? o.owner_phone ?? o.ownerPhone ?? o.mobile ?? null;
+  const ownerName = o.full_name ?? o.owner_full_name ?? o.ownerFullName ?? o.ownerName ?? o.name ?? null;
+  setVal('owner-phone', ownerPhone);
+  setVal('owner-full-name', ownerName);
+  // Project fields: support both snake_case and camelCase
+  setVal('project-title', p.title);
+  setVal('project-status', normalizeStatusForPayload(p.status));
+  const monthly = p.monthly_profit_percent ?? p.monthlyProfitPercent ?? null;
+  setVal('project-monthly-profit-percent', monthly);
+  const duration = p.duration_months ?? p.durationMonths ?? null;
+  setVal('project-duration-months', duration);
+  const profitInterval = p.profit_payout_interval_days ?? p.profitPayoutIntervalDays ?? null;
+  setVal('project-profit-payout-interval-days', profitInterval);
+  const principalInterval = p.principal_payout_interval_days ?? p.principalPayoutIntervalDays ?? null;
+  setVal('project-principal-payout-interval-days', principalInterval);
+  const required = p.required_amount_toman ?? p.requiredAmountToman ?? null;
+  setVal('project-required-amount-toman', required);
+  const funded = p.funded_amount_toman ?? p.fundedAmountToman ?? null;
+  setVal('project-funded-amount-toman', funded != null ? funded : 0);
+  const vis = (p.visibility ?? '').toString().toUpperCase();
+  setVal('project-visibility', vis === 'PUBLIC' ? PUBLISH_STATUS.PUBLISHED : PUBLISH_STATUS.UNPUBLISHED);
+  // Guarantee type: support both formats
+  const guarantee = (p.guarantee_type ?? p.guaranteeType ?? '').trim();
+  if (guarantee) {
+    const parts = guarantee.split(/[،,]/).map((s) => s.trim()).filter(Boolean);
+    const container = document.getElementById('guarantee-checkboxes');
+    if (container) {
+      container.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+        cb.checked = parts.includes(cb.value);
+      });
+    }
+    const chipsEl = document.getElementById('guarantee-chips');
+    if (chipsEl) {
+      chipsEl.hidden = parts.length === 0;
+      chipsEl.innerHTML = parts.map((v) => `<span class="chip">${escapeHtml(v)}</span>`).join('');
+    }
+  }
+  // Image: show existing if available, make upload optional in edit mode
+  const imgUrl = project.image_url ?? p.image_url ?? project.imageUrl ?? p.imageUrl ?? null;
+  if (imgUrl && imagePreview && imagePreviewWrap) {
+    imagePreview.src = toPublicImageUrl(imgUrl);
+    imagePreviewWrap.hidden = false;
+  }
+  // Amount formatting: support both snake_case and camelCase
+  const reqAmount = p.required_amount_toman ?? p.requiredAmountToman ?? null;
+  const reqRead = document.getElementById('required-amount-readable');
+  const reqFormatted = document.getElementById('required-amount-formatted');
+  const reqWords = document.getElementById('required-amount-words');
+  if (reqRead && reqFormatted && reqWords && reqAmount != null) {
+    reqRead.hidden = false;
+    setText(reqFormatted, toPersianDigits(formatAmountWithSeparators(String(reqAmount))) + ' تومان');
+    setText(reqWords, numberToPersianWords(Number(reqAmount)));
+  }
+  const fundedAmount = p.funded_amount_toman ?? p.fundedAmountToman ?? null;
+  const fundedRead = document.getElementById('funded-amount-readable');
+  const fundedFormatted = document.getElementById('funded-amount-formatted');
+  const fundedWords = document.getElementById('funded-amount-words');
+  if (fundedRead && fundedFormatted && fundedWords && fundedAmount != null) {
+    fundedRead.hidden = false;
+    setText(fundedFormatted, toPersianDigits(formatAmountWithSeparators(String(fundedAmount))) + ' تومان');
+    setText(fundedWords, numberToPersianWords(Number(fundedAmount)));
+  }
+  setupAmountFormatting();
+}
 
 // ——— Validation helpers ———
 
@@ -270,6 +384,20 @@ function parseNumericInput(str) {
   if (/[eE]/.test(s)) return NaN;
   const n = parseFloat(s);
   return isNaN(n) ? NaN : n;
+}
+
+/** Normalize and format monthly profit percent: 1–100, exactly 2 decimals. Supports Persian digits. */
+function formatProfitPercentInput(inputEl) {
+  if (!inputEl) return;
+
+  const raw = normalizeDigits(inputEl.value);
+  if (!raw) return;
+
+  const n = parseFloat(raw);
+  if (isNaN(n)) return;
+
+  const clamped = Math.min(Math.max(n, 1), 100);
+  inputEl.value = clamped.toFixed(2);
 }
 
 function escapeHtml(str) {
@@ -465,11 +593,6 @@ async function validateForm(model) {
     if (title.length < 3 || title.length > 80) errors.push({ field: 'project_title', message: 'عنوان باید بین ۳ تا ۸۰ کاراکتر باشد.' });
     else if (ONLY_NUMBERS.test(title)) errors.push({ field: 'project_title', message: 'عنوان نمی‌تواند فقط عدد باشد.' });
     else if (DANGEROUS_TITLE.test(title)) errors.push({ field: 'project_title', message: 'عنوان شامل کاراکترهای نامعتبر است.' });
-    else {
-      const strictTitle = (project.visibility === PUBLISH_STATUS.PUBLISHED || project.status === 'FUNDING');
-      if (strictTitle && !titleHasPrefix(title)) {
-        errors.push({ field: 'project_title', message: 'برای انتشار، عنوان باید با «تأمین مالی برای» یا «تأمین مالی جهت» آغاز شود.' });
-      }
     }
   }
 
@@ -508,7 +631,9 @@ async function validateForm(model) {
   }
 
   if (!file) {
-    errors.push({ field: 'project_image', message: 'تصویر پروژه الزامی است.' });
+    if (!editMode) {
+      errors.push({ field: 'project_image', message: 'تصویر پروژه الزامی است.' });
+    }
   } else {
     const imgResult = await validateImageFile(file);
     if (!imgResult.valid) errors.push({ field: 'project_image', message: imgResult.message });
@@ -627,6 +752,42 @@ function normalizeCreateResponse(opportunity, fullJson) {
   const id = raw.id ?? raw.opportunity_id ?? fullJson?.opportunity_id ?? fullJson?.id ?? null;
   const imageUrl = raw.image_url ?? raw.imageUrl ?? '';
   return { ...raw, id, image_url: imageUrl };
+}
+
+/** Call update webhook. Returns same shape as callCreateProject for consistency. */
+async function callUpdateProject(projectId, payload) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), CONFIG.REQUEST_TIMEOUT_MS);
+  try {
+    const body = { id: projectId, opportunity_id: projectId, ...payload };
+    const res = await fetch(CONFIG.UPDATE_URL, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    const bodyText = await res.text();
+    let json = null;
+    try {
+      json = bodyText ? JSON.parse(bodyText) : null;
+    } catch (_) {
+      return { kind: 'system', message: MSG.INVALID_RESPONSE, raw: null };
+    }
+    if (res.ok) {
+      const data = normalizeCreateResponse(json?.opportunity ?? json, json);
+      return { kind: 'success', data: { ...data, id: projectId } };
+    }
+    if (res.status === 400 && json && Array.isArray(json.errors)) {
+      return { kind: 'validation', errors: json.errors };
+    }
+    const msg = json?.message || json?.error?.message || (typeof json?.error === 'string' ? json.error : null) || `HTTP ${res.status}`;
+    return { kind: 'system', message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, requestId: json?.error?.request_id, raw: bodyText };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') return { kind: 'system', message: MSG.REQUEST_TIMEOUT };
+    return { kind: 'system', message: err.message || MSG.REQUEST_FAILED };
+  }
 }
 
 /** Generic fetch with timeout. Returns { ok, status, json, text } or throws. */
@@ -931,7 +1092,18 @@ function renderSuccess(resp) {
   successBannerEl.hidden = true;
   summaryCardWrap.hidden = true;
   if (form) form.hidden = true;
+  const backDashboard = document.getElementById('btn-back-dashboard');
+  if (backDashboard) backDashboard.hidden = !editMode;
   if (successPanelEl) {
+    const titleEl = successPanelEl.querySelector('.success-panel-title');
+    const textEl = successPanelEl.querySelector('.success-panel-text');
+    if (editMode) {
+      if (titleEl) titleEl.textContent = '✅ پروژه با موفقیت ویرایش شد';
+      if (textEl) textEl.textContent = 'تغییرات شما ذخیره شد.';
+    } else {
+      if (titleEl) titleEl.textContent = '✅ پروژه شما در ویترین ایجاد شد';
+      if (textEl) textEl.textContent = 'می‌توانید برای مشاهده به لینک زیر بروید:';
+    }
     successPanelEl.hidden = false;
     successPanelEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
@@ -984,8 +1156,6 @@ function resetToCreateNew() {
   if (imageInput) imageInput.value = '';
   setFormEnabled(true);
   setupGuaranteeCheckboxes();
-  const fb = document.getElementById('title-feedback');
-  if (fb) { fb.className = 'title-feedback-inline'; setText(fb, ''); }
   const reqRead = document.getElementById('required-amount-readable');
   if (reqRead) reqRead.hidden = true;
 }
@@ -1057,68 +1227,15 @@ function setupGuaranteeCheckboxes() {
   updateChips();
 }
 
-function setupTitleHelper() {
+function prefillDefaultTitlePrefix() {
+  if (editMode) return;
   const titleInput = document.getElementById('project-title');
-  const feedbackEl = document.getElementById('title-feedback');
-  const applyBtn = document.getElementById('title-apply-btn');
-  const applyTooltipBtn = document.getElementById('title-apply-tooltip-btn');
-  const infoIcon = document.getElementById('title-info-icon');
-  const tooltip = document.getElementById('title-tooltip');
+  if (!titleInput) return;
+  if (titleInput.value && titleInput.value.trim().length > 0) return;
 
-  function updateTitleFeedback() {
-    if (!feedbackEl || !titleInput) return;
-    const val = titleInput.value.trim();
-    if (!val) {
-      feedbackEl.textContent = '';
-      feedbackEl.className = 'title-feedback-inline';
-      return;
-    }
-    if (titleHasPrefix(val)) {
-      feedbackEl.textContent = '✓ عنوان مطابق الگو است.';
-      feedbackEl.className = 'title-feedback-inline is-ok';
-    } else {
-      feedbackEl.textContent = '⚠ عنوان باید با «تأمین مالی برای» یا «تأمین مالی جهت» آغاز شود.';
-      feedbackEl.className = 'title-feedback-inline is-warning';
-    }
-  }
-
-  function applyTitle() {
-    if (titleInput) {
-      titleInput.value = applyTitlePrefix(titleInput.value);
-      updateTitleFeedback();
-      titleInput.focus();
-    }
-  }
-
-  if (titleInput) {
-    titleInput.addEventListener('input', updateTitleFeedback);
-    titleInput.addEventListener('blur', updateTitleFeedback);
-  }
-  if (applyBtn) applyBtn.addEventListener('click', applyTitle);
-  if (applyTooltipBtn) applyTooltipBtn.addEventListener('click', applyTitle);
-
-  if (infoIcon && tooltip) {
-    const showTooltip = () => { tooltip.hidden = false; };
-    const hideTooltip = () => { tooltip.hidden = true; };
-    const handleOutsideClick = (e) => {
-      if (tooltip.hidden) return;
-      if (!tooltip.contains(e.target) && !infoIcon.contains(e.target)) hideTooltip();
-    };
-    infoIcon.addEventListener('mouseenter', showTooltip);
-    infoIcon.addEventListener('mouseleave', hideTooltip);
-    infoIcon.addEventListener('focus', showTooltip);
-    infoIcon.addEventListener('blur', () => setTimeout(hideTooltip, 200));
-    infoIcon.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      tooltip.hidden = !tooltip.hidden;
-      if (!tooltip.hidden) document.addEventListener('click', handleOutsideClick, { once: true });
-    });
-    tooltip.addEventListener('mouseenter', showTooltip);
-    tooltip.addEventListener('mouseleave', hideTooltip);
-  }
-
-  updateTitleFeedback();
+  titleInput.value = TITLE_DEFAULT_PREFIX;
+  const pos = titleInput.value.length;
+  titleInput.setSelectionRange(pos, pos);
 }
 
 function setupAmountFormatting() {
@@ -1199,10 +1316,6 @@ async function handleSubmit(e) {
 
   submitState = STATE.VALIDATING;
   setOverlayLoading(true, MSG.PROGRESS_VALIDATE);
-  const titleEl = form.querySelector('#project-title');
-  if (titleEl && !titleHasPrefix(titleEl.value)) {
-    titleEl.value = applyTitlePrefix(titleEl.value);
-  }
   const model = collectFormData();
   const { isValid, errors } = await validateForm(model);
 
@@ -1221,6 +1334,59 @@ async function handleSubmit(e) {
   lastErrorStep = null;
 
   try {
+    if (editMode && editProjectId) {
+      // Edit: update then optionally upload new image
+      submitState = STATE.CREATING;
+      setOverlayLoading(true, 'در حال ذخیره تغییرات...');
+      const { owner, project } = normalizePayload(model.owner, model.project);
+      const updateRes = await callUpdateProject(editProjectId, { owner, project });
+      if (updateRes.kind === 'validation') {
+        lastErrorStep = MSG.STEP_CREATE;
+        showError(MSG.VALIDATION_FIX, { stepName: 'بروزرسانی', technicalDetails: { url: CONFIG.UPDATE_URL, errors: updateRes.errors } });
+        showFieldErrors(updateRes.errors);
+        scrollToFirstError(updateRes.errors);
+        return;
+      }
+      if (updateRes.kind === 'system') {
+        lastErrorStep = MSG.STEP_CREATE;
+        showError(updateRes.message || MSG.SYSTEM_ERROR, { stepName: 'بروزرسانی', requestId: updateRes.requestId, technicalDetails: { url: CONFIG.UPDATE_URL, raw: updateRes.raw } });
+        return;
+      }
+      lastSuccessfulProjectId = editProjectId;
+      const file = model.file || form.querySelector('#project-image')?.files?.[0] || null;
+      if (file) {
+        submitState = STATE.UPLOADING;
+        setOverlayLoading(true, MSG.PROGRESS_UPLOAD);
+        const visibility = publishStatusToBackend(model.project.visibility);
+        const uploadResult = await requestUploadCover({ entityId: editProjectId, file, visibility });
+        if (!uploadResult.success || !uploadResult.url) {
+          lastErrorStep = MSG.STEP_UPLOAD;
+          showError(MSG.CREATE_OK_UPLOAD_FAIL, { stepName: MSG.STEP_UPLOAD, projectId: editProjectId });
+          return;
+        }
+        submitState = STATE.ATTACHING;
+        setOverlayLoading(true, MSG.PROGRESS_ATTACH);
+        const attachResult = await requestAttachCover({ entityId: editProjectId, imageUrl: uploadResult.url });
+        if (!attachResult.success) {
+          lastErrorStep = MSG.STEP_ATTACH;
+          showError(MSG.UPLOAD_OK_ATTACH_FAIL, { stepName: MSG.STEP_ATTACH, projectId: editProjectId });
+          return;
+        }
+      }
+      submitState = STATE.DONE;
+      lastErrorStep = null;
+      clearLoadingState();
+      renderSuccess({ ...model.project, id: editProjectId });
+      // Auto-redirect to dashboard after 3 seconds in edit mode
+      if (editMode) {
+        setTimeout(() => {
+          window.location.href = 'admin-dashboard.html';
+        }, 3000);
+      }
+      submitState = STATE.IDLE;
+      return;
+    }
+
     // 1) Create
     submitState = STATE.CREATING;
     setOverlayLoading(true, MSG.PROGRESS_CREATE);
@@ -1370,13 +1536,67 @@ async function doRetryAttach(projectId, cleanUrl) {
 // ——— Init ———
 
 function init() {
+  const { mode, id } = getEditParams();
+  if (mode === 'edit' && id) {
+    editMode = true;
+    editProjectId = id;
+    const pageTitleEl = document.getElementById('page-title');
+    if (pageTitleEl) pageTitleEl.textContent = MSG.EDIT_TITLE;
+    const backLink = document.getElementById('back-to-dashboard');
+    if (backLink) backLink.hidden = false;
+    if (submitBtn) submitBtn.textContent = MSG.BTN_UPDATE;
+    const imageInputReq = document.getElementById('project-image');
+    if (imageInputReq) imageInputReq.removeAttribute('required');
+    const fundedInput = document.getElementById('project-funded-amount-toman');
+    if (fundedInput) {
+      fundedInput.disabled = false;
+      fundedInput.removeAttribute('title');
+    }
+    setOverlayLoading(true, MSG.LOADING_EDIT);
+    // Ensure guarantee checkboxes are set up before prefilling
+    setupGuaranteeCheckboxes();
+    fetchProjectForEdit(id).then((project) => {
+      setOverlayLoading(false, '');
+      if (project) {
+        // Small delay to ensure DOM is ready
+        setTimeout(() => {
+          prefillForm(project);
+        }, 100);
+      } else {
+        showGlobalError({ type: 'system', message: MSG.EDIT_LOAD_FAIL });
+      }
+    }).catch(() => {
+      setOverlayLoading(false, '');
+      showGlobalError({ type: 'system', message: MSG.EDIT_LOAD_FAIL });
+    });
+  }
+
   applyAppMode();
   setupImagePreview();
   setupClearErrorsOnInput();
-  setupTitleHelper();
   setupAmountFormatting();
+  if (!editMode) prefillDefaultTitlePrefix();
 
-  setupGuaranteeCheckboxes();
+  const profitInput = document.getElementById('project-monthly-profit-percent');
+  if (profitInput) {
+    profitInput.addEventListener('blur', () => {
+      formatProfitPercentInput(profitInput);
+    });
+
+    profitInput.addEventListener('input', (e) => {
+      let val = normalizeDigits(e.target.value);
+      val = val.replace(/[^0-9.]/g, '');
+      const parts = val.split('.');
+      if (parts.length > 2) {
+        val = parts[0] + '.' + parts.slice(1).join('');
+      }
+      e.target.value = val;
+    });
+  }
+
+  if (!editMode) {
+    setupGuaranteeCheckboxes();
+  }
 
   const btnCreateNew = document.getElementById('btn-create-new');
   if (btnCreateNew) btnCreateNew.addEventListener('click', resetToCreateNew);
@@ -1386,8 +1606,6 @@ function init() {
     form.addEventListener('reset', () => {
       clearForm(false);
       setTimeout(() => {
-        const fb = document.getElementById('title-feedback');
-        if (fb) { fb.className = 'title-feedback-inline'; setText(fb, ''); }
         const reqRead = document.getElementById('required-amount-readable');
         if (reqRead) reqRead.hidden = true;
         document.getElementById('guarantee-checkboxes')?.classList.remove('is-invalid', 'error');
