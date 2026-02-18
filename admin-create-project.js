@@ -318,7 +318,7 @@ const IRANIAN_MOBILE = /^09\d{9}$/;
 
 /** Title prefix: acceptable prefixes. Default for auto-apply. */
 const TITLE_PREFIXES = ['تأمین مالی برای', 'تامین مالی برای', 'تأمین مالی جهت', 'تامین مالی جهت'];
-const TITLE_DEFAULT_PREFIX = 'تأمین مالی برای ';
+const TITLE_DEFAULT_PREFIX = 'تأمین مالی جهت ';
 
 /** Guarantee type options (controlled vocabulary). */
 const GUARANTEE_OPTIONS = ['وثیقه ملکی', 'ضامن معتبر', 'دستگاه', 'خودرو', 'طلا', 'سفته'];
@@ -693,12 +693,13 @@ async function callCreateProject(formData) {
     let json = null;
     try {
       json = bodyText ? JSON.parse(bodyText) : null;
-    } catch {
+    } catch (parseErr) {
+      const msg = 'پاسخ سرور به صورت JSON معتبر نبود. در بخش «جزئیات فنی» می‌توانید پاسخ خام را ببینید.';
       return {
         kind: 'system',
-        message: MSG.INVALID_RESPONSE,
+        message: msg,
         requestId: null,
-        raw: bodyText,
+        raw: bodyText != null ? String(bodyText).slice(0, 2000) : '',
       };
     }
 
@@ -830,7 +831,8 @@ async function requestUploadCover({ entityId, file, visibility }) {
     const cleanUrl = String(rawUrl || '').trim();
     if (ok && cleanUrl) return { success: true, ok: true, url: cleanUrl, key: data?.key ?? data?.data?.key, status, raw: text };
     if (ok && !cleanUrl) return { success: false, ok: true, message: 'پاسخ آپلود بدون آدرس تصویر است.', status, raw: text };
-    const msg = data?.message || data?.error || (typeof data?.error === 'object' && data.error?.message) || MSG.SYSTEM_ERROR;
+    const invalidJsonMsg = json === null && text ? 'پاسخ سرور به صورت JSON معتبر نبود. در بخش «جزئیات فنی» پاسخ خام را ببینید.' : null;
+    const msg = invalidJsonMsg || data?.message || data?.error || (typeof data?.error === 'object' && data.error?.message) || MSG.SYSTEM_ERROR;
     return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, status, raw: text };
   } catch (err) {
     if (err.name === 'AbortError') return { success: false, ok: false, message: MSG.REQUEST_TIMEOUT };
@@ -864,7 +866,8 @@ async function requestAttachCover({ entityId, imageUrl }) {
       }
       return { success: true, ok: true, json, status, raw: text };
     }
-    const msg = json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
+    const invalidJsonMsg = json === null && text ? 'پاسخ سرور به صورت JSON معتبر نبود. در بخش «جزئیات فنی» پاسخ خام را ببینید.' : null;
+    const msg = invalidJsonMsg || json?.message || json?.error || (typeof json?.error === 'object' && json.error?.message) || MSG.SYSTEM_ERROR;
     return { success: false, ok: false, message: typeof msg === 'string' ? msg : MSG.SYSTEM_ERROR, status, raw: text };
   } catch (err) {
     if (err.name === 'AbortError') return { success: false, ok: false, message: MSG.REQUEST_TIMEOUT };
@@ -1278,6 +1281,25 @@ function setupLockedTitlePrefix() {
   }
   titleInput.addEventListener('click', () => setTimeout(clampSelection, 0));
   titleInput.addEventListener('keyup', () => setTimeout(clampSelection, 0));
+
+  titleInput.addEventListener('paste', function (e) {
+    e.preventDefault();
+    const pasted = (e.clipboardData || window.clipboardData || {}).getData('text') || '';
+    const trimmed = String(pasted).replace(/\s+/g, ' ').trim();
+    let newVal = titleInput.value;
+    const start = titleInput.selectionStart;
+    const end = titleInput.selectionEnd;
+    const before = newVal.slice(0, Math.max(prefixLen, start));
+    const after = newVal.slice(end);
+    newVal = before + trimmed + after;
+    if (!newVal.startsWith(prefix)) {
+      newVal = prefix + newVal;
+    }
+    titleInput.value = newVal;
+    const pos = newVal.length;
+    titleInput.setSelectionRange(pos, pos);
+    setTimeout(clampSelection, 0);
+  });
 }
 
 function setupAmountFormatting() {
@@ -1322,7 +1344,7 @@ function setupAmountFormatting() {
   }
 
   if (requiredInput) {
-    setupAmountInput(requiredInput, requiredReadable, null, requiredWordsEl);
+    setupAmountInput(requiredInput, requiredReadable, requiredFormatted, requiredWordsEl);
   }
   if (fundedInput && fundedReadable) {
     updateReadable(fundedReadable, fundedFormatted, fundedWordsEl, '0');
@@ -1355,7 +1377,24 @@ function applyAppMode() {
 
 async function handleSubmit(e) {
   e.preventDefault();
-  if (submitState !== STATE.IDLE && submitState !== STATE.ERROR) return;
+  console.log('[handleSubmit] entered', { submitState, editMode });
+
+  if (!form) {
+    console.error('[handleSubmit] form element is null');
+    showGlobalError({ type: 'system', message: 'فرم یافت نشد. لطفاً صفحه را مجدداً بارگذاری کنید.' });
+    return;
+  }
+  if (submitState !== STATE.IDLE && submitState !== STATE.ERROR) {
+    console.warn('[handleSubmit] blocked by submitState', submitState);
+    return;
+  }
+
+  const createUrl = CONFIG.CREATE_URL;
+  const uploadUrl = CONFIG.UPLOAD_URL;
+  const attachUrl = CONFIG.ATTACH_COVER_URL;
+  if (!createUrl || !uploadUrl || !attachUrl) {
+    console.warn('[handleSubmit] CONFIG URLs missing or invalid', { createUrl: !!createUrl, uploadUrl: !!uploadUrl, attachUrl: !!attachUrl });
+  }
 
   submitState = STATE.VALIDATING;
   setOverlayLoading(true, MSG.PROGRESS_VALIDATE);
@@ -1431,6 +1470,7 @@ async function handleSubmit(e) {
     }
 
     // 1) Create
+    console.log('[handleSubmit] before CREATE', CONFIG.CREATE_URL);
     submitState = STATE.CREATING;
     setOverlayLoading(true, MSG.PROGRESS_CREATE);
     const formData = buildCreateFormData(model.owner, model.project);
@@ -1474,6 +1514,7 @@ async function handleSubmit(e) {
     }
 
     // 2) Upload
+    console.log('[handleSubmit] before UPLOAD', CONFIG.UPLOAD_URL);
     submitState = STATE.UPLOADING;
     setOverlayLoading(true, MSG.PROGRESS_UPLOAD);
     const visibility = publishStatusToBackend(model.project.visibility);
@@ -1493,6 +1534,7 @@ async function handleSubmit(e) {
     lastUploadResult = { url: uploadResult.url, key: uploadResult.key };
 
     // 3) Attach — ALWAYS call after successful upload
+    console.log('[handleSubmit] before ATTACH', CONFIG.ATTACH_COVER_URL);
     submitState = STATE.ATTACHING;
     setOverlayLoading(true, MSG.PROGRESS_ATTACH);
     const attachPayload = { entity_id: projectId, image_url: uploadResult.url };
@@ -1647,7 +1689,10 @@ function init() {
   const btnCreateNew = document.getElementById('btn-create-new');
   if (btnCreateNew) btnCreateNew.addEventListener('click', resetToCreateNew);
 
-  if (form) {
+  if (!form) {
+    console.error('[init] form #create-project-form not found');
+    showGlobalError({ type: 'system', message: 'فرم یافت نشد. لطفاً صفحه را مجدداً بارگذاری کنید.' });
+  } else {
     form.addEventListener('submit', handleSubmit);
     form.addEventListener('reset', () => {
       clearForm(false);
@@ -1660,6 +1705,12 @@ function init() {
         if (chips) { chips.hidden = true; chips.innerHTML = ''; }
       }, 0);
     });
+  }
+  const createUrl = CONFIG.CREATE_URL;
+  const uploadUrl = CONFIG.UPLOAD_URL;
+  const attachUrl = CONFIG.ATTACH_COVER_URL;
+  if (!createUrl || !uploadUrl || !attachUrl) {
+    console.warn('[init] CONFIG CREATE_URL, UPLOAD_URL, or ATTACH_COVER_URL is empty or invalid', { createUrl: createUrl || '(empty)', uploadUrl: uploadUrl || '(empty)', attachUrl: attachUrl || '(empty)' });
   }
 }
 
