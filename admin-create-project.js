@@ -1291,18 +1291,19 @@ function setupAmountFormatting() {
   const fundedWordsEl = document.getElementById('funded-amount-words');
 
   function updateReadable(container, formattedEl, wordsEl, val) {
-    if (!container || !formattedEl || !wordsEl) return;
+    if (!container || !wordsEl) return;
     const n = parseNumericInput(val);
     if (isNaN(n) || n <= 0) {
       container.hidden = true;
-      setText(formattedEl, '');
+      if (formattedEl) setText(formattedEl, '');
       setText(wordsEl, '');
       return;
     }
     container.hidden = false;
     const raw = normalizeDigits(String(val || ''));
-    setText(formattedEl, raw ? toPersianDigits(formatAmountWithSeparators(raw)) + ' تومان' : '');
-    setText(wordsEl, numberToPersianWords(n));
+    if (formattedEl) setText(formattedEl, raw ? toPersianDigits(formatAmountWithSeparators(raw)) + ' تومان' : '');
+    const words = numberToPersianWords(n);
+    setText(wordsEl, words ? words : '');
   }
 
   function digitsOnly(val) {
@@ -1321,7 +1322,7 @@ function setupAmountFormatting() {
   }
 
   if (requiredInput) {
-    setupAmountInput(requiredInput, requiredReadable, requiredFormatted, requiredWordsEl);
+    setupAmountInput(requiredInput, requiredReadable, null, requiredWordsEl);
   }
   if (fundedInput && fundedReadable) {
     updateReadable(fundedReadable, fundedFormatted, fundedWordsEl, '0');

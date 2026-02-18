@@ -444,10 +444,21 @@ body {
 .amount-readable {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-4);
   margin-top: var(--space-4);
   font-size: 0.85rem;
   color: var(--gray-text);
+}
+
+.amount-words-line {
+  display: block;
+  font-weight: 500;
+  color: var(--primary);
+}
+
+.amount-words-label {
+  color: var(--gray-text);
+  font-weight: 400;
 }
 
 .amount-readable[hidden] {
