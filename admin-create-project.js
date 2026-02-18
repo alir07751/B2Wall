@@ -1238,6 +1238,48 @@ function prefillDefaultTitlePrefix() {
   titleInput.setSelectionRange(pos, pos);
 }
 
+/** در حالت ایجاد، پیش‌عنوان را غیرقابل حذف می‌کند؛ کاربر فقط بعد از آن تایپ می‌کند. */
+function setupLockedTitlePrefix() {
+  if (editMode) return;
+  const titleInput = document.getElementById('project-title');
+  if (!titleInput) return;
+  const prefix = TITLE_DEFAULT_PREFIX;
+  const prefixLen = prefix.length;
+
+  titleInput.addEventListener('input', function () {
+    const val = titleInput.value;
+    if (val.startsWith(prefix)) return;
+    titleInput.value = prefix + val;
+    const len = titleInput.value.length;
+    titleInput.setSelectionRange(len, len);
+  });
+
+  titleInput.addEventListener('keydown', function (e) {
+    const start = titleInput.selectionStart;
+    const end = titleInput.selectionEnd;
+    if (e.key === 'Backspace' && end <= prefixLen) {
+      e.preventDefault();
+      return;
+    }
+    if (e.key === 'Delete' && start < prefixLen) {
+      e.preventDefault();
+      return;
+    }
+  });
+
+  function clampSelection() {
+    const start = titleInput.selectionStart;
+    const end = titleInput.selectionEnd;
+    if (start < prefixLen || end < prefixLen) {
+      const newStart = Math.max(prefixLen, start);
+      const newEnd = Math.max(prefixLen, end);
+      titleInput.setSelectionRange(newStart, newEnd);
+    }
+  }
+  titleInput.addEventListener('click', () => setTimeout(clampSelection, 0));
+  titleInput.addEventListener('keyup', () => setTimeout(clampSelection, 0));
+}
+
 function setupAmountFormatting() {
   const requiredInput = document.getElementById('project-required-amount-toman');
   const fundedInput = document.getElementById('project-funded-amount-toman');
@@ -1575,7 +1617,10 @@ function init() {
   setupImagePreview();
   setupClearErrorsOnInput();
   setupAmountFormatting();
-  if (!editMode) prefillDefaultTitlePrefix();
+  if (!editMode) {
+    prefillDefaultTitlePrefix();
+    setupLockedTitlePrefix();
+  }
 
   const profitInput = document.getElementById('project-monthly-profit-percent');
   if (profitInput) {
