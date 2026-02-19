@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>پنل داشبورد — B2Wall</title>
+  <link rel="stylesheet" href="admin-dashboard.css">
+</head>
+<body>
+  <header class="page-header">
+    <div class="header-top-bar">
+      <h1 id="page-title">پنل داشبورد</h1>
+      <a href="index.html" id="link-showcase" class="back-link" target="_blank" rel="noopener noreferrer">مشاهده ویترین ←</a>
+    </div>
+  </header>
+
+  <main class="main-wrap">
+    <div id="loading-overlay" class="loading-overlay" role="status" aria-live="polite" aria-busy="false" hidden>
+      <div class="loading-overlay-content">
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <p class="loading-overlay-text">در حال بارگذاری پروژه‌ها...</p>
+      </div>
+    </div>
+
+    <div id="global-error" class="alert alert-error" role="alert" aria-live="polite" hidden>
+      <div class="alert-content"></div>
+    </div>
+
+    <section class="toolbar" aria-label="ابزارهای داشبورد">
+      <a href="admin-create-project.html" class="btn btn-primary" id="btn-create-new">ایجاد پروژه جدید</a>
+      <label for="search-input" class="visually-hidden">جستجو در عنوان</label>
+      <input type="search" id="search-input" class="toolbar-search" placeholder="جستجو در عنوان..." autocomplete="off">
+      <label for="filter-visibility" class="visually-hidden">فیلتر انتشار</label>
+      <select id="filter-visibility" class="toolbar-filter" aria-label="وضعیت انتشار">
+        <option value="">همه</option>
+        <option value="PUBLIC">منتشر شده</option>
+        <option value="PRIVATE">منتشر نشده</option>
+      </select>
+      <label for="filter-status" class="visually-hidden">فیلتر وضعیت</label>
+      <select id="filter-status" class="toolbar-filter" aria-label="وضعیت">
+        <option value="">همه وضعیت‌ها</option>
+        <option value="REVIEW">در حال کارشناسی</option>
+        <option value="FUNDING">در حال جذب سرمایه</option>
+        <option value="COMPLETED">تکمیل شده</option>
+      </select>
+    </section>
+
+    <div id="projects-container" class="projects-grid" aria-live="polite">
+      <!-- Cards rendered by JS -->
+    </div>
+
+    <div id="empty-state" class="empty-state" hidden>
+      <p>پروژه‌ای یافت نشد.</p>
+    </div>
+  </main>
+
+  <footer class="footer">پنل داشبورد — B2Wall</footer>
+
+  <script src="admin-dashboard.js"></script>
+</body>
+</html>
