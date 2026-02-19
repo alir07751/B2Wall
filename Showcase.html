@@ -157,7 +157,7 @@
       return div.innerHTML;
     }
 
-    var API_URL = 'https://n8nb2wall.darkube.app/webhook/opportunities';
+    var API_URL = 'https://n8nb2wall.darkube.app/webhook/allopportunities';
     var IMAGE_BASE = 'https://b2wall.storage.c2.liara.space/';
     var DATA = [];
 
@@ -168,6 +168,13 @@
       var lower = (raw || '').toString().toLowerCase();
       var map = { open: 'FUNDING', funding: 'FUNDING', active: 'FUNDING', review: 'REVIEW', completed: 'COMPLETED', close: 'COMPLETED', closed: 'COMPLETED' };
       return map[lower] || 'FUNDING';
+    }
+
+    function normalizeVisibility(val) {
+      var v = (val ?? '').toString().toUpperCase();
+      if (v === 'PUBLIC' || v === 'PRIVATE') return v;
+      if (v === 'PUBLISHED') return 'PUBLIC';
+      return 'PRIVATE';
     }
 
     function toPublicUrl(u) {
@@ -210,10 +217,12 @@
 
       var locParts = [raw.state, raw.city, raw.country].filter(Boolean);
       var location = locParts.length ? locParts.join(' ') : '';
+      var visibility = normalizeVisibility(raw.visibility);
       return {
         id: raw.id != null ? raw.id : index + 1,
         title: raw.title || '—',
         location: location,
+        visibility: visibility,
         status: status,
         monthlyProfitPercent: profitPct,
         planProfitPercent: raw.planProfitPercent != null ? Number(raw.planProfitPercent) : null,
@@ -346,6 +355,7 @@
       var activeBtn = document.querySelector('.tabs button.active');
       var statusFilter = activeBtn ? (activeBtn.dataset.status || '') : '';
       var list = DATA.slice();
+      list = list.filter(function(i) { return i.visibility === 'PUBLIC'; });
       if (statusFilter) list = list.filter(function(i) { return i.status === statusFilter; });
       list.sort(function(a, b) {
         var order = (STATUS_ORDER[a.status] || 0) - (STATUS_ORDER[b.status] || 0);
