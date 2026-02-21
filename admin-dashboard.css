@@ -329,7 +329,7 @@ body {
 .badge-status.FUNDING { background: #dbeafe; color: #1e40af; }
 .badge-status.COMPLETED { background: #ecfdf5; color: var(--success); }
 
-/* Card body: image + visibility badge (مانند تکمیل‌شد در ویترین) */
+/* Card body: image + visibility badge — ظاهر مثل ویترین (تکمیل‌شده روی تصویر) */
 .card-img-wrap {
   position: relative;
   aspect-ratio: 16/9;
@@ -345,6 +345,31 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: filter 0.35s ease, transform 0.35s ease;
+}
+
+/* لایهٔ رنگی روی تصویر + کمی بلور (مثل کارت تکمیل‌شده در ویترین) */
+.card-img-wrap:has(.card-visibility-badge) img {
+  filter: blur(2px) brightness(0.85) saturate(0.95);
+  transform: scale(1.03);
+}
+
+.card-img-wrap:has(.card-visibility-badge-public)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 150, 105, 0.3);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.card-img-wrap:has(.card-visibility-badge-private)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .card-visibility-badge {
@@ -354,6 +379,7 @@ body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
+  z-index: 2;
 }
 
 .card-visibility-badge::after {
@@ -369,14 +395,14 @@ body {
 
 .card-visibility-badge-public::after {
   content: 'انتشار';
-  background: rgba(13, 125, 77, 0.94);
-  border-color: rgba(13, 125, 77, 0.98);
+  background: rgba(5, 150, 105, 0.94);
+  border-color: rgba(5, 150, 105, 0.98);
 }
 
 .card-visibility-badge-private::after {
   content: 'عدم انتشار';
-  background: rgba(100, 116, 139, 0.94);
-  border-color: rgba(100, 116, 139, 0.98);
+  background: rgba(51, 65, 85, 0.94);
+  border-color: rgba(51, 65, 85, 0.98);
 }
 
 .card-img-placeholder {
