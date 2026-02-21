@@ -41,6 +41,20 @@
     </div>
     <div id="summary-card" class="summary-card-wrap" hidden></div>
 
+    <!-- Supply activation: clear expectations, market context (design-first v1) -->
+    <section class="form-section form-section-guide" aria-label="راهنمای طراحی پروژه قابل تأمین">
+      <h2 class="form-section-title">معیارهای پذیرش و طراحی پروژه</h2>
+      <ul class="guide-list">
+        <li>عنوان، مبلغ مورد نیاز، مدت و نرخ سود ماهانه باید مشخص باشد.</li>
+        <li><strong>حداقل یک نوع ضمانت</strong> انتخاب شود. پروژه‌های با ضمانت شفاف زودتر بررسی می‌شوند.</li>
+        <li>پروژه‌های با نرخ سود و مدت نزدیک به میانگین بازار، معمولاً زودتر به ویترین و جذب سرمایه می‌رسند.</li>
+      </ul>
+      <p id="market-context" class="market-context" aria-live="polite">
+        <span id="market-avg-rate"></span>
+        <span id="market-avg-duration"></span>
+      </p>
+    </section>
+
     <form id="create-project-form" class="create-form" novalidate aria-busy="false">
       <!-- مالک پروژه: برای حالت SELF_SERVICE مخفی می‌شود و از نشست گرفته می‌شود -->
       <section id="owner-section" class="form-section">
@@ -113,6 +127,7 @@
             <label for="guarantee-سفته"><input type="checkbox" id="guarantee-سفته" name="guarantee_type" value="سفته"> سفته</label>
           </div>
           <div id="guarantee-chips" class="guarantee-chips" hidden></div>
+          <span class="field-hint">حداقل یک نوع ضمانت لازم است. پروژه‌های با ضمانت شفاف زودتر بررسی می‌شوند.</span>
           <span class="field-error" id="project-guarantee-type-error" role="alert"></span>
         </div>
         <div class="form-row">
@@ -138,8 +153,8 @@
         <div class="form-row">
           <label for="project-visibility">وضعیت انتشار <span class="required">*</span></label>
           <select id="project-visibility" name="project_visibility" required>
-            <option value="PUBLISHED">منتشر شده</option>
-            <option value="UNPUBLISHED">منتشر نشده</option>
+            <option value="PUBLISHED">انتشار</option>
+            <option value="UNPUBLISHED">عدم انتشار</option>
           </select>
           <span class="field-hint">در صورت انتخاب منتشر شود، پروژه در ویترین نمایش داده خواهد شد.</span>
           <span class="field-error" id="project-visibility-error" role="alert"></span>

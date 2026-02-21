@@ -321,6 +321,38 @@ body {
   color: var(--primary);
 }
 
+/* Supply activation: guide and market context */
+.form-section-guide {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+.form-section-guide .form-section-title {
+  font-size: 1rem;
+}
+
+.guide-list {
+  margin: 0 0 var(--space-12);
+  padding-right: 1.25rem;
+  font-size: 0.9rem;
+  color: var(--gray-text);
+  line-height: 1.6;
+}
+
+.guide-list li {
+  margin-bottom: 0.35rem;
+}
+
+.market-context {
+  font-size: 0.85rem;
+  color: var(--gray-text);
+  margin: 0;
+}
+
+.market-context [id^="market-"]:empty {
+  display: none;
+}
+
 /* Form rows */
 .form-row {
   position: relative;

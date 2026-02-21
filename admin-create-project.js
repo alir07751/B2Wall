@@ -1087,7 +1087,7 @@ function renderClientErrors(errors) {
 }
 
 const STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'در حال کارشناسی', COMPLETED: 'تکمیل‌شده' };
-const VISIBILITY_LABELS = { PUBLIC: 'منتشر شده', PRIVATE: 'منتشر نشده', PUBLISHED: 'منتشر شده', UNPUBLISHED: 'منتشر نشده' };
+const VISIBILITY_LABELS = { PUBLIC: 'انتشار', PRIVATE: 'عدم انتشار', PUBLISHED: 'انتشار', UNPUBLISHED: 'عدم انتشار' };
 
 function renderSuccess(resp) {
   clearErrors();

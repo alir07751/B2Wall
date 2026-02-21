@@ -26,8 +26,8 @@
 
   function mapVisibilityToFa(visibility) {
     const v = (visibility || '').toString().toUpperCase();
-    if (v === 'PUBLIC') return 'منتشر شده';
-    if (v === 'PRIVATE') return 'منتشر نشده';
+    if (v === 'PUBLIC') return 'انتشار';
+    if (v === 'PRIVATE') return 'عدم انتشار';
     return v || '—';
   }
 
@@ -246,6 +246,10 @@
       ph.setAttribute('aria-hidden', 'true');
       imgWrap.appendChild(ph);
     }
+    const visibilityBadge = document.createElement('div');
+    visibilityBadge.className = `card-visibility-badge card-visibility-badge-${p.visibility === 'PUBLIC' ? 'public' : 'private'}`;
+    visibilityBadge.setAttribute('aria-hidden', 'true');
+    imgWrap.appendChild(visibilityBadge);
     article.appendChild(imgWrap);
 
     const metaGrid = document.createElement('div');

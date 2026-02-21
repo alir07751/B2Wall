@@ -329,8 +329,9 @@ body {
 .badge-status.FUNDING { background: #dbeafe; color: #1e40af; }
 .badge-status.COMPLETED { background: #ecfdf5; color: var(--success); }
 
-/* Card body: image + compact numbers */
+/* Card body: image + visibility badge (مانند تکمیل‌شد در ویترین) */
 .card-img-wrap {
+  position: relative;
   aspect-ratio: 16/9;
   background: var(--gray-border);
   display: flex;
@@ -344,6 +345,38 @@ body {
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.card-visibility-badge {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.card-visibility-badge::after {
+  padding: 0.6rem 1rem;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 1rem;
+  color: #fff;
+  border: 1px solid transparent;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.25);
+}
+
+.card-visibility-badge-public::after {
+  content: 'انتشار';
+  background: rgba(13, 125, 77, 0.94);
+  border-color: rgba(13, 125, 77, 0.98);
+}
+
+.card-visibility-badge-private::after {
+  content: 'عدم انتشار';
+  background: rgba(100, 116, 139, 0.94);
+  border-color: rgba(100, 116, 139, 0.98);
 }
 
 .card-img-placeholder {
