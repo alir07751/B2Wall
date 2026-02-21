@@ -60,6 +60,7 @@ const MSG = {
   EDIT_TITLE: 'ویرایش پروژه',
   LOADING_EDIT: 'در حال بارگذاری پروژه...',
   EDIT_LOAD_FAIL: 'بارگذاری پروژه برای ویرایش ناموفق بود.',
+  PUBLISH_REQUIRES_VALID: 'برای انتشار پروژه ابتدا تمام فیلدهای الزامی را تکمیل کنید.',
 };
 
 // Persian digits for display
@@ -649,6 +650,45 @@ function scrollToFirstError(errors) {
     const el = document.getElementById(scrollId);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+}
+
+/** بررسی می‌کند آیا فرم با وضعیت «انتشار» معتبر است؛ گزینه انتشار را طبق آن فعال/غیرفعال می‌کند. */
+async function updatePublishAvailability() {
+  const visibilitySelect = document.getElementById('project-visibility');
+  const publishedOption = visibilitySelect?.querySelector('option[value="PUBLISHED"]');
+  const errorEl = document.getElementById('project-visibility-error');
+  if (!visibilitySelect || !publishedOption) return;
+
+  const model = collectFormData();
+  model.project.visibility = PUBLISH_STATUS.PUBLISHED;
+  const { isValid } = await validateForm(model);
+
+  publishedOption.disabled = !isValid;
+  if (publishedOption.disabled) {
+    publishedOption.title = MSG.PUBLISH_REQUIRES_VALID;
+  } else {
+    publishedOption.removeAttribute('title');
+  }
+
+  if (!isValid && visibilitySelect.value === PUBLISH_STATUS.PUBLISHED) {
+    visibilitySelect.value = PUBLISH_STATUS.UNPUBLISHED;
+    if (errorEl) {
+      errorEl.textContent = MSG.PUBLISH_REQUIRES_VALID;
+      visibilitySelect.classList.add('is-invalid', 'error');
+    }
+  } else if (errorEl && errorEl.textContent === MSG.PUBLISH_REQUIRES_VALID) {
+    errorEl.textContent = '';
+    visibilitySelect.classList.remove('is-invalid', 'error');
+  }
+}
+
+let _publishAvailabilityDebounce = null;
+function debouncedUpdatePublishAvailability() {
+  if (_publishAvailabilityDebounce) clearTimeout(_publishAvailabilityDebounce);
+  _publishAvailabilityDebounce = setTimeout(() => {
+    _publishAvailabilityDebounce = null;
+    updatePublishAvailability();
+  }, 400);
 }
 
 // ——— FormData builder ———
@@ -1681,6 +1721,7 @@ function init() {
         // Small delay to ensure DOM is ready
         setTimeout(() => {
           prefillForm(project);
+          updatePublishAvailability();
         }, 100);
       } else {
         showGlobalError({ type: 'system', message: MSG.EDIT_LOAD_FAIL });
@@ -1728,6 +1769,14 @@ function init() {
     showGlobalError({ type: 'system', message: 'فرم یافت نشد. لطفاً صفحه را مجدداً بارگذاری کنید.' });
   } else {
     form.addEventListener('submit', handleSubmit);
+    form.addEventListener('input', debouncedUpdatePublishAvailability);
+    form.addEventListener('change', debouncedUpdatePublishAvailability);
+    const visibilitySelect = document.getElementById('project-visibility');
+    if (visibilitySelect) {
+      visibilitySelect.addEventListener('change', () => {
+        if (visibilitySelect.value === PUBLISH_STATUS.PUBLISHED) updatePublishAvailability();
+      });
+    }
     form.addEventListener('reset', () => {
       clearForm(false);
       setTimeout(() => {
@@ -1737,6 +1786,7 @@ function init() {
         setText(document.getElementById('project-guarantee-type-error'), '');
         const chips = document.getElementById('guarantee-chips');
         if (chips) { chips.hidden = true; chips.innerHTML = ''; }
+        updatePublishAvailability();
       }, 0);
     });
   }
@@ -1746,6 +1796,8 @@ function init() {
   if (!createUrl || !uploadUrl || !attachUrl) {
     console.warn('[init] CONFIG CREATE_URL, UPLOAD_URL, or ATTACH_COVER_URL is empty or invalid', { createUrl: createUrl || '(empty)', uploadUrl: uploadUrl || '(empty)', attachUrl: attachUrl || '(empty)' });
   }
+
+  updatePublishAvailability();
 }
 
 function initWrapper() {
