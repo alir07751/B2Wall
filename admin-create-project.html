@@ -161,12 +161,6 @@
         </div>
       </section>
 
-      <div class="form-actions">
-        <p id="progress-text" class="progress-text" aria-live="polite" hidden></p>
-        <button type="submit" id="submit-btn" class="btn btn-primary">ایجاد پروژه</button>
-        <button type="reset" id="reset-btn" class="btn btn-secondary">پاک کردن</button>
-      </div>
-
       <!-- تصویر پروژه — آپلود و به‌روزرسانی آدرس تصویر پس از کلیک روی «ایجاد پروژه» انجام می‌شود -->
       <section class="form-section form-section-image">
         <h2 class="form-section-title">تصویر پروژه</h2>
@@ -180,7 +174,24 @@
           <img id="image-preview" src="" alt="پیش‌نمایش" class="image-preview">
         </div>
       </section>
+
+      <div class="form-actions">
+        <p id="progress-text" class="progress-text" aria-live="polite" hidden></p>
+        <button type="submit" id="submit-btn" class="btn btn-primary">ایجاد پروژه</button>
+        <button type="button" id="reset-btn" class="btn btn-secondary">پاک کردن</button>
+      </div>
     </form>
+    <!-- مودال تأیید سفارشی (هم‌ظاهر با فرم، فونت و رنگ یکسان) -->
+    <div id="confirm-modal" class="confirm-modal" role="alertdialog" aria-modal="true" aria-label="تأیید" aria-describedby="confirm-modal-message" hidden>
+      <div class="confirm-modal-backdrop"></div>
+      <div class="confirm-modal-card">
+        <p id="confirm-modal-message" class="confirm-modal-message"></p>
+        <div class="confirm-modal-actions">
+          <button type="button" id="confirm-modal-cancel" class="btn btn-secondary">انصراف</button>
+          <button type="button" id="confirm-modal-ok" class="btn btn-primary">تأیید</button>
+        </div>
+      </div>
+    </div>
   </main>
 
   <footer class="footer">پنل ایجاد پروژه — B2Wall</footer>

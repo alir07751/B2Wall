@@ -631,6 +631,58 @@ body {
   color: var(--primary);
 }
 
+/* مودال تأیید — هم‌ظاهر با فرم (فونت و رنگ یکسان) */
+.confirm-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-16);
+}
+
+.confirm-modal[hidden] {
+  display: none;
+}
+
+.confirm-modal-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.35);
+  backdrop-filter: blur(2px);
+}
+
+.confirm-modal-card {
+  position: relative;
+  background: var(--white);
+  border: 1px solid var(--gray-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-hover);
+  padding: var(--space-24);
+  max-width: 400px;
+  width: 100%;
+  font-family: 'Vazirmatn', 'Segoe UI', Tahoma, sans-serif;
+  font-size: 1rem;
+  color: var(--primary);
+}
+
+.confirm-modal-message {
+  margin: 0 0 var(--space-24);
+  line-height: 1.6;
+}
+
+.confirm-modal-actions {
+  display: flex;
+  gap: var(--space-12);
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.confirm-modal-actions .btn {
+  min-width: 100px;
+}
+
 /* Footer */
 .footer {
   padding: var(--space-16);

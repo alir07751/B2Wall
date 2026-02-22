@@ -56,11 +56,15 @@ const MSG = {
   SUCCESS_MESSAGE: 'پروژه با موفقیت ثبت شد.',
   SUBMIT_ERROR: 'خطا در ثبت پروژه. لطفاً بررسی و دوباره تلاش کنید.',
   BTN_SUBMIT: 'ایجاد پروژه',
-  BTN_UPDATE: 'ثبت ویرایش',
+  BTN_UPDATE: 'ذخیره',
   EDIT_TITLE: 'ویرایش پروژه',
   LOADING_EDIT: 'در حال بارگذاری پروژه...',
   EDIT_LOAD_FAIL: 'بارگذاری پروژه برای ویرایش ناموفق بود.',
   PUBLISH_REQUIRES_VALID: 'برای انتشار پروژه ابتدا تمام فیلدهای الزامی را تکمیل کنید.',
+  CONFIRM_LEAVE: 'تغییرات ذخیره نمی‌شوند. مطمئن هستید که می‌خواهید از صفحه خارج شوید؟',
+  CONFIRM_SAVE: 'آیا از ذخیره تغییرات اطمینان دارید؟',
+  CONFIRM_CREATE: 'آیا از ایجاد پروژه اطمینان دارید؟',
+  CONFIRM_RESET: 'آیا مطمئن هستید که می‌خواهید همهٔ فیلدها را پاک کنید؟',
 };
 
 // Persian digits for display
@@ -108,6 +112,10 @@ let lastUploadResult = null;
 let lastErrorStep = null;
 let editMode = false;
 let editProjectId = null;
+/** بعد از ذخیره/ایجاد موفق؛ برای جلوگیری از beforeunload هنگام خروج عمدی */
+let formSubmittedSuccessfully = false;
+/** کاربر از طریق دکمه «بازگشت به داشبورد» و تأیید در مودال فرم خارج می‌شود → دیالوگ مرورگر نشان داده نشود */
+let leavingByFormBackLink = false;
 
 // Server field path → input element ID
 const FIELD_PATH_TO_ID = {
@@ -479,6 +487,31 @@ function toPublicImageUrl(url) {
 }
 
 // ——— Data collection & normalization ———
+
+/** آیا کاربر دادهٔ قابل‌ذخیره در فرم وارد کرده (برای تأیید خروج / پاک کردن) */
+function formHasMeaningfulData() {
+  if (!form) return false;
+  const ownerPhone = (form.querySelector('#owner-phone')?.value || '').trim();
+  const ownerName = (form.querySelector('#owner-full-name')?.value || '').trim();
+  const title = (form.querySelector('#project-title')?.value || '').trim();
+  const defaultTitlePrefix = 'تأمین مالی جهت ';
+  if (ownerPhone || ownerName) return true;
+  if (title && title !== defaultTitlePrefix) return true;
+  const numericIds = [
+    'project-monthly-profit-percent', 'project-duration-months',
+    'project-profit-payout-interval-days', 'project-principal-payout-interval-days',
+    'project-required-amount-toman', 'project-funded-amount-toman',
+  ];
+  for (const id of numericIds) {
+    const v = form.querySelector('#' + id)?.value;
+    if (v != null && String(v).trim() !== '' && String(v).trim() !== '۰') return true;
+  }
+  const hasGuarantee = form.querySelectorAll('#guarantee-checkboxes input[type="checkbox"]:checked').length > 0;
+  if (hasGuarantee) return true;
+  const hasFile = form.querySelector('#project-image')?.files?.length > 0;
+  if (hasFile) return true;
+  return false;
+}
 
 function collectFormData() {
   const rawTitle = (form.querySelector('#project-title')?.value || '').replace(/\s+/g, ' ').trim();
@@ -1064,7 +1097,8 @@ function setOverlayLoading(show, text) {
   }
   if (submitBtn) {
     submitBtn.setAttribute('aria-busy', String(isOn));
-    setText(submitBtn, isOn ? MSG.SUBMITTING_BTN : MSG.BTN_SUBMIT);
+    const btnLabel = isOn ? MSG.SUBMITTING_BTN : (editMode ? MSG.BTN_UPDATE : MSG.BTN_SUBMIT);
+    setText(submitBtn, btnLabel);
   }
   if (loadingOverlayEl) {
     const txt = loadingOverlayEl.querySelector('.loading-overlay-text');
@@ -1130,6 +1164,7 @@ const STATUS_LABELS = { FUNDING: 'در حال جذب سرمایه', REVIEW: 'د�
 const VISIBILITY_LABELS = { PUBLIC: 'انتشار', PRIVATE: 'عدم انتشار', PUBLISHED: 'انتشار', UNPUBLISHED: 'عدم انتشار' };
 
 function renderSuccess(resp) {
+  formSubmittedSuccessfully = true;
   clearErrors();
   successBannerEl.hidden = true;
   summaryCardWrap.hidden = true;
@@ -1430,6 +1465,85 @@ function applyAppMode() {
   }
 }
 
+// ——— مودال تأیید سفارشی (هم‌ظاهر با فرم، فونت و رنگ یکسان) ———
+
+/**
+ * نمایش مودال تأیید با ظاهر فرم. Promise با true (تأیید) یا false (انصراف) resolve می‌شود.
+ * @param {string} message
+ * @param {{ confirmText?: string, cancelText?: string }} options
+ * @returns {Promise<boolean>}
+ */
+function showConfirmModal(message, options = {}) {
+  const modal = document.getElementById('confirm-modal');
+  const messageEl = document.getElementById('confirm-modal-message');
+  const okBtn = document.getElementById('confirm-modal-ok');
+  const cancelBtn = document.getElementById('confirm-modal-cancel');
+  const backdrop = modal?.querySelector('.confirm-modal-backdrop');
+  if (!modal || !messageEl || !okBtn || !cancelBtn) return Promise.resolve(false);
+
+  const confirmText = options.confirmText ?? 'تأیید';
+  const cancelText = options.cancelText ?? 'انصراف';
+
+  return new Promise((resolve) => {
+    function finish(confirmed) {
+      modal.hidden = true;
+      okBtn.removeEventListener('click', onOk);
+      cancelBtn.removeEventListener('click', onCancel);
+      backdrop?.removeEventListener('click', onCancel);
+      window.removeEventListener('keydown', onKey);
+      resolve(confirmed);
+    }
+
+    function onOk() { finish(true); }
+    function onCancel() { finish(false); }
+
+    function onKey(e) {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        finish(false);
+      }
+    }
+
+    messageEl.textContent = message || '';
+    okBtn.textContent = confirmText;
+    cancelBtn.textContent = cancelText;
+    okBtn.addEventListener('click', onOk);
+    cancelBtn.addEventListener('click', onCancel);
+    if (backdrop) backdrop.addEventListener('click', onCancel);
+    window.addEventListener('keydown', onKey);
+
+    modal.hidden = false;
+    cancelBtn.focus();
+  });
+}
+
+function setupBeforeUnload() {
+  window.addEventListener('beforeunload', (e) => {
+    if (formSubmittedSuccessfully) return;
+    if (leavingByFormBackLink) return;
+    if (formHasMeaningfulData()) {
+      e.preventDefault();
+      e.returnValue = MSG.CONFIRM_LEAVE;
+      return MSG.CONFIRM_LEAVE;
+    }
+  });
+}
+
+function setupLeaveConfirmations() {
+  const backLink = document.getElementById('back-to-dashboard');
+  if (backLink) {
+    backLink.addEventListener('click', async (e) => {
+      if (!formHasMeaningfulData()) return;
+      e.preventDefault();
+      const ok = await showConfirmModal(MSG.CONFIRM_LEAVE);
+      if (ok) {
+        leavingByFormBackLink = true;
+        window.location.href = backLink.href;
+      }
+    });
+  }
+}
+
 // ——— Submit handler ———
 
 async function handleSubmit(e) {
@@ -1445,6 +1559,10 @@ async function handleSubmit(e) {
     console.warn('[handleSubmit] blocked by submitState', submitState);
     return;
   }
+
+  const confirmMessage = editMode ? MSG.CONFIRM_SAVE : MSG.CONFIRM_CREATE;
+  const confirmed = await showConfirmModal(confirmMessage);
+  if (!confirmed) return;
 
   const createUrl = CONFIG.CREATE_URL;
   const uploadUrl = CONFIG.UPLOAD_URL;
@@ -1733,6 +1851,8 @@ function init() {
   }
 
   applyAppMode();
+  setupBeforeUnload();
+  setupLeaveConfirmations();
   setupImagePreview();
   setupClearErrorsOnInput();
   setupAmountFormatting();
@@ -1789,6 +1909,19 @@ function init() {
         updatePublishAvailability();
       }, 0);
     });
+
+    const resetBtn = document.getElementById('reset-btn');
+    if (resetBtn) {
+      resetBtn.addEventListener('click', () => {
+        if (!formHasMeaningfulData()) {
+          form.reset();
+          return;
+        }
+        showConfirmModal(MSG.CONFIRM_RESET).then((ok) => {
+          if (ok) form.reset();
+        });
+      });
+    }
   }
   const createUrl = CONFIG.CREATE_URL;
   const uploadUrl = CONFIG.UPLOAD_URL;
