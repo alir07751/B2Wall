@@ -1,0 +1,24 @@
+# Dependencies
+node_modules
+.pnp
+.pnp.js
+
+# Build / Next
+.next
+out
+build
+dist
+
+# Env (do not commit secrets)
+.env
+.env.local
+.env.*.local
+
+# DB (local dev)
+*.db
+*.db-journal
+
+# Debug / IDE
+npm-debug.log*
+.DS_Store
+.idea

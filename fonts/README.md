@@ -23,4 +23,4 @@ https://github.com/rastikerdar/vazirmatn/releases
 - https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@33.003/fonts/webfonts/Vazirmatn-SemiBold.woff2
 - https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@33.003/fonts/webfonts/Vazirmatn-Bold.woff2
 
-پس از قرار دادن فایل‌ها در `fonts/webfonts/`، صفحه بدون نیاز به اینترنت فونت را از همان سرور خودتان لود می‌کند.
+پس از قرار دادن فایل‌ها در `fonts/webfonts/`، برای استفاده در اپ وب، آن‌ها را در `web/public/fonts/` کپی کنید تا لندینگ از همین فونت‌های محلی استفاده کند.
