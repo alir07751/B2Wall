@@ -3,8 +3,11 @@ import { DemoAuthProvider } from '@/lib/demo-auth';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'B2Wall — بازار سرمایه پروژه‌محور',
+  title: 'C2WALL',
   description: 'بازاری برای مبادله سرمایه بر اساس پروژه‌ها؛ ضمانت و بازپرداخت شفاف.',
+  icons: {
+    icon: '/logo1.svg',
+  },
 };
 
 export default function RootLayout({
