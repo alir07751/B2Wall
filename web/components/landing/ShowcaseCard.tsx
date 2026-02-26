@@ -21,6 +21,8 @@ export function ShowcaseCard({ opportunity, grossNet, onQuickView, onCta }: Prop
     repaymentPlan,
     netAPR,
     guaranteePack,
+    imageUrl,
+    ownerName,
   } = opportunity;
 
   const progress = targetAmount > 0 ? Math.round((raisedAmount / targetAmount) * 100) : 0;
@@ -30,13 +32,20 @@ export function ShowcaseCard({ opportunity, grossNet, onQuickView, onCta }: Prop
 
   return (
     <article className="rounded-2xl border border-border bg-white overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col w-full max-w-full min-h-0">
-      <div className="aspect-video bg-slate-200 flex items-center justify-center">
-        <LayoutGrid className="h-12 w-12 text-slate-400" aria-hidden />
+      <div className="aspect-video bg-slate-200 flex items-center justify-center overflow-hidden relative">
+        {imageUrl ? (
+          <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+        ) : (
+          <LayoutGrid className="h-12 w-12 text-slate-400" aria-hidden />
+        )}
       </div>
       <div className="p-4 flex flex-col gap-3 flex-1">
         <h3 className="font-semibold text-slate-800 text-base leading-snug line-clamp-2" title={title}>
           {title}
         </h3>
+        {ownerName && (
+          <p className="text-xs text-muted -mt-1" title={ownerName}>{ownerName}</p>
+        )}
         <div>
           <p className="text-xl font-bold text-primary font-tabular">{formatPct(planProfitPct)}</p>
           <p className="text-xs text-muted mt-0.5">{fa.planProfit}</p>

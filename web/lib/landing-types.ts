@@ -68,6 +68,9 @@ export interface Opportunity {
   reports: ReportsInfo;
   audit: AuditItem[];
   coverageState: CoverageState;
+  /** از API n8n (webhook/allopportunities) */
+  imageUrl?: string;
+  ownerName?: string;
 }
 
 export type LandingMode = 'investor' | 'seeker';
