@@ -5,8 +5,10 @@ import path from 'path';
 const FONT_NAMES = ['Vazirmatn-Regular.woff2', 'Vazirmatn-Medium.woff2', 'Vazirmatn-SemiBold.woff2', 'Vazirmatn-Bold.woff2'];
 
 function getFontsDir(): string | null {
-  const webDir = process.cwd();
-  const fontsRoot = path.join(webDir, '..', 'fonts');
+  const cwd = process.cwd();
+  const publicFonts = path.join(cwd, 'public', 'fonts');
+  if (fs.existsSync(publicFonts)) return publicFonts;
+  const fontsRoot = path.join(cwd, '..', 'fonts');
   const webfonts = path.join(fontsRoot, 'webfonts');
   if (fs.existsSync(webfonts)) return webfonts;
   if (fs.existsSync(fontsRoot)) return fontsRoot;

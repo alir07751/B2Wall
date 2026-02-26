@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { DemoAuthProvider } from '@/lib/demo-auth';
+import { Clarity } from '@/components/Clarity';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,6 +16,7 @@ export default function RootLayout({
   return (
     <html lang="fa" dir="rtl">
       <body className="min-h-screen font-vazir antialiased">
+        <Clarity />
         <DemoAuthProvider>
           {children}
         </DemoAuthProvider>

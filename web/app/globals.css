@@ -2,31 +2,31 @@
 @tailwind components;
 @tailwind utilities;
 
-/* فونت‌ها از B2Wall-1/fonts — اول از API، در صورت نبود از public/fonts */
+/* فونت Vazirmatn — CDN اول (پروداکشن بدون فایل لوکال)، بعد لوکال/API */
 @font-face {
   font-family: 'Vazirmatn';
-  src: url('/api/fonts/Vazirmatn-Regular.woff2') format('woff2'), url('/fonts/Vazirmatn-Regular.woff2') format('woff2');
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/vazirmatn@5.0.16/files/vazirmatn-arabic-400-normal.woff2') format('woff2'), url('/api/fonts/Vazirmatn-Regular.woff2') format('woff2'), url('/fonts/Vazirmatn-Regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Vazirmatn';
-  src: url('/api/fonts/Vazirmatn-Medium.woff2') format('woff2'), url('/fonts/Vazirmatn-Medium.woff2') format('woff2');
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/vazirmatn@5.0.16/files/vazirmatn-arabic-500-normal.woff2') format('woff2'), url('/api/fonts/Vazirmatn-Medium.woff2') format('woff2'), url('/fonts/Vazirmatn-Medium.woff2') format('woff2');
   font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Vazirmatn';
-  src: url('/api/fonts/Vazirmatn-SemiBold.woff2') format('woff2'), url('/fonts/Vazirmatn-SemiBold.woff2') format('woff2');
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/vazirmatn@5.0.16/files/vazirmatn-arabic-600-normal.woff2') format('woff2'), url('/api/fonts/Vazirmatn-SemiBold.woff2') format('woff2'), url('/fonts/Vazirmatn-SemiBold.woff2') format('woff2');
   font-weight: 600;
   font-style: normal;
   font-display: swap;
 }
 @font-face {
   font-family: 'Vazirmatn';
-  src: url('/api/fonts/Vazirmatn-Bold.woff2') format('woff2'), url('/fonts/Vazirmatn-Bold.woff2') format('woff2');
+  src: url('https://cdn.jsdelivr.net/npm/@fontsource/vazirmatn@5.0.16/files/vazirmatn-arabic-700-normal.woff2') format('woff2'), url('/api/fonts/Vazirmatn-Bold.woff2') format('woff2'), url('/fonts/Vazirmatn-Bold.woff2') format('woff2');
   font-weight: 700;
   font-style: normal;
   font-display: swap;
